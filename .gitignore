@@ -1,0 +1,42 @@
+# Dependencies
+**/vendor/
+**/node_modules/
+
+# Environment files
+**/.env
+**/.env.backup
+**/.env.production
+
+# Laravel storage & cache
+**/storage/*.key
+**/storage/key/
+**/storage/install.zip
+**/storage/update.zip
+**/storage/debugbar/
+**/storage/logs/*
+**/storage/app/*
+!**/storage/app/.gitignore
+!**/storage/app/public/.gitignore
+**/storage/framework/cache/*
+**/storage/framework/sessions/*
+**/storage/framework/views/*
+!**/storage/framework/cache/.gitignore
+!**/storage/framework/sessions/.gitignore
+!**/storage/framework/views/.gitignore
+!**/storage/logs/.gitignore
+**/public/storage
+
+# Composer
+composer.phar
+
+# Logs
+npm-debug.log
+yarn-error.log
+
+# IDE & OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+*.zip
