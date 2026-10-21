@@ -18,4 +18,43 @@ if ($uri !== '/' && file_exists(__DIR__.'/public'.$uri)) {
     return false;
 }
 
+$mimes = [
+    'css'   => 'text/css',
+    'js'    => 'application/javascript',
+    'png'   => 'image/png',
+    'jpg'   => 'image/jpeg',
+    'jpeg'  => 'image/jpeg',
+    'gif'   => 'image/gif',
+    'svg'   => 'image/svg+xml',
+    'webp'  => 'image/webp',
+    'ico'   => 'image/x-icon',
+    'woff'  => 'font/woff',
+    'woff2' => 'font/woff2',
+    'ttf'   => 'font/ttf',
+    'eot'   => 'application/vnd.ms-fontobject',
+    'json'  => 'application/json',
+];
+
+if (str_starts_with($uri, '/public/')) {
+    $cleanPath = preg_replace('#^/public/#', '/', $uri);
+    $fullPath = __DIR__ . '/public' . $cleanPath;
+    if (file_exists($fullPath) && !is_dir($fullPath)) {
+        $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+        header('Content-Type: ' . ($mimes[$ext] ?? 'application/octet-stream'));
+        readfile($fullPath);
+        exit;
+    }
+}
+
+if (str_starts_with($uri, '/storage/app/public/')) {
+    $cleanPath = preg_replace('#^/storage/app/public/#', '/', $uri);
+    $fullPath = __DIR__ . '/storage/app/public' . $cleanPath;
+    if (file_exists($fullPath) && !is_dir($fullPath)) {
+        $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+        header('Content-Type: ' . ($mimes[$ext] ?? 'application/octet-stream'));
+        readfile($fullPath);
+        exit;
+    }
+}
+
 require_once __DIR__.'/public/index.php';
