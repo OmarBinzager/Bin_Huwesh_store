@@ -13,41 +13,30 @@
                     <div class="card-body">
                         <h5 class="text-uppercase mb-3">{{translate('payment')}} {{translate('method')}}</h5>
                         @php($config=\App\CentralLogics\Helpers::get_business_settings('cash_on_delivery'))
+                        @php($isCodActive = (is_array($config) ? ($config['status'] ?? 0) : (int)$config) == 1)
                         <form action="{{route('admin.business-settings.web-app.payment-method-update',['cash_on_delivery'])}}"
                               method="post">
                             @csrf
-                            @if(isset($config))
+                            <div class="form-group">
+                                <label class="form-label text--title">
+                                    <strong>{{translate('cash_on_delivery')}}</strong>
+                                </label>
+                            </div>
 
-                                <div class="form-group">
-                                    <label class="form-label text--title">
-                                        <strong>{{translate('cash_on_delivery')}}</strong>
-                                    </label>
-                                </div>
+                            <div class="d-flex flex-wrap mb-4">
+                                <label class="form-check mr-2 mr-md-4">
+                                    <input class="form-check-input" type="radio" name="status" value="1" {{ $isCodActive ? 'checked' : '' }}>
+                                    <span class="form-check-label text--title pl-2">{{translate('active')}}</span>
+                                </label>
+                                <label class="form-check">
+                                    <input class="form-check-input" type="radio" name="status" value="0" {{ !$isCodActive ? 'checked' : '' }}>
+                                    <span class="form-check-label text--title pl-2">{{translate('inactive')}}</span>
+                                </label>
+                            </div>
 
-                                <div class="d-flex flex-wrap mb-4">
-                                    <label class="form-check mr-2 mr-md-4">
-                                        <input class="form-check-input" type="radio" name="status"  value="1" {{$config['status']==1?'checked':''}}>
-                                        <span class="form-check-label text--title pl-2">{{translate('active')}}</span>
-                                    </label>
-                                    <label class="form-check">
-                                        <input class="form-check-input" type="radio" name="status" value="0" {{$config['status']==0?'checked':''}}>
-                                        <span class="form-check-label text--title pl-2">{{translate('inactive')}}</span>
-                                    </label>
-                                </div>
-
-                                <div class="text-right">
-                                    <button type="submit" class="btn btn-primary px-5">{{translate('save')}}</button>
-                                </div>
-                            @else
-                                <div class="form-group">
-                                    <label class="form-label text--title">
-                                        <strong>{{translate('cash_on_delivery')}}</strong>
-                                    </label>
-                                </div>
-                                <div class="text-right">
-                                    <button type="submit" class="btn btn-primary px-5">{{translate('configure')}}</button>
-                                </div>
-                            @endif
+                            <div class="text-right">
+                                <button type="submit" class="btn btn-primary px-5">{{translate('save')}}</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -57,41 +46,30 @@
                     <div class="card-body">
                         <h5 class="text-uppercase mb-3">{{translate('payment')}} {{translate('method')}}</h5>
                         @php($config=\App\CentralLogics\Helpers::get_business_settings('digital_payment'))
+                        @php($isDigitalActive = (is_array($config) ? ($config['status'] ?? 0) : (int)$config) == 1)
                         <form action="{{route('admin.business-settings.web-app.payment-method-update',['digital_payment'])}}"
                               method="post">
                             @csrf
-                            @if(isset($config))
+                            <div class="form-group">
+                                <label class="form-label text--title">
+                                    <strong>{{translate('digital')}} {{translate('payment')}}</strong>
+                                </label>
+                            </div>
 
-                                <div class="form-group">
-                                    <label class="form-label text--title">
-                                        <strong>{{translate('digital')}} {{translate('payment')}}</strong>
-                                    </label>
-                                </div>
+                            <div class="d-flex flex-wrap mb-4">
+                                <label class="form-check mr-2 mr-md-4">
+                                    <input class="form-check-input" type="radio" name="status" value="1" {{ $isDigitalActive ? 'checked' : '' }}>
+                                    <span class="form-check-label text--title pl-2">{{translate('active')}}</span>
+                                </label>
+                                <label class="form-check">
+                                    <input class="form-check-input" type="radio" name="status" value="0" {{ !$isDigitalActive ? 'checked' : '' }}>
+                                    <span class="form-check-label text--title pl-2">{{translate('inactive')}}</span>
+                                </label>
+                            </div>
 
-                                <div class="d-flex flex-wrap mb-4">
-                                    <label class="form-check mr-2 mr-md-4">
-                                        <input class="form-check-input" type="radio" name="status"  value="1" {{$config['status']==1?'checked':''}}>
-                                        <span class="form-check-label text--title pl-2">{{translate('active')}}</span>
-                                    </label>
-                                    <label class="form-check">
-                                        <input class="form-check-input" type="radio" name="status" value="0" {{$config['status']==0?'checked':''}}>
-                                        <span class="form-check-label text--title pl-2">{{translate('inactive')}}</span>
-                                    </label>
-                                </div>
-
-                                <div class="text-right">
-                                    <button type="submit" class="btn btn-primary px-5">{{translate('save')}}</button>
-                                </div>
-                            @else
-                                <div class="form-group">
-                                    <label class="form-label text--title">
-                                        <strong>{{translate('digital')}} {{translate('payment')}}</strong>
-                                    </label>
-                                </div>
-                                <div class="text-right">
-                                    <button type="submit" class="btn btn-primary px-5">{{translate('configure')}}</button>
-                                </div>
-                            @endif
+                            <div class="text-right">
+                                <button type="submit" class="btn btn-primary px-5">{{translate('save')}}</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -101,41 +79,30 @@
                     <div class="card-body">
                         <h5 class="text-uppercase mb-3">{{translate('payment')}} {{translate('method')}}</h5>
                         @php($config=\App\CentralLogics\Helpers::get_business_settings('offline_payment'))
+                        @php($isOfflineActive = (is_array($config) ? ($config['status'] ?? 0) : (int)$config) == 1)
                         <form action="{{route('admin.business-settings.web-app.payment-method-update',['offline_payment'])}}"
                               method="post">
                             @csrf
-                            @if(isset($config))
+                            <div class="form-group">
+                                <label class="form-label text--title">
+                                    <strong>{{translate('offline')}} {{translate('payment')}}</strong>
+                                </label>
+                            </div>
 
-                                <div class="form-group">
-                                    <label class="form-label text--title">
-                                        <strong>{{translate('offline')}} {{translate('payment')}}</strong>
-                                    </label>
-                                </div>
+                            <div class="d-flex flex-wrap mb-4">
+                                <label class="form-check mr-2 mr-md-4">
+                                    <input class="form-check-input" type="radio" name="status" value="1" {{ $isOfflineActive ? 'checked' : '' }}>
+                                    <span class="form-check-label text--title pl-2">{{translate('active')}}</span>
+                                </label>
+                                <label class="form-check">
+                                    <input class="form-check-input" type="radio" name="status" value="0" {{ !$isOfflineActive ? 'checked' : '' }}>
+                                    <span class="form-check-label text--title pl-2">{{translate('inactive')}}</span>
+                                </label>
+                            </div>
 
-                                <div class="d-flex flex-wrap mb-4">
-                                    <label class="form-check mr-2 mr-md-4">
-                                        <input class="form-check-input" type="radio" name="status"  value="1" {{$config['status']==1?'checked':''}}>
-                                        <span class="form-check-label text--title pl-2">{{translate('active')}}</span>
-                                    </label>
-                                    <label class="form-check">
-                                        <input class="form-check-input" type="radio" name="status" value="0" {{$config['status']==0?'checked':''}}>
-                                        <span class="form-check-label text--title pl-2">{{translate('inactive')}}</span>
-                                    </label>
-                                </div>
-
-                                <div class="text-right">
-                                    <button type="submit" class="btn btn-primary px-5">{{translate('save')}}</button>
-                                </div>
-                            @else
-                                <div class="form-group">
-                                    <label class="form-label text--title">
-                                        <strong>{{translate('offline')}} {{translate('payment')}}</strong>
-                                    </label>
-                                </div>
-                                <div class="text-right">
-                                    <button type="submit" class="btn btn-primary px-5">{{translate('configure')}}</button>
-                                </div>
-                            @endif
+                            <div class="text-right">
+                                <button type="submit" class="btn btn-primary px-5">{{translate('save')}}</button>
+                            </div>
                         </form>
                     </div>
                 </div>

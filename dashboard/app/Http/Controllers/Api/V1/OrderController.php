@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreOrderRequest;
 use App\Mail\Customer\OrderPlaced;
 use App\Model\Coupon;
+use App\Model\Currency;
 use App\Model\CustomerAddress;
 use App\Model\DMReview;
 use App\Model\Order;
@@ -62,6 +63,9 @@ class OrderController extends Controller
         }
 
         $phone = $request->input('phone');
+        if ($phone === 'null' || trim($phone ?? '') === '') {
+            $phone = null;
+        }
         $userId = (bool)auth('api')->user() ? auth('api')->user()->id : $request->header('guest-id');
         $userType = (bool)auth('api')->user() ? 0 : 1;
 
@@ -73,21 +77,36 @@ class OrderController extends Controller
             ], 404);
         }
 
+        if ((bool)auth('api')->user() && $order['user_id'] == auth('api')->user()->id && $order['is_guest'] == 0) {
+            return response()->json(OrderLogic::track_order($request['order_id']), 200);
+        }
+
         if (!is_null($phone)) {
+            $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
             if ($order['is_guest'] == 0) {
                 $trackOrder = $this->order
                     ->with(['customer', 'delivery_address'])
                     ->where(['id' => $request['order_id']])
-                    ->whereHas('customer', function ($customerSubQuery) use ($phone) {
-                        $customerSubQuery->where('phone', $phone);
+                    ->whereHas('customer', function ($customerSubQuery) use ($phone, $cleanPhone) {
+                        $customerSubQuery->where(function ($sub) use ($phone, $cleanPhone) {
+                            $sub->where('phone', $phone);
+                            if (!empty($cleanPhone)) {
+                                $sub->orWhere('phone', 'like', "%$cleanPhone");
+                            }
+                        });
                     })
                     ->first();
             } else {
                 $trackOrder = $this->order
                     ->with(['delivery_address'])
                     ->where(['id' => $request['order_id']])
-                    ->whereHas('delivery_address', function ($addressSubQuery) use ($phone) {
-                        $addressSubQuery->where('contact_person_number', $phone);
+                    ->whereHas('delivery_address', function ($addressSubQuery) use ($phone, $cleanPhone) {
+                        $addressSubQuery->where(function ($sub) use ($phone, $cleanPhone) {
+                            $sub->where('contact_person_number', $phone);
+                            if (!empty($cleanPhone)) {
+                                $sub->orWhere('contact_person_number', 'like', "%$cleanPhone");
+                            }
+                        });
                     })
                     ->first();
             }
@@ -142,7 +161,8 @@ class OrderController extends Controller
             return response()->json(['errors' => $formattedErrors], 403);
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['errors' => [['message' => $e->getMessage()]]], 403);
+            \Illuminate\Support\Facades\Log::error('Calculate order amount failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return response()->json(['errors' => [['code' => 'order', 'message' => $e->getMessage()]]], 403);
         }
 
         $orderAmount = $amountData['ordered_amount'];
@@ -170,11 +190,30 @@ class OrderController extends Controller
         try {
             DB::beginTransaction();
             $orderId = 100000 + Order::all()->count() + 1;
+
+            $selectedCurrencyCode = $request->header('X-Currency-Code') ?? $request['currency_code'] ?? null;
+            $orderCurrency = null;
+            if (!empty($selectedCurrencyCode)) {
+                $orderCurrency = Currency::where('currency_code', strtoupper($selectedCurrencyCode))->where('status', 1)->first();
+            }
+            if (!$orderCurrency) {
+                $orderCurrency = Currency::where('is_base', 1)->first() ?? Currency::where('currency_code', Helpers::currency_code())->first();
+            }
+
+            $orderCurrencyCode = $orderCurrency->currency_code ?? 'YER';
+            $orderExchangeRate = (float)($orderCurrency->exchange_rate ?? 1.0);
+            $orderCurrencyAmount = ($orderExchangeRate > 0)
+                ? round($orderAmount / $orderExchangeRate, $orderCurrency->decimal_digits ?? 2)
+                : $orderAmount;
+
             $or = [
                 'id' => $orderId,
                 'user_id' => $customerId,
                 'is_guest' => $userType,
                 'order_amount' => $orderAmount,
+                'currency_code' => $orderCurrencyCode,
+                'currency_exchange_rate' => $orderExchangeRate,
+                'currency_amount' => $orderCurrencyAmount,
                 'coupon_code' =>  $request['coupon_code'],
                 'coupon_discount_amount' => $couponDiscount,
                 'coupon_discount_title' => $request->coupon_discount_title == 0 ? null : 'coupon_discount_title',
@@ -223,16 +262,40 @@ class OrderController extends Controller
                 $discount_type = ($category_discount >= $price) ? 'discount_on_product' : ($product_discount > $category_discount ? 'discount_on_product' : 'discount_on_category');
                 $tax_on_product = Helpers::tax_calculate($product, ($price - $discount));
 
+                $purchase_price = $hasVariations
+                    ? (float)Helpers::variation_purchase_price($product, json_encode($item['variation'] ?? []))
+                    : (float)($product['purchase_price'] ?? 0);
+                if ($purchase_price <= 0) {
+                    $purchase_price = (float)($product['purchase_price'] ?? 0);
+                }
+
+                $productDetailsData = is_array($product) ? $product : $product->toArray();
+                if ($product instanceof \App\Model\Product) {
+                    $product->load(['seller']);
+                    if ($product->seller) {
+                        $productDetailsData['seller'] = [
+                            'id' => $product->seller->id,
+                            'name' => $product->seller->name,
+                            'image' => $product->seller->logo_full_path ?? '',
+                        ];
+                    } elseif ($product->added_by == 'admin') {
+                        $productDetailsData['seller'] = [
+                            'id' => 0,
+                            'name' => 'In House Shop',
+                            'image' => '',
+                        ];
+                    }
+                }
 
                 $or_d = [
                     'order_id' => $orderId,
                     'product_id' => $item['product_id'],
                     'time_slot_id' => $orderTimeSlotId,
                     'delivery_date' => $orderDeliveryDate,
-                    'product_details' => $product,
+                    'product_details' => is_array($productDetailsData) ? json_encode($productDetailsData) : $productDetailsData,
                     'quantity' => $item['quantity'],
                     'price' => $price,
-                    'purchase_price' => (float)($product['purchase_price'] ?? 0),
+                    'purchase_price' => $purchase_price,
                     'unit' => $product['unit'],
                     'tax_amount' => $tax_on_product,
                     'discount_on_product' => $discount,
@@ -245,13 +308,18 @@ class OrderController extends Controller
                     'updated_at' => now(),
                 ];
 
-                $type = $item['variation'][0]['type'];
+                $type = $item['variation'][0]['type'] ?? null;
                 $variationStore = [];
-                foreach (json_decode($product['variations'], true) as $var) {
-                    if ($type == $var['type']) {
-                        $var['stock'] -= $item['quantity'];
+                $productVariations = json_decode($product['variations'] ?? '[]', true) ?: [];
+                if (!empty($type) && is_array($productVariations)) {
+                    foreach ($productVariations as $var) {
+                        if ($type == ($var['type'] ?? null)) {
+                            $var['stock'] -= $item['quantity'];
+                        }
+                        $variationStore[] = $var;
                     }
-                    $variationStore[] = $var;
+                } else {
+                    $variationStore = $productVariations;
                 }
 
                 $this->product->where(['id' => $product['id']])->update([
@@ -320,7 +388,7 @@ class OrderController extends Controller
             $orderStatusMessage = ($request->payment_method == 'cash_on_delivery' || $request->payment_method == 'offline_payment') ? 'pending' : 'confirmed';
             $message = Helpers::order_status_update_message($orderStatusMessage);
 
-            if ($languageCode != 'en') {
+            if ($message !== 0 && $message !== '0' && $languageCode != 'en') {
                 $message = $this->translate_message($languageCode, $orderStatusMessage);
             }
 
@@ -366,8 +434,12 @@ class OrderController extends Controller
             ], 200);
         } catch (\Exception $e) {
             DB::rollBack();
-
-            return response()->json([$e], 403);
+            \Illuminate\Support\Facades\Log::error('Order placement failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return response()->json([
+                'errors' => [
+                    ['code' => 'order', 'message' => $e->getMessage()]
+                ]
+            ], 403);
         }
     }
 
@@ -432,6 +504,9 @@ class OrderController extends Controller
         }
 
         $phone = $request->input('phone');
+        if ($phone === 'null' || trim($phone ?? '') === '') {
+            $phone = null;
+        }
         $userId = (bool)auth('api')->user() ? auth('api')->user()->id : $request->header('guest-id');
         $userType = (bool)auth('api')->user() ? 0 : 1;
 
@@ -442,21 +517,38 @@ class OrderController extends Controller
             ], 404);
         }
 
-        if (!is_null($phone)) {
+        if ((bool)auth('api')->user() && $order['user_id'] == auth('api')->user()->id && $order['is_guest'] == 0) {
+            $details = $this->orderDetail
+                ->with(['order', 'order.partial_payment', 'order.offline_payment'])
+                ->where(['order_id' => $request['order_id']])
+                ->orderBy('id', 'desc')
+                ->get();
+        } elseif (!is_null($phone)) {
+            $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
             if ($order['is_guest'] == 0) {
                 $details = $this->orderDetail
                     ->with(['order', 'order.delivery_address', 'order.customer', 'order.partial_payment', 'order.offline_payment', 'order.order_image'])
                     ->where(['order_id' => $request['order_id']])
-                    ->whereHas('order.customer', function ($customerSubQuery) use ($phone) {
-                        $customerSubQuery->where('phone', $phone);
+                    ->whereHas('order.customer', function ($customerSubQuery) use ($phone, $cleanPhone) {
+                        $customerSubQuery->where(function ($sub) use ($phone, $cleanPhone) {
+                            $sub->where('phone', $phone);
+                            if (!empty($cleanPhone)) {
+                                $sub->orWhere('phone', 'like', "%$cleanPhone");
+                            }
+                        });
                     })
                     ->get();
             } else {
                 $details = $this->orderDetail
                     ->with(['order', 'order.delivery_address', 'order.partial_payment', 'order.offline_payment', 'order.order_image'])
                     ->where(['order_id' => $request['order_id']])
-                    ->whereHas('order.delivery_address', function ($addressSubQuery) use ($phone) {
-                        $addressSubQuery->where('contact_person_number', $phone);
+                    ->whereHas('order.delivery_address', function ($addressSubQuery) use ($phone, $cleanPhone) {
+                        $addressSubQuery->where(function ($sub) use ($phone, $cleanPhone) {
+                            $sub->where('contact_person_number', $phone);
+                            if (!empty($cleanPhone)) {
+                                $sub->orWhere('contact_person_number', 'like', "%$cleanPhone");
+                            }
+                        });
                     })
                     ->get();
             }
@@ -511,15 +603,50 @@ class OrderController extends Controller
                 $detail['review_count'] = $this->review->where(['order_id' => $detail['order_id'], 'product_id' => $detail['product_id']])->count();
                 $decodedProduct = json_decode($detail['product_details'], true);
                 if (is_array($decodedProduct)) {
-                    $detail['product_details'] = Helpers::product_data_formatting($decodedProduct);
+                    $formattedProduct = Helpers::product_data_formatting($decodedProduct);
                 } else {
-                    $fallbackProduct = $this->product->find($detail['product_id']);
+                    $fallbackProduct = $this->product->with('seller')->find($detail['product_id']);
                     if ($fallbackProduct) {
-                        $detail['product_details'] = Helpers::product_data_formatting(json_decode(json_encode($fallbackProduct), true));
+                        $formattedProduct = Helpers::product_data_formatting(json_decode(json_encode($fallbackProduct), true));
                     } else {
-                        $detail['product_details'] = null;
+                        $formattedProduct = null;
                     }
                 }
+
+                // Attach seller information if available
+                $sellerData = null;
+                if (isset($formattedProduct['seller']) && !empty($formattedProduct['seller']['name'])) {
+                    $sellerData = $formattedProduct['seller'];
+                } else {
+                    $origProd = $this->product->with('seller')->find($detail['product_id']);
+                    if ($origProd && $origProd->seller) {
+                        $sellerData = [
+                            'id' => $origProd->seller->id,
+                            'name' => $origProd->seller->name,
+                            'image' => $origProd->seller->logo_full_path ?? '',
+                        ];
+                    } elseif ($origProd && $origProd->added_by == 'admin') {
+                        $sellerData = [
+                            'id' => 0,
+                            'name' => 'In House Shop',
+                            'image' => '',
+                        ];
+                    } elseif (!empty($decodedProduct['seller_id'])) {
+                        $sellerObj = \App\Model\Seller::find($decodedProduct['seller_id']);
+                        if ($sellerObj) {
+                            $sellerData = [
+                                'id' => $sellerObj->id,
+                                'name' => $sellerObj->name,
+                                'image' => $sellerObj->logo_full_path ?? '',
+                            ];
+                        }
+                    }
+                }
+                if ($formattedProduct) {
+                    $formattedProduct['seller'] = $sellerData;
+                }
+                $detail['product_details'] = $formattedProduct;
+                $detail['seller'] = $sellerData;
             }
             return response()->json($details, 200);
         } else {

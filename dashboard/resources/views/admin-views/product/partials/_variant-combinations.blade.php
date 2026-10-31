@@ -6,6 +6,9 @@
                 <label for="" class="control-label">{{ translate('Variant') }}</label>
             </td>
             <td class="text-center">
+                <label for="" class="control-label">{{ translate('purchase_price') }}</label>
+            </td>
+            <td class="text-center">
                 <label for="" class="control-label">{{ translate('Variant Price') }}</label>
             </td>
             <td class="text-center">
@@ -33,6 +36,10 @@
                     <td>
                         <label for="" class="control-label">{{ $str }}</label>
                      </td>
+                    <td>
+                        <input type="number" name="purchase_price_{{ $str }}" value="{{ $matchedVariation['purchase_price'] ?? ($purchase_price ?? 0) }}" min="0" step="any"
+                               class="form-control" required>
+                    </td>
                     <td>
                         <input type="number" name="price_{{ $str }}" value="{{ $matchedVariation['price'] ?? $price }}" min="0" step="any"
                                class="form-control" required>

@@ -49,12 +49,17 @@
         </li>
         <li class="nav-item">
             <a class="nav-link {{Request::is('admin/business-settings/store/customer-setup')?'active':''}}" href="{{route('admin.business-settings.store.customer-setup')}}">
-                {{translate('customers')}}
+                {{translate('Customer Settings')}}
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link {{Request::is('admin/business-settings/store/order-setup')?'active':''}}" href="{{route('admin.business-settings.store.order-setup')}}">
-                {{translate('orders')}}
+                {{translate('Order Setup')}}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {{Request::is('admin/business-settings/currency*')?'active':''}}" href="{{route('admin.business-settings.currency-add')}}">
+                {{translate('Currency Setup')}}
             </a>
         </li>
     </ul>

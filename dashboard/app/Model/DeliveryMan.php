@@ -33,6 +33,16 @@ class DeliveryMan extends Authenticatable
         return $this->belongsTo(Branch::class, 'branch_id');
     }
 
+    public function wallet(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(DeliveryManWallet::class, 'delivery_man_id');
+    }
+
+    public function custodyTransactions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DeliveryManCustodyTransaction::class, 'delivery_man_id');
+    }
+
     public function getImageFullPathAttribute(): string
     {
         $image = $this->image ?? null;
@@ -59,7 +69,4 @@ class DeliveryMan extends Authenticatable
         }
         return $imageUrlArray;
     }
-
-
-
 }

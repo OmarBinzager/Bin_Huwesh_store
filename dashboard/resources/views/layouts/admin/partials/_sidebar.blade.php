@@ -675,6 +675,18 @@
                                     </li>
 
                                     <li
+                                        class="nav-item {{ Request::is('admin/delivery-man/custody*') ? 'active' : '' }}">
+                                        <a class="nav-link" href="{{ route('admin.delivery-man.custody.index') }}"
+                                            title="{{ translate('Delivery Men Wallets & Cash Custody') }}">
+                                            <span class="tio-circle nav-indicator-icon"></span>
+                                            <span
+                                                class="navbar-vertical-aside-mini-mode-hidden-elements text-truncate font-weight-bold">
+                                                {{ translate('Delivery Men Wallets & Cash Custody') }}
+                                            </span>
+                                        </a>
+                                    </li>
+
+                                    <li
                                         class="nav-item {{ Request::is('admin/delivery-man/reviews/list') ? 'active' : '' }}">
                                         <a class="nav-link" href="{{ route('admin.delivery-man.reviews.list') }}"
                                             title="{{ translate('reviews') }}">

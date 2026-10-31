@@ -1273,6 +1273,9 @@
                 },
                 success: function (data) {
                     toastr.success(data.message);
+                    setTimeout(function () {
+                        location.reload(true);
+                    }, 800);
                 },
                 complete: function () {
                     $('#loading').hide();

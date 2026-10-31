@@ -41,13 +41,16 @@ class CustomerWalletController extends Controller
             return response()->json(['errors' => [['code' => 'wallet', 'message' => translate('Your point in not sufficient!')]]], 401);
         }
 
-        $minimumPoint = $this->businessSetting->where(['key' => 'loyalty_point_minimum_point'])->first()->value;
+        $minimumPoint = (float)($this->businessSetting->where(['key' => 'loyalty_point_minimum_point'])->first()?->value ?? 1);
         if ($request['point'] < $minimumPoint ) {
             return response()->json(['errors' => [['code' => 'wallet', 'message' => translate('Your point in not sufficient!')]]], 401);
         }
 
-        $loyaltyPointExchangeRate = $this->businessSetting->where(['key' => 'loyalty_point_exchange_rate'])->first()->value;
-        $loyaltyAmount = $request['point']/$loyaltyPointExchangeRate;
+        $loyaltyPointExchangeRate = (float)($this->businessSetting->where(['key' => 'loyalty_point_exchange_rate'])->first()?->value ?? 1);
+        if ($loyaltyPointExchangeRate <= 0) {
+            $loyaltyPointExchangeRate = 1;
+        }
+        $loyaltyAmount = $request['point'] / $loyaltyPointExchangeRate;
 
         CustomerLogic::loyalty_point_wallet_transfer_transaction($user->id, $request['point'], $loyaltyAmount);
 

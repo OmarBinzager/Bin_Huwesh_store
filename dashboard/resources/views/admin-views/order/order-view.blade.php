@@ -105,7 +105,7 @@
                                     </span>
                                 @elseif($order['order_status'] == 'out_for_delivery')
                                     <span class="badge badge-soft-warning ml-2 ml-sm-3 text-capitalize">
-                                        {{ translate('out_for_delivery') }}
+                                        {{ translate('out_for_delivery') }} - ({{ translate('On the way to pick up from brand') }})
                                     </span>
                                 @elseif($order['order_status'] == 'delivered')
                                     <span class="badge badge-soft-success ml-2 ml-sm-3 text-capitalize">
@@ -246,6 +246,15 @@
                                         </div>
                                         <div class="media-body">
                                             <h5 class="line--limit-1">{{ $product['name'] ?? ($detail->product->name ?? translate('Product')) }}</h5>
+                                            @php($sellerName = $product['seller']['name'] ?? ($detail->product->seller->name ?? (\App\Model\Seller::find($product['seller_id'] ?? ($detail->product->seller_id ?? null))->name ?? null)))
+                                            @if(empty($sellerName) && (($product['added_by'] ?? ($detail->product->added_by ?? null)) == 'admin'))
+                                                @php($sellerName = translate('In House Shop'))
+                                            @endif
+                                            @if(!empty($sellerName))
+                                                <div class="mt-1">
+                                                    <span class="badge badge-soft-info"><i class="tio-shop"></i> {{ translate('seller') }}: {{ $sellerName }}</span>
+                                                </div>
+                                            @endif
                                             @if (count(json_decode($detail['variation'], true) ?? []) > 0)
                                                 @foreach (json_decode($detail['variation'], true)[0] ?? json_decode($detail['variation'], true) as $key1 => $variation)
                                                     <div class="font-size-sm text-body text-capitalize">
@@ -381,6 +390,19 @@
                                     {{ Helpers::set_symbol($total + $del_c + $updatedTotalTax - $order['coupon_discount_amount'] - $order['extra_discount'] + $order['weight_charge_amount']) }}
                                     <hr>
                                 </dd>
+
+                                @if($order->currency_code && $order->currency_code != 'YER' && $order->currency_amount)
+                                    <dt class="col-6 text-left">
+                                        <div class="ml-auto max-w-150px text-primary font-weight-bold">
+                                            {{ translate('Customer Currency') }} ({{ $order->currency_code }}):
+                                        </div>
+                                    </dt>
+                                    <dd class="col-6 col-xl-5 pr-5 text-primary font-weight-bold">
+                                        {{ number_format($order->currency_amount, 2) }} {{ $order->currency_code }}
+                                        <small class="text-muted d-block">(1 {{ $order->currency_code }} = {{ number_format($order->currency_exchange_rate, 2) }} YER)</small>
+                                        <hr>
+                                    </dd>
+                                @endif
 
                                 @if ($order->partial_payment->isNotEmpty())
                                     @foreach ($order->partial_payment as $partial)

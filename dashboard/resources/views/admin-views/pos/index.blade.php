@@ -85,7 +85,7 @@
                                         @foreach ($users as $user)
                                             <option value="{{ $user['id'] }}"
                                                 {{ session('customer_id') == $user['id'] ? 'selected' : '' }}>
-                                                {{ $user['f_name'] . ' ' . $user['l_name'] }}</option>
+                                                {{ $user['f_name'] . ' ' . $user['l_name'] }} ({{ $user['phone'] }})</option>
                                         @endforeach
                                     </select>
                                     <button class="btn btn--primary rounded font-regular" data-toggle="modal"
@@ -133,6 +133,33 @@
 
                             <div class="w-100 py-2">
                                 <div class="form-group d-none" id="home_delivery_section">
+                                    <div class="delivery-speed-container mb-3 p-2 bg-light border rounded">
+                                        <label class="input-label font-weight-bold text-dark mb-2">
+                                            <i class="tio-truck"></i> {{ translate('Delivery Service Option') }}
+                                        </label>
+                                        <div class="d-flex gap-2">
+                                            <label class="custom-radio d-flex gap-2 align-items-center m-0 flex-1 p-2 bg-white rounded border cursor-pointer">
+                                                <input type="radio" class="delivery-service-type-radio" name="delivery_service_type" value="fast_delivery"
+                                                    {{ !session()->has('delivery_service_type') || session('delivery_service_type') == 'fast_delivery' ? 'checked' : '' }}>
+                                                <span class="media align-items-center mb-0">
+                                                    <span class="media-body ml-1 font-weight-semibold">
+                                                        {{ translate('fast_delivery') }}
+                                                        <span class="badge badge-soft-info ml-1">{{ Helpers::set_symbol($fastDeliveryCharge ?? 0) }}</span>
+                                                    </span>
+                                                </span>
+                                            </label>
+                                            <label class="custom-radio d-flex gap-2 align-items-center m-0 flex-1 p-2 bg-white rounded border cursor-pointer">
+                                                <input type="radio" class="delivery-service-type-radio" name="delivery_service_type" value="convenient_delivery"
+                                                    {{ session('delivery_service_type') == 'convenient_delivery' ? 'checked' : '' }}>
+                                                <span class="media align-items-center mb-0">
+                                                    <span class="media-body ml-1 font-weight-semibold">
+                                                        {{ translate('convenient_delivery') }}
+                                                        <span class="badge badge-soft-success ml-1">{{ Helpers::set_symbol($convenientDeliveryCharge ?? 0) }}</span>
+                                                    </span>
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
                                     <div class="d-flex justify-content-between">
                                         <label for=""
                                             class="font-weight-semibold fs-16 text-dark">{{ translate('Delivery Information') }}
@@ -209,6 +236,39 @@
                     <?php
                     if (session()->has('address')) {
                         $old = session()->get('address');
+                    } elseif (session()->has('customer_id') && session('customer_id')) {
+                        $custAddress = \App\Model\CustomerAddress::where('user_id', session('customer_id'))->latest('id')->first();
+                        $customerObj = \App\User::find(session('customer_id'));
+                        if ($custAddress) {
+                            $old = [
+                                'id' => $custAddress->id,
+                                'contact_person_name' => $custAddress->contact_person_name ?: ($customerObj ? $customerObj->f_name . ' ' . $customerObj->l_name : ''),
+                                'contact_person_number' => $custAddress->contact_person_number ?: ($customerObj ? $customerObj->phone : ''),
+                                'address_type' => $custAddress->address_type ?? 'Home',
+                                'address' => $custAddress->address,
+                                'floor' => $custAddress->floor,
+                                'road' => $custAddress->road,
+                                'house' => $custAddress->house,
+                                'distance' => 0,
+                                'longitude' => (string)$custAddress->longitude,
+                                'latitude' => (string)$custAddress->latitude,
+                                'area_id' => $custAddress->area_id ?? null,
+                                'area_name' => null
+                            ];
+                            session()->put('address', $old);
+                        } else {
+                            $old = [
+                                'contact_person_name' => $customerObj ? $customerObj->f_name . ' ' . $customerObj->l_name : '',
+                                'contact_person_number' => $customerObj ? $customerObj->phone : '',
+                                'address' => '',
+                                'road' => '',
+                                'house' => '',
+                                'floor' => '',
+                                'longitude' => '',
+                                'latitude' => '',
+                                'area_id' => null
+                            ];
+                        }
                     } else {
                         $old = null;
                     }
@@ -217,6 +277,17 @@
                         @csrf
 
                         <div class="row g-2" id="delivery_address">
+                            <div class="col-12" id="saved_addresses_wrapper" style="display: none;">
+                                <div class="form-group mb-2 p-2 bg-light border rounded">
+                                    <label class="input-label font-weight-bold text-primary mb-1">
+                                        <i class="tio-bookmark"></i> {{ translate('Saved Customer Addresses') }}
+                                    </label>
+                                    <select id="saved_customer_addresses_select" class="form-control">
+                                        <option value="">{{ translate('-- Choose from saved addresses --') }}</option>
+                                    </select>
+                                    <small class="text-muted">{{ translate('Selecting an address will auto-fill the fields below') }}</small>
+                                </div>
+                            </div>
                             <div class="col-md-6">
                                 <label class="input-label" for="">{{ translate('contact_person_name') }}
                                     <span class="input-label-secondary text-danger">*</span></label>
@@ -769,6 +840,50 @@
             });
         }
 
+        window.customerSavedAddresses = [];
+        function populateSavedAddresses(savedAddresses) {
+            window.customerSavedAddresses = savedAddresses || [];
+            var $select = $('#saved_customer_addresses_select');
+            if (!$select.length) return;
+            $select.empty().append('<option value="">{{ translate('-- Choose from saved addresses --') }}</option>');
+
+            if (savedAddresses && savedAddresses.length > 0) {
+                $('#saved_addresses_wrapper').show();
+                $.each(savedAddresses, function(index, addr) {
+                    var label = (addr.address_type ? addr.address_type + ': ' : '') + addr.address;
+                    $select.append($('<option>', {
+                        value: index,
+                        text: label
+                    }));
+                });
+            } else {
+                $('#saved_addresses_wrapper').hide();
+            }
+        }
+
+        $(document).on('change', '#saved_customer_addresses_select', function() {
+            var idx = $(this).val();
+            if (idx !== '' && window.customerSavedAddresses && window.customerSavedAddresses[idx]) {
+                var a = window.customerSavedAddresses[idx];
+                $('input[name="contact_person_name"]').val(a.contact_person_name || '');
+                $('input[name="contact_person_number"]').val(a.contact_person_number || '');
+                $('textarea[name="address"]').val(a.address || '');
+                $('input[name="road"]').val(a.road || '');
+                $('input[name="house"]').val(a.house || '');
+                $('input[name="floor"]').val(a.floor || '');
+                $('input[name="longitude"]').val(a.longitude || '');
+                $('input[name="latitude"]').val(a.latitude || '');
+                if (a.area_id && $('#areaDropdown').length) {
+                    $('#areaDropdown').val(a.area_id).trigger('change');
+                }
+            }
+        });
+
+        $(document).on('change', '.delivery-service-type-radio', function() {
+            var serviceType = $(this).val();
+            store_key('delivery_service_type', serviceType);
+        });
+
         function store_key(key, value) {
             $.ajaxSetup({
                 headers: {
@@ -782,12 +897,39 @@
                     value: value,
                 },
                 success: function(data) {
-                    key = key == 'customer_id' ? "{{ translate('customer_id') }}" : (key == 'branch_id' ?
-                        "{{ translate('branch_id') }}" : '');
-                    toastr.success(key + ' ' + '{{ translate('selected') }}!', {
-                        CloseButton: true,
-                        ProgressBar: true
-                    });
+                    var keyLabel = key == 'customer_id' ? "{{ translate('customer_id') }}" : (key == 'branch_id' ?
+                        "{{ translate('branch_id') }}" : (key == 'delivery_service_type' ? "{{ translate('Delivery Service Option') }}" : ''));
+                    if (keyLabel) {
+                        toastr.success(keyLabel + ' ' + '{{ translate('selected') }}!', {
+                            CloseButton: true,
+                            ProgressBar: true
+                        });
+                    }
+
+                    if (key == 'customer_id') {
+                        if (data && data.address_view) {
+                            $('#del-add').html(data.address_view);
+                        }
+                        if (data && data.address) {
+                            $('input[name="contact_person_name"]').val(data.address.contact_person_name || '');
+                            $('input[name="contact_person_number"]').val(data.address.contact_person_number || '');
+                            $('textarea[name="address"]').val(data.address.address || '');
+                            $('input[name="road"]').val(data.address.road || '');
+                            $('input[name="house"]').val(data.address.house || '');
+                            $('input[name="floor"]').val(data.address.floor || '');
+                            $('input[name="longitude"]').val(data.address.longitude || '');
+                            $('input[name="latitude"]').val(data.address.latitude || '');
+                            if (data.address.area_id && $('#areaDropdown').length) {
+                                $('#areaDropdown').val(data.address.area_id).trigger('change');
+                            }
+                        }
+                        populateSavedAddresses(data ? data.saved_addresses : []);
+                        updateCart();
+                    }
+
+                    if (key == 'delivery_service_type' || key == 'delivery_man_id') {
+                        updateCart();
+                    }
                 },
             });
         }
@@ -897,6 +1039,22 @@
                 $('#home_delivery_section').removeClass('d-none');
             } else {
                 $('#home_delivery_section').addClass('d-none');
+            }
+
+            var currentCustomerId = $('#customer').val();
+            if (currentCustomerId && currentCustomerId !== 'false') {
+                $.post({
+                    url: '{{ route('admin.pos.store-keys') }}',
+                    data: {
+                        key: 'customer_id',
+                        value: currentCustomerId
+                    },
+                    success: function(data) {
+                        if (data && data.saved_addresses) {
+                            populateSavedAddresses(data.saved_addresses);
+                        }
+                    }
+                });
             }
         });
 
@@ -1046,6 +1204,7 @@
                         }
                     } else {
                         $('#del-add').empty().html(data.view);
+                        updateCart();
                     }
                     updateCart();
                     $('.call-when-done').click();

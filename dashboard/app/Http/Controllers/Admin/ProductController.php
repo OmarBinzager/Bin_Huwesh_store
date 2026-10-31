@@ -60,6 +60,7 @@ class ProductController extends Controller
     {
         $options = [];
         $price = $request->price;
+        $purchase_price = $request->purchase_price ?? 0;
         $productVariations = [];
         if ($request->filled('product_id'))
         {
@@ -86,7 +87,7 @@ class ProductController extends Controller
         $combinations = $result;
 
         return response()->json([
-            'view' => view('admin-views.product.partials._variant-combinations', compact('combinations', 'price', 'productVariations'))->render(),
+            'view' => view('admin-views.product.partials._variant-combinations', compact('combinations', 'price', 'purchase_price', 'productVariations'))->render(),
         ]);
     }
 
@@ -327,6 +328,10 @@ public function index(): View|Factory|Application
                 $item['type'] = $str;
                 $item['price'] = abs($request['price_' . str_replace('.', '_', $str)]);
                 $item['stock'] = abs($request['stock_' . str_replace('.', '_', $str)]);
+                $varPurchaseKey = 'purchase_price_' . str_replace('.', '_', $str);
+                $item['purchase_price'] = isset($request[$varPurchaseKey]) && is_numeric($request[$varPurchaseKey])
+                    ? abs((float)$request[$varPurchaseKey])
+                    : (isset($request['purchase_price']) && is_numeric($request['purchase_price']) ? abs((float)$request['purchase_price']) : 0.0);
 
                 if ($request['discount_type'] == 'amount' && $item['price'] <= $request['discount']) {
                     $validator->getMessageBag()->add('discount_mismatch', 'Discount can not be more or equal to the price. Please change variant ' . $item['type'] . ' price or change discount amount!');
@@ -591,6 +596,10 @@ $brands = $this->brand->active()->orderBy('name')->get();
                 $item['type'] = $str;
                 $item['price'] = abs($request['price_' . str_replace('.', '_', $str)]);
                 $item['stock'] = abs($request['stock_' . str_replace('.', '_', $str)]);
+                $varPurchaseKey = 'purchase_price_' . str_replace('.', '_', $str);
+                $item['purchase_price'] = isset($request[$varPurchaseKey]) && is_numeric($request[$varPurchaseKey])
+                    ? abs((float)$request[$varPurchaseKey])
+                    : (isset($request['purchase_price']) && is_numeric($request['purchase_price']) ? abs((float)$request['purchase_price']) : 0.0);
 
                 if ($request['discount_type'] == 'amount' && $item['price'] <= $request['discount']) {
                     $validator->getMessageBag()->add('discount_mismatch', 'Discount can not be more or equal to the price. Please change variant ' . $item['type'] . ' price or change discount amount!');
@@ -992,17 +1001,22 @@ $brands = $this->brand->active()->orderBy('name')->get();
     {
         $variations = [];
         $stockCount = $request['total_stock'];
+        $product = $this->product->find($request['product_id']);
+        $existingVariations = $product ? (is_string($product->variations) ? json_decode($product->variations, true) : $product->variations) : [];
+
         if ($request->has('type')) {
             foreach ($request['type'] as $key => $str) {
                 $item = [];
                 $item['type'] = $str;
                 $item['price'] = (abs($request['price_' . str_replace('.', '_', $str)]));
                 $item['stock'] = abs($request['qty_' . str_replace('.', '_', $str)]);
+                $matchedExisting = collect($existingVariations ?? [])->firstWhere('type', $str);
+                $item['purchase_price'] = isset($matchedExisting['purchase_price']) && is_numeric($matchedExisting['purchase_price'])
+                    ? (float)$matchedExisting['purchase_price']
+                    : (float)($product->purchase_price ?? 0);
                 $variations[] = $item;
             }
         }
-
-        $product = $this->product->find($request['product_id']);
 
         if ($stockCount >= 0) {
             $product->total_stock = $stockCount;

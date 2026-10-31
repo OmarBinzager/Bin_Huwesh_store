@@ -196,7 +196,8 @@
                                     <div class="max-85">
                                         <select name="priority" class="custom-select"
                                             onchange="location.href='{{ route('admin.category.priority', ['id' => $category['id'], 'priority' => '']) }}' + this.value">
-                                            @for ($i = 1; $i <= 10; $i++)
+                                            @php($maxPriority = max(100, ($categories->total() ?? 0) + 10, ($category->priority ?? 0)))
+                                            @for ($i = 1; $i <= $maxPriority; $i++)
                                                 <option value="{{ $i }}"
                                                     {{ $category->priority == $i ? 'selected' : '' }}>
                                                     {{ $i }}</option>

@@ -32,6 +32,8 @@ class Order extends Model
         'bring_change_amount'   => 'float',
         'extra_discount'   => 'float',
         'weight_charge_amount'   => 'float',
+        'currency_exchange_rate' => 'float',
+        'currency_amount'        => 'float',
     ];
 
     protected $fillable = [

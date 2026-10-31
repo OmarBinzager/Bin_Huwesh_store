@@ -341,6 +341,11 @@
                                                 }
                                                 ?>
                                                 {{ Helpers::set_symbol($orderAmount) }}
+                                                @if($order->currency_code && $order->currency_code != 'YER' && $order->currency_amount)
+                                                    <span class="badge badge-soft-info d-block mt-1 font-size-12">
+                                                        {{ number_format($order->currency_amount, 2) }} {{ $order->currency_code }}
+                                                    </span>
+                                                @endif
                                             </div>
                                             @if ($order->payment_status == 'paid')
                                                 <span class="text-success">

@@ -100,7 +100,7 @@
                                         </span>
                                     @elseif($order['order_status']=='out_for_delivery')
                                         <span class="badge badge-soft-warning ml-2 ml-sm-3 text-capitalize">
-                                        {{translate('out_for_delivery')}}
+                                        {{translate('out_for_delivery')}} - ({{translate('On the way to pick up from brand')}})
                                         </span>
                                     @elseif($order['order_status']=='delivered')
                                         <span class="badge badge-soft-success ml-2 ml-sm-3 text-capitalize">
@@ -231,6 +231,15 @@
                                                     </div>
                                                     <div class="media-body">
                                                         <h5 class="line--limit-1">{{$product['name'] ?? ($detail->product->name ?? translate('Product'))}}</h5>
+                                                        @php($sellerName = $product['seller']['name'] ?? ($detail->product->seller->name ?? (\App\Model\Seller::find($product['seller_id'] ?? ($detail->product->seller_id ?? null))->name ?? null)))
+                                                        @if(empty($sellerName) && (($product['added_by'] ?? ($detail->product->added_by ?? null)) == 'admin'))
+                                                            @php($sellerName = translate('In House Shop'))
+                                                        @endif
+                                                        @if(!empty($sellerName))
+                                                            <div class="mt-1">
+                                                                <span class="badge badge-soft-info"><i class="tio-shop"></i> {{ translate('seller') }}: {{ $sellerName }}</span>
+                                                            </div>
+                                                        @endif
                                                         @if(count(json_decode($detail['variation'],true) ?? []) > 0)
                                                             @foreach(json_decode($detail['variation'],true)[0]??json_decode($detail['variation'],true) as $key1 =>$variation)
                                                                 <div class="font-size-sm text-body text-capitalize">
@@ -533,7 +542,7 @@
                                            href="javascript:">{{translate('packaging')}}</a>
                                         <a class="dropdown-item offline-payment-verify-alert"
                                            data-message="{{ translate("You can not change order status to this status. Please Check & Verify the payment information whether it is correct or not. You can only change order status to failed or cancel if payment is not verified.") }}"
-                                           href="javascript:">{{translate('out_for_delivery')}}</a>
+                                           href="javascript:">{{translate('out_for_delivery')}} - ({{translate('On the way to pick up from brand')}})</a>
                                         <a class="dropdown-item offline-payment-verify-alert"
                                            data-message="{{ translate("You can not change order status to this status. Please Check & Verify the payment information whether it is correct or not. You can only change order status to failed or cancel if payment is not verified.") }}"
                                            href="javascript:">{{translate('delivered')}}</a>
@@ -564,7 +573,7 @@
                                         <a class="dropdown-item route-alert"
                                            data-route="{{route('branch.orders.status',['id'=>$order['id'],'order_status'=>'out_for_delivery'])}}"
                                            data-message="{{ translate("Change status to out for delivery ?") }}"
-                                           href="javascript:">{{translate('out_for_delivery')}}</a>
+                                           href="javascript:">{{translate('out_for_delivery')}} - ({{translate('On the way to pick up from brand')}})</a>
                                         <a class="dropdown-item route-alert"
                                            data-route="{{route('branch.orders.status',['id'=>$order['id'],'order_status'=>'delivered'])}}"
                                            data-message="{{ translate("Change status to delivered ?") }}"

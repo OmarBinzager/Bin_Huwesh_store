@@ -177,6 +177,11 @@
                         <dt class="col-6 font-20px">{{ translate('Total') }}:</dt>
                         <dd class="col-6 font-20px">{{ Helpers::set_symbol($subTotal+$del_c+$updatedTotalTax-$order['coupon_discount_amount']-$order['extra_discount']+$order['weight_charge_amount']) }}</dd>
 
+                        @if($order->currency_code && $order->currency_code != 'YER' && $order->currency_amount)
+                            <dt class="col-6 font-16px font-weight-bold">{{ translate('Selected Currency') }} ({{ $order->currency_code }}):</dt>
+                            <dd class="col-6 font-16px font-weight-bold">{{ number_format($order->currency_amount, 2) }} {{ $order->currency_code }}</dd>
+                        @endif
+
                         @if($order->order_change_amount()->exists())
                             <dt class="col-6">{{translate('Paid Amount')}}<span>:</span></dt>
                             <dd class="col-6">{{ \App\CentralLogics\Helpers::set_symbol($order->order_change_amount?->paid_amount) }}</dd>

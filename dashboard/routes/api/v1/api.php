@@ -208,6 +208,8 @@ Route::group(['prefix' => 'sellers'], function () {
             Route::put('update-fcm-token', [DeliverymanController::class, 'updateFcmToken']);
             Route::get('order-model', [DeliverymanController::class, 'orderModel']);
             Route::get('orders-count', [DeliverymanController::class, 'getOrdersCount']);
+            Route::get('wallet', [DeliverymanController::class, 'getWallet']);
+            Route::get('wallet/transactions', [DeliverymanController::class, 'getWalletTransactions']);
             Route::delete('delete-account', [DeliverymanController::class, 'deleteAccount']);
         });
         Route::get('last-location', [DeliverymanController::class, 'getLastLocation']);

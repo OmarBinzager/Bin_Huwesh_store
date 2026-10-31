@@ -30,7 +30,11 @@ class ConfigController extends Controller
 
     public function configuration()
     {
-        $currencySymbol = Currency::where(['currency_code' => Helpers::currency_code()])->first()->currency_symbol;
+        $baseCurrency = Currency::where('is_base', 1)->first() ?? Currency::where(['currency_code' => Helpers::currency_code()])->first();
+        $currencySymbol = $baseCurrency->currency_symbol ?? '﷼';
+        $activeCurrencies = Currency::where('status', 1)->orderBy('is_base', 'desc')->get([
+            'id', 'country', 'currency_code', 'currency_symbol', 'symbol_position', 'decimal_digits', 'exchange_rate', 'is_base'
+        ]);
         $cashOnDelivery = Helpers::get_business_settings('cash_on_delivery');
         $digitalPayment =  Helpers::get_business_settings('digital_payment');
 
@@ -153,6 +157,18 @@ class ConfigController extends Controller
                 'order_image_url'         => asset('storage/app/public/order'),
             ],
             'currency_symbol'             => $currencySymbol,
+            'currency_symbol_position'    => $baseCurrency->symbol_position ?? (Helpers::get_business_settings('currency_symbol_position') ?? 'right'),
+            'currency_model'              => [
+                'id'              => $baseCurrency->id ?? 0,
+                'country'         => $baseCurrency->country ?? '',
+                'currency_code'   => $baseCurrency->currency_code ?? 'YER',
+                'currency_symbol' => $baseCurrency->currency_symbol ?? '﷼',
+                'symbol_position' => $baseCurrency->symbol_position ?? 'right',
+                'decimal_digits'  => (int)($baseCurrency->decimal_digits ?? 2),
+                'exchange_rate'   => 1.0,
+                'is_base'         => true,
+            ],
+            'active_currencies'           => $activeCurrencies,
             'delivery_charge'             => (float) Helpers::get_business_settings('delivery_charge'),
             'delivery_management'         => $deliveryManagement,
             'branches'                    => Branch::active()->get(['id', 'name', 'email', 'longitude', 'latitude', 'address', 'coverage', 'status']),
@@ -162,7 +178,6 @@ class ConfigController extends Controller
             'faq'                         => Helpers::get_business_settings('faq'),
             'email_verification'          => (boolean) Helpers::get_business_settings('email_verification') ?? 0,
             'phone_verification'          => (boolean) Helpers::get_business_settings('phone_verification') ?? 0,
-            'currency_symbol_position'    => Helpers::get_business_settings('currency_symbol_position') ?? 'right',
             'country'                     => Helpers::get_business_settings('country') ?? 'BD',
             'play_store_config' => [
                 "status"=> isset($playStoreConfig) && (boolean)$playStoreConfig['status'],

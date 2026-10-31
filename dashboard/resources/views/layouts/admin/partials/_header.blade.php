@@ -26,7 +26,7 @@
                     <li class="nav-item dropdown language-dropdown">
                         <div class="hs-unfold">
                             <div class="p-2">
-                                @php($local = session()->has('local') ? session('local') : 'en')
+                                @php($local = session()->has('local') ? session('local') : \App\CentralLogics\Helpers::get_default_language())
                                 @php($lang = \App\CentralLogics\Helpers::get_business_settings('language') ?? null)
                                 <div class="topbar-text dropdown disable-autohide text-capitalize">
                                     @if (isset($lang) && array_key_exists('code', $lang[0]))

@@ -56,8 +56,9 @@ class CustomerAuthController extends Controller
 
     // التحقق من كود الإحالة (اختياري)
     $refer_user = null;
-    if ($request->referral_code){
-        $refer_user = $this->user->where(['referral_code' => $request->referral_code])->first();
+    if ($request->filled('referral_code')){
+        $refCode = trim($request->referral_code);
+        $refer_user = $this->user->where(['referral_code' => $refCode])->first();
         if (!$refer_user){
             return response()->json(['errors' => [
                 ['code' => 'referral', 'message' => translate('Invalid Referral Code!')]
@@ -765,8 +766,9 @@ class CustomerAuthController extends Controller
 
         $temporaryToken = Str::random(40);
 
-        if ($request->referral_code){
-            $refer_user = $this->user->where(['referral_code' => $request->referral_code])->first();
+        if ($request->filled('referral_code')){
+            $refCode = trim($request->referral_code);
+            $refer_user = $this->user->where(['referral_code' => $refCode])->first();
             if (!$refer_user){
                 return response()->json(['errors' => [
                     ['code' => 'referral', 'message' => translate('Invalid Referral Code!')]
@@ -952,8 +954,9 @@ class CustomerAuthController extends Controller
 
         $temporaryToken = Str::random(40);
 
-        if ($request->referral_code){
-            $refer_user = $this->user->where(['referral_code' => $request->referral_code])->first();
+        if ($request->filled('referral_code')){
+            $refCode = trim($request->referral_code);
+            $refer_user = $this->user->where(['referral_code' => $refCode])->first();
             if (!$refer_user){
                 return response()->json(['errors' => [
                     ['code' => 'referral', 'message' => translate('Invalid Referral Code!')]

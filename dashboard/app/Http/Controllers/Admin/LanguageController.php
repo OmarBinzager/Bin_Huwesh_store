@@ -74,7 +74,7 @@ class LanguageController extends Controller
             'id' => count($language) + 1,
             'name' => $request['name'],
             'code' => $request['code'],
-            'direction' => 'ltr',
+            'direction' => $request['code'] == 'ar' ? 'rtl' : ($request['direction'] ?? 'ltr'),
             'status' => 0,
             'default' => false,
         ];
@@ -93,11 +93,12 @@ class LanguageController extends Controller
         $language = json_decode($languages->value, true);
         $languageArray = [];
         foreach ($language as $key => $data) {
+            $direction = $data['direction'] ?? ($data['code'] == 'ar' ? 'rtl' : 'ltr');
             if ($data['code'] == $request['code']) {
                 $lang = [
                     'id' => $data['id'],
                     'name' => $data['name'],
-                    'direction' => 'ltr',
+                    'direction' => $direction,
                     'code' => $data['code'],
                     'status' => $data['status'] == 1 ? 0 : 1,
                     'default' => (array_key_exists('default', $data) ? $data['default'] : $data['code'] == 'en'),
@@ -106,7 +107,7 @@ class LanguageController extends Controller
                 $lang = [
                     'id' => $data['id'],
                     'name' => $data['name'],
-                    'direction' => 'ltr',
+                    'direction' => $direction,
                     'code' => $data['code'],
                     'status' => $data['status'],
                     'default' => (array_key_exists('default', $data) ? $data['default'] : $data['code'] == 'en'),
@@ -132,12 +133,15 @@ class LanguageController extends Controller
         $languages = BusinessSetting::where('key', 'language')->first();
         $language = json_decode($languages->value, true);
         $languageArray = [];
+        $selectedDirection = 'ltr';
         foreach ($language as $key => $data) {
             if ($data['code'] == $request['code']) {
+                $dir = $data['direction'] ?? ($data['code'] == 'ar' ? 'rtl' : 'ltr');
+                $selectedDirection = $dir;
                 $lang = [
                     'id' => $data['id'],
                     'name' => $data['name'],
-                    'direction' => $data['direction'] ?? 'ltr',
+                    'direction' => $dir,
                     'code' => $data['code'],
                     'status' => 1,
                     'default' => true,
@@ -146,7 +150,7 @@ class LanguageController extends Controller
                 $lang = [
                     'id' => $data['id'],
                     'name' => $data['name'],
-                    'direction' => $data['direction'] ?? 'ltr',
+                    'direction' => $data['direction'] ?? ($data['code'] == 'ar' ? 'rtl' : 'ltr'),
                     'code' => $data['code'],
                     'status' => $data['status'],
                     'default' => false,
@@ -154,9 +158,16 @@ class LanguageController extends Controller
             }
             $languageArray[] = $lang;
         }
-        $this->businessSetting->where('key', 'language')->update([
+
+        $this->InsertOrUpdateBusinessData(['key' => 'language'], [
             'value' => $languageArray
         ]);
+
+        session()->forget('language_settings');
+        \Illuminate\Support\Facades\Cache::forget(CACHE_BUSINESS_SETTINGS_TABLE);
+        session()->put('local', $request['code']);
+        session()->put('direction', $selectedDirection);
+        \Illuminate\Support\Facades\App::setLocale($request['code']);
 
         Toastr::success(translate('Default Language Changed!'));
         return back();
@@ -177,7 +188,7 @@ class LanguageController extends Controller
                 $lang = [
                     'id' => $data['id'],
                     'name' => $request['name'],
-                    'direction' => $request['direction'] ?? 'ltr',
+                    'direction' => $request['direction'] ?? ($data['direction'] ?? ($data['code'] == 'ar' ? 'rtl' : 'ltr')),
                     'code' => $data['code'],
                     'status' => $data['status'] ?? 0,
                     'default' => (array_key_exists('default', $data) ? $data['default'] : $data['code'] == 'en'),
@@ -186,7 +197,7 @@ class LanguageController extends Controller
                 $lang = [
                     'id' => $data['id'],
                     'name' => $data['name'],
-                    'direction' => $data['direction'] ?? 'ltr',
+                    'direction' => $data['direction'] ?? ($data['code'] == 'ar' ? 'rtl' : 'ltr'),
                     'code' => $data['code'],
                     'status' => $data['status'],
                     'default' => (array_key_exists('default', $data) ? $data['default'] : $data['code'] == 'en'),
@@ -321,29 +332,40 @@ class LanguageController extends Controller
      */
     public function lang($local): \Illuminate\Http\RedirectResponse
     {
-        $direction = 'ltr';
+        $direction = ($local == 'ar') ? 'rtl' : 'ltr';
         $languages = BusinessSetting::where('key', 'language')->first();
-        $language = json_decode($languages->value, true);
-        foreach ($language as $key => $data) {
-            if ($data['code'] == $local) {
-                $direction = $data['direction'] ?? 'ltr';
+        if ($languages && $languages->value) {
+            $language = json_decode($languages->value, true);
+            if (is_array($language)) {
+                foreach ($language as $key => $data) {
+                    if ($data['code'] == $local) {
+                        $direction = $data['direction'] ?? ($local == 'ar' ? 'rtl' : 'ltr');
+                    }
+                }
             }
         }
         session()->forget('language_settings');
         Helpers::language_load();
         session()->put('local', $local);
         Session::put('direction', $direction);
+        \Illuminate\Support\Facades\App::setLocale($local);
         return redirect()->back();
     }
 
     private function InsertOrUpdateBusinessData($key, $value)
     {
         $businessSetting = $this->businessSetting->where(['key' => $key['key']])->first();
+        $val = is_array($value['value']) ? json_encode($value['value']) : $value['value'];
         if ($businessSetting) {
-            $businessSetting->value = $value['value'];
+            $businessSetting->value = $val;
             $businessSetting->save();
         } else {
-            $this->businessSetting->create($key, $value);
+            $this->businessSetting->create([
+                'key' => $key['key'],
+                'value' => $val,
+            ]);
         }
+        \Illuminate\Support\Facades\Cache::forget(CACHE_BUSINESS_SETTINGS_TABLE);
+        session()->forget('language_settings');
     }
 }

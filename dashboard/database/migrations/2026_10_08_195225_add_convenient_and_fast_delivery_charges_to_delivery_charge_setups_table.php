@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('delivery_charge_setups', function (Blueprint $table) {
-            $table->double('convenient_delivery_charge')->default(0)->after('fixed_delivery_charge');
-            $table->double('fast_delivery_charge')->default(0)->after('convenient_delivery_charge');
+            if (!Schema::hasColumn('delivery_charge_setups', 'convenient_delivery_charge')) {
+                $table->double('convenient_delivery_charge')->default(0)->after('fixed_delivery_charge');
+            }
+            if (!Schema::hasColumn('delivery_charge_setups', 'fast_delivery_charge')) {
+                $table->double('fast_delivery_charge')->default(0)->after('convenient_delivery_charge');
+            }
         });
     }
 

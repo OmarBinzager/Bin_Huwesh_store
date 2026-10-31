@@ -20,9 +20,10 @@ class CustomerLogic{
     public static function create_wallet_transaction($user_id, float $amount, $transaction_type, $referance)
     {
 
-        if(BusinessSetting::where('key','wallet_status')->first()->value != 1) return false;
+        if((int)(BusinessSetting::where('key','wallet_status')->first()?->value ?? 0) != 1) return false;
 
         $user = User::find($user_id);
+        if (!$user) return false;
         $current_balance = $user->wallet_balance;
 
         $wallet_transaction = new WalletTransaction();
@@ -40,7 +41,8 @@ class CustomerLogic{
 
             if($transaction_type == 'loyalty_point')
             {
-                $credit = (int)($amount / BusinessSetting::where('key','loyalty_point_exchange_rate')->first()->value);
+                $rate = (float)(BusinessSetting::where('key','loyalty_point_exchange_rate')->first()?->value ?? 1);
+                $credit = $rate > 0 ? (int)($amount / $rate) : (int)$amount;
             }
         }
         else if($transaction_type == 'order_place')
@@ -84,6 +86,7 @@ class CustomerLogic{
         $credit = 0;
         $debit = 0;
         $user = User::find($user_id);
+        if (!$user) return false;
 
         $loyalty_point_transaction = new LoyaltyTransaction();
         $loyalty_point_transaction->user_id = $user->id;
@@ -128,11 +131,12 @@ class CustomerLogic{
     public static function referral_earning_wallet_transaction($user_id, $transaction_type, $referance)
     {
         $user = User::find($referance);
+        if (!$user) return false;
         $current_balance = $user->wallet_balance;
 
         $debit = 0.0;
         $credit = 0.0;
-        $amount = BusinessSetting::where('key','ref_earning_exchange_rate')->first()->value?? 0;
+        $amount = (float)(BusinessSetting::where('key','ref_earning_exchange_rate')->first()?->value ?? 0);
         $credit = $amount;
 
         $wallet_transaction = new WalletTransaction();

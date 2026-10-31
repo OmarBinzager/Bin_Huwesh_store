@@ -276,7 +276,7 @@ class OrderController extends Controller
                 $referredByUser = $this->user->find($user->referred_by);
 
                 if ($isFirstOrder < 2 && isset($user->referred_by) && isset($referredByUser)){
-                    if($this->businessSetting->where('key','ref_earning_status')->first()->value == 1) {
+                    if($this->businessSetting->where('key','ref_earning_status')->first()?->value == 1) {
                         CustomerLogic::referral_earning_wallet_transaction($order->user_id, 'referral_order_place', $referredByUser->id);
                     }
                 }
@@ -298,6 +298,13 @@ class OrderController extends Controller
         $order->order_status = $request->order_status;
         $order->save();
 
+        if ($order->order_status == 'delivered' && $order->payment_method == 'cash_on_delivery' && $order->delivery_man_id) {
+            $dm = $order->delivery_man ?? \App\Model\DeliveryMan::find($order->delivery_man_id);
+            if ($dm) {
+                \App\Services\DeliveryManCustodyService::recordCashCollection($order, $dm);
+            }
+        }
+
         if ($request->order_status == 'out_for_delivery' && $order->delivery_man_id != null) {
             DeliveryHistory::updateOrInsert(
                 [
@@ -318,7 +325,7 @@ class OrderController extends Controller
         $customerLanguageCode = $order->is_guest == 0 ? ($order->customer ? $order->customer->language_code : 'en') : ($order->guest ? $order->guest->language_code : 'en');
         $customerFcmToken = $order->is_guest == 0 ? ($order->customer ? $order->customer->cm_firebase_token : null) : ($order->guest ? $order->guest->fcm_token : null);
 
-        if ($customerLanguageCode != 'en'){
+        if ($message !== 0 && $message !== '0' && $customerLanguageCode != 'en') {
             $message = $this->translate_message($customerLanguageCode, $request->order_status);
         }
         $value = $this->dynamic_key_replaced_message(message: $message, type: 'order', order: $order);
@@ -476,6 +483,13 @@ class OrderController extends Controller
         }
         $order->payment_status = $request->payment_status;
         $order->save();
+
+        if ($order->payment_status == 'paid' && $order->payment_method == 'cash_on_delivery' && $order->delivery_man_id) {
+            $dm = $order->delivery_man ?? \App\Model\DeliveryMan::find($order->delivery_man_id);
+            if ($dm) {
+                \App\Services\DeliveryManCustodyService::recordCashCollection($order, $dm);
+            }
+        }
 
         Toastr::success(translate('Payment status updated!'));
         return back();

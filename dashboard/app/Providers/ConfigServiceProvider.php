@@ -32,18 +32,34 @@ class ConfigServiceProvider extends ServiceProvider
         try {
             $emailServices = Helpers::get_business_settings('mail_config');
             if ($emailServices) {
-                $config = array(
-                    'driver' => $emailServices['driver'],
-                    'host' => $emailServices['host'],
-                    'port' => $emailServices['port'],
-                    'username' => $emailServices['username'],
-                    'password' => $emailServices['password'],
-                    'encryption' => $emailServices['encryption'],
-                    'from' => array('address' => $emailServices['email_id'], 'name' => $emailServices['name']),
-                    'sendmail' => '/usr/sbin/sendmail -bs',
-                    'pretend' => false,
-                );
-                Config::set('mail', $config);
+                if (is_string($emailServices)) {
+                    $emailServices = json_decode($emailServices, true);
+                }
+                if (is_array($emailServices)) {
+                    $driver = $emailServices['driver'] ?? 'smtp';
+                    $config = array(
+                        'driver' => $driver,
+                        'host' => $emailServices['host'] ?? '',
+                        'port' => $emailServices['port'] ?? 587,
+                        'username' => $emailServices['username'] ?? '',
+                        'password' => $emailServices['password'] ?? '',
+                        'encryption' => $emailServices['encryption'] ?? 'tls',
+                        'from' => array('address' => $emailServices['email_id'] ?? '', 'name' => $emailServices['name'] ?? ''),
+                        'sendmail' => '/usr/sbin/sendmail -bs',
+                        'pretend' => false,
+                    );
+                    Config::set('mail', $config);
+
+                    Config::set('mail.default', $driver);
+                    Config::set('mail.mailers.smtp.transport', $driver);
+                    Config::set('mail.mailers.smtp.host', $emailServices['host'] ?? '');
+                    Config::set('mail.mailers.smtp.port', (int)($emailServices['port'] ?? 587));
+                    Config::set('mail.mailers.smtp.encryption', $emailServices['encryption'] ?? 'tls');
+                    Config::set('mail.mailers.smtp.username', $emailServices['username'] ?? '');
+                    Config::set('mail.mailers.smtp.password', $emailServices['password'] ?? '');
+                    Config::set('mail.from.address', $emailServices['email_id'] ?? '');
+                    Config::set('mail.from.name', $emailServices['name'] ?? '');
+                }
             }
 
 

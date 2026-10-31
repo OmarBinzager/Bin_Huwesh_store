@@ -27,10 +27,20 @@ class SystemController extends Controller
      */
     public function businessData(): JsonResponse
     {
-        $orderCount = DB::table('orders')->where(['branch_id' => auth('branch')->id(), 'checked' => 0])->count();
+        $branchId = auth('branch')->id();
+        $orderCount = DB::table('orders')->where(['branch_id' => $branchId, 'checked' => 0])->count();
+        $deliveryEvent = \Illuminate\Support\Facades\Cache::get('latest_delivery_event');
+
+        if ($deliveryEvent && isset($deliveryEvent['branch_id']) && $deliveryEvent['branch_id'] != $branchId && $deliveryEvent['branch_id'] != 0) {
+            $deliveryEvent = null;
+        }
+
         return response()->json([
             'success' => 1,
-            'data' => ['new_order' => $orderCount]
+            'data' => [
+                'new_order' => $orderCount,
+                'delivery_event' => $deliveryEvent,
+            ]
         ]);
     }
 

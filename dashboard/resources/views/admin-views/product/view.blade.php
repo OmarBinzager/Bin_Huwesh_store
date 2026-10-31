@@ -173,6 +173,9 @@
                                     @foreach(json_decode($product['variations'],true) as $variation)
                                         <div class="text-capitalize">
                                             {{$variation['type']}} : {{ Helpers::set_symbol($variation['price']) }}
+                                            @if(isset($variation['purchase_price']) && $variation['purchase_price'] > 0)
+                                                <small class="text-muted">({{ translate('purchase_price') }}: {{ Helpers::set_symbol($variation['purchase_price']) }})</small>
+                                            @endif
                                         </div>
                                     @endforeach
                                 </td>

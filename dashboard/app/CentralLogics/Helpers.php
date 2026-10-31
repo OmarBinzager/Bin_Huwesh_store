@@ -55,12 +55,20 @@ class Helpers
         $decodedVariation = is_string($variation) ? json_decode($variation, true) : $variation;
         $matchType = null;
 
-        if (!empty($decodedVariation) && is_array($decodedVariation)) {
-            $first = reset($decodedVariation);
-            if (is_array($first) && !empty($first['type']) && is_string($first['type'])) {
-                $matchType = trim($first['type']);
-            } elseif (is_object($first) && !empty($first->type) && is_string($first->type)) {
-                $matchType = trim($first->type);
+        if (is_string($variation) && $decodedVariation === null && !empty(trim($variation))) {
+            $matchType = trim($variation);
+        } elseif (!empty($decodedVariation) && is_array($decodedVariation)) {
+            if (isset($decodedVariation['type']) && is_string($decodedVariation['type'])) {
+                $matchType = trim($decodedVariation['type']);
+            } else {
+                $first = reset($decodedVariation);
+                if (is_array($first) && !empty($first['type']) && is_string($first['type'])) {
+                    $matchType = trim($first['type']);
+                } elseif (is_object($first) && !empty($first->type) && is_string($first->type)) {
+                    $matchType = trim($first->type);
+                } elseif (is_string($first)) {
+                    $matchType = trim($first);
+                }
             }
         }
 
@@ -85,6 +93,56 @@ class Helpers
         }
 
         return self::set_price($result);
+    }
+
+    public static function variation_purchase_price($product, $variation)
+    {
+        $basePurchasePrice = isset($product['purchase_price']) ? (float)$product['purchase_price'] : 0.0;
+        $result = null;
+
+        $decodedVariation = is_string($variation) ? json_decode($variation, true) : $variation;
+        $matchType = null;
+
+        if (is_string($variation) && $decodedVariation === null && !empty(trim($variation))) {
+            $matchType = trim($variation);
+        } elseif (!empty($decodedVariation) && is_array($decodedVariation)) {
+            if (isset($decodedVariation['type']) && is_string($decodedVariation['type'])) {
+                $matchType = trim($decodedVariation['type']);
+            } else {
+                $first = reset($decodedVariation);
+                if (is_array($first) && !empty($first['type']) && is_string($first['type'])) {
+                    $matchType = trim($first['type']);
+                } elseif (is_object($first) && !empty($first->type) && is_string($first->type)) {
+                    $matchType = trim($first->type);
+                } elseif (is_string($first)) {
+                    $matchType = trim($first);
+                }
+            }
+        }
+
+        if (!empty($matchType)) {
+            $rawVariations = $product['variations'] ?? [];
+            $variations = is_string($rawVariations) ? json_decode($rawVariations, true) : $rawVariations;
+
+            if (!empty($variations) && (is_array($variations) || is_object($variations))) {
+                foreach ($variations as $value) {
+                    $value = (array)$value;
+                    $varType = isset($value['type']) ? trim((string)$value['type']) : '';
+                    if ($varType !== '' && $varType === $matchType) {
+                        if (isset($value['purchase_price']) && is_numeric($value['purchase_price']) && (float)$value['purchase_price'] > 0) {
+                            $result = (float)$value['purchase_price'];
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        if ($result === null || $result <= 0.0) {
+            $result = $basePurchasePrice;
+        }
+
+        return (float)$result;
     }
 
     public static function product_data_formatting($data, $multi_data = false)
@@ -135,6 +193,7 @@ class Helpers
                             'type' => $var['type'] ?? '',
                             'price' => (float)($var['price'] ?? 0),
                             'stock' => isset($var['stock']) ? (int)$var['stock'] : (int)0,
+                            'purchase_price' => isset($var['purchase_price']) && is_numeric($var['purchase_price']) ? (float)$var['purchase_price'] : (float)($item['purchase_price'] ?? 0),
                         ];
                     }
                 }
@@ -199,6 +258,7 @@ class Helpers
                         'type' => $var['type'] ?? '',
                         'price' => (float)($var['price'] ?? 0),
                         'stock' => isset($var['stock']) ? (int)$var['stock'] : (int)0,
+                        'purchase_price' => isset($var['purchase_price']) && is_numeric($var['purchase_price']) ? (float)$var['purchase_price'] : (float)($data['purchase_price'] ?? 0),
                     ];
                 }
             }
@@ -261,7 +321,7 @@ class Helpers
     public static function get_business_settings($name)
     {
         $config = null;
-        $settings = Cache::rememberForever(CACHE_BUSINESS_SETTINGS_TABLE, function () {
+        $settings = Cache::remember(CACHE_BUSINESS_SETTINGS_TABLE, 120, function () {
             return BusinessSetting::all();
         });
 
@@ -470,6 +530,7 @@ class Helpers
             "data" => [
                 "title" => (string)$data['title'],
                 "body" => (string)$data['description'],
+                "description" => (string)$data['description'],
                 "order_id" => (string)($data['order_id'] ?? ''),
                 "type" => (string)($data['type'] ?? 'general'),
                 "image" => (string)$imageUrl,
@@ -845,10 +906,11 @@ class Helpers
     {
         $data = self::get_business_settings('language');
         $default_lang = 'en';
-        if ($data && array_key_exists('code', $data)) {
+        if (is_array($data)) {
             foreach ($data as $lang) {
-                if ($lang['default'] == true) {
+                if (isset($lang['default']) && ($lang['default'] === true || $lang['default'] === 1 || $lang['default'] === '1')) {
                     $default_lang = $lang['code'];
+                    break;
                 }
             }
         }
@@ -1066,7 +1128,7 @@ class Helpers
         return str_ireplace(['"', ',', ';', '<', '>', '?'], ' ', $str);
     }
 
-    public static function get_delivery_charge($branchId, ?int $distance = null, int|string|null $selectedDeliveryArea = null, ?string $orderType = null)
+    public static function get_delivery_charge($branchId, float|int|string|null $distance = null, int|string|null $selectedDeliveryArea = null, ?string $orderType = null)
     {
         $branch = Branch::with(['delivery_charge_setup', 'delivery_charge_by_area'])
             ->where(['id' => $branchId])
@@ -1079,15 +1141,31 @@ class Helpers
             $area = DeliveryChargeByArea::find($selectedDeliveryArea);
             $deliveryCharge = $area->delivery_charge ?? 0;
         } elseif ($deliveryType == 'distance') {
-            $minDeliveryCharge = $branch?->delivery_charge_setup?->minimum_delivery_charge ?? 0;
-            $shippingChargePerKM = $branch?->delivery_charge_setup?->delivery_charge_per_kilometer ?? 0;
-            $minDistanceForFreeDelivery = $branch?->delivery_charge_setup?->minimum_distance_for_free_delivery ?? 0;
+            $minDeliveryCharge = (float)($branch?->delivery_charge_setup?->minimum_delivery_charge ?? 0);
+            $shippingChargePerKM = (float)($branch?->delivery_charge_setup?->delivery_charge_per_kilometer ?? 0);
+            $minDistanceForFreeDelivery = (float)($branch?->delivery_charge_setup?->minimum_distance_for_free_delivery ?? 0);
+            $numDistance = $distance !== null ? (float)$distance : 0.0;
 
-            if ($distance < $minDistanceForFreeDelivery) {
-                $deliveryCharge = 0;
+            if ($orderType == 'self_pickup' || $orderType == 'convenient_delivery') {
+                $convenientCharge = (float)($branch?->delivery_charge_setup?->convenient_delivery_charge ?? 0);
+                if ($convenientCharge > 0) {
+                    $deliveryCharge = $convenientCharge;
+                } elseif ($minDistanceForFreeDelivery > 0 && $numDistance < $minDistanceForFreeDelivery) {
+                    $deliveryCharge = 0;
+                } elseif ($numDistance > 0) {
+                    $deliveryCharge = max($shippingChargePerKM * $numDistance, $minDeliveryCharge);
+                } else {
+                    $deliveryCharge = $minDeliveryCharge;
+                }
             } else {
-                $distanceDeliveryCharge = $shippingChargePerKM * $distance;
-                $deliveryCharge = max($distanceDeliveryCharge, $minDeliveryCharge);
+                if ($minDistanceForFreeDelivery > 0 && $numDistance < $minDistanceForFreeDelivery) {
+                    $deliveryCharge = 0;
+                } elseif ($numDistance > 0) {
+                    $distanceDeliveryCharge = $shippingChargePerKM * $numDistance;
+                    $deliveryCharge = max($distanceDeliveryCharge, $minDeliveryCharge);
+                } else {
+                    $deliveryCharge = $minDeliveryCharge;
+                }
             }
         } else {
             if ($orderType == 'self_pickup' || $orderType == 'convenient_delivery') {
@@ -1489,7 +1567,7 @@ function translate($key)
         ? session('local')
         : (request()->hasHeader('X-localization')
             ? request()->header('X-localization')
-            : (App::getLocale() ?: 'en'));
+            : (App::getLocale() ?: Helpers::get_default_language()));
     App::setLocale($local);
 
     try {
@@ -1502,7 +1580,7 @@ function translate($key)
             file_put_contents(base_path('resources/lang/' . $local . '/messages.php'), $str);
             $result = $processed_key;
         } else {
-            $result = __('messages.' . $key);
+            $result = $lang_array[$key] ?? __('messages.' . $key);
         }
     } catch (Exception $exception) {
         $result = __('messages.' . $key);

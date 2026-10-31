@@ -1,4 +1,6 @@
-<?php return array (
+<?php
+
+return array (
   'attribute' => 'Attribute',
   'update' => 'Update',
   'name' => 'Name',
@@ -2786,4 +2788,23 @@
   'Enabling Facebook Login, customers can log in to the site using their existing Facebook credentials.' => 'Enabling Facebook Login  customers can log in to the site using their existing Facebook credentials.',
   'With Social Login, customers can log in using social media credentials. while new customers can create accounts instantly.' => 'With Social Login  customers can log in using social media credentials. while new customers can create accounts instantly.',
   'Please active at lest one social media login option between google or facebook.' => 'Please active at lest one social media login option between google or facebook.',
+  'Delivery Service Option' => 'Delivery Service Option',
+  'Offline_payment' => 'Offline Payment',
+  'offline_payment' => 'Offline Payment',
+  'Change Amount' => 'Change Amount',
+  'Paid amount must be equal or greater than total amount' => 'Paid amount must be equal or greater than total amount',
+  '-- Select Method --' => '-- Select Method --',
+  '-- Select Delivery Man --' => '-- Select Delivery Man --',
+  'Transaction Reference / Receipt No' => 'Transaction Reference / Receipt No',
+  'Ex: TXN12345678' => 'Ex: TXN12345678',
+  'Payment Note (Optional)' => 'Payment Note (Optional)',
+  'Customer Address (Optional)' => 'Customer Address (Optional)',
+  'Enter detailed address, street, landmark' => 'Enter detailed address, street, landmark',
+  'House / Building No' => 'House / Building No',
+  'Floor / Apt' => 'Floor / Apt',
+  'Road / Street' => 'Road / Street',
+  'Saved Customer Addresses' => 'Saved Customer Addresses',
+  '-- Choose from saved addresses --' => '-- Choose from saved addresses --',
+  'Selecting an address will auto-fill the fields below' => 'Selecting an address will auto-fill the fields below',
+  'New Order Assigned' => 'New Order Assigned',
 );

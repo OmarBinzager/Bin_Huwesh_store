@@ -61,6 +61,33 @@
         </div>
     </div>
 
+    <div class="modal fade" id="delivery-popup-modal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 12px; overflow: hidden;">
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3">
+                        <span class="btn btn-icon btn-soft-info rounded-circle" style="width: 70px; height: 70px; display: inline-flex; align-items: center; justify-content: center; font-size: 32px; background: rgba(0, 150, 255, 0.1); color: #0080ff;">
+                            <i class="tio-bike"></i>
+                        </span>
+                    </div>
+                    <h3 id="delivery-modal-title" class="text-dark font-weight-bold mb-2">
+                        {{ translate('Delivery Movement Update') }}
+                    </h3>
+                    <p id="delivery-modal-desc" class="text-body font-size-md mb-4 px-2" style="line-height: 1.6; font-size: 15px;"></p>
+                    <hr class="my-3">
+                    <div class="d-flex justify-content-center" style="gap: 12px;">
+                        <button type="button" class="btn btn-secondary px-4" data-dismiss="modal">
+                            {{ translate('Close') }}
+                        </button>
+                        <a id="delivery-modal-link" href="#" class="btn btn-primary px-4">
+                            {{ translate('View Order') }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </main>
 
 <script src="{{asset('public/assets/admin')}}/js/vendor.min.js"></script>
@@ -246,7 +273,30 @@
     @php($admin_order_notification = \App\CentralLogics\Helpers::get_business_settings('admin_order_notification'))
     @php($admin_order_notification_type = \App\CentralLogics\Helpers::get_business_settings('admin_order_notification_type'))
 
+    function showDeliveryNotification(title, message, url) {
+        playAudio();
+
+        if (typeof toastr !== 'undefined' && message) {
+            toastr.info(message, title, {
+                timeOut: 20000,
+                closeButton: true,
+                progressBar: true,
+                onclick: function() {
+                    if (url) window.location.href = url;
+                }
+            });
+        }
+
+        $('#delivery-modal-title').text(title || '{{ translate('Delivery Movement Update') }}');
+        $('#delivery-modal-desc').text(message || '');
+        if (url) {
+            $('#delivery-modal-link').attr('href', url);
+        }
+        $('#delivery-popup-modal').appendTo("body").modal('show');
+    }
+
     @if($admin_order_notification)
+        var lastDeliveryEventId = null;
         @if($admin_order_notification_type == 'manual')
             setInterval(function () {
                 $.get({
@@ -258,6 +308,13 @@
                         if (data.new_order > 0) {
                             playAudio();
                             $('#popup-modal').appendTo("body").modal('show');
+                        }
+                        if (data.delivery_event && data.delivery_event.id && data.delivery_event.id !== lastDeliveryEventId) {
+                            lastDeliveryEventId = data.delivery_event.id;
+                            let title = data.delivery_event.title || '{{ translate('Delivery Movement Update') }}';
+                            let desc = data.delivery_event.description || data.delivery_event.body || '';
+                            let url = data.delivery_event.url || ('{{ url('/branch/orders/details') }}/' + data.delivery_event.order_id);
+                            showDeliveryNotification(title, desc, url);
                         }
                     },
                 });
@@ -313,9 +370,18 @@
             }
 
             messaging.onMessage(function(payload) {
-                if(payload.data.order_id && payload.data.type == "order_request"){
+                let pData = payload.data || {};
+                let pNotif = payload.notification || {};
+
+                if(pData.order_id && pData.type == "order_request"){
                     playAudio();
                     $('#popup-modal').appendTo("body").modal('show');
+                } else if (pData.type == "delivery_man_confirmed" || pData.type == "delivery_man_started") {
+                    let title = pData.title || pNotif.title || '{{ translate('Delivery Movement Update') }}';
+                    let desc = pData.description || pData.body || pNotif.body || '';
+                    let orderId = pData.order_id || '';
+                    let url = orderId ? ('{{ url('/branch/orders/details') }}/' + orderId) : (pData.click_action || '');
+                    showDeliveryNotification(title, desc, url);
                 }
             });
 

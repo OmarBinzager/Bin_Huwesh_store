@@ -6,6 +6,9 @@
                 <label for="" class="control-label">{{ translate('Variant') }}</label>
             </td>
             <td class="text-center">
+                <label for="" class="control-label">{{ translate('purchase_price') }}</label>
+            </td>
+            <td class="text-center">
                 <label for="" class="control-label">{{ translate('Variant Price') }}</label>
             </td>
             <td class="text-center">
@@ -19,6 +22,12 @@
             <tr>
                 <td>
                     <label for="" class="control-label">{{ $combination['type'] }}</label>
+                </td>
+                <td>
+                    <input type="number" name="purchase_price_{{ $combination['type'] }}"
+                           value="{{ $combination['purchase_price'] ?? ($product['purchase_price'] ?? 0) }}" min="0"
+                           step="any"
+                           class="form-control" required>
                 </td>
                 <td>
                     <input type="number" name="price_{{ $combination['type'] }}"

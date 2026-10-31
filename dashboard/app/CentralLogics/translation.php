@@ -10,7 +10,7 @@ if(!function_exists('translate')) {
             ? session('local')
             : (request()->hasHeader('X-localization')
                 ? request()->header('X-localization')
-                : (App::getLocale() ?: 'en'));
+                : (App::getLocale() ?: Helpers::get_default_language()));
         App::setLocale($local);
 
     try{
@@ -23,7 +23,7 @@ if(!function_exists('translate')) {
             file_put_contents(base_path('resources/lang/' . $local . '/messages.php'), $str);
             $result = $processed_key;
         } else {
-            $result = __('messages.' . $key);
+            $result = $lang_array[$key] ?? __('messages.' . $key);
         }
     }catch(Exception $exception){
         $result = __('messages.' . $key);

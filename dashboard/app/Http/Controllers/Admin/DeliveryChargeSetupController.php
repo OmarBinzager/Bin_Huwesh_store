@@ -65,17 +65,26 @@ class DeliveryChargeSetupController extends Controller
             'delivery_charge_per_kilometer' => 'required|numeric|min:0|max:99999999',
             'minimum_delivery_charge' => 'required|numeric|min:0|max:99999999',
             'minimum_distance_for_free_delivery' => 'required|numeric|min:0|max:99999999',
+            'convenient_delivery_charge' => 'nullable|numeric|min:0|max:99999999',
         ]);
+
+        $data = [
+            'branch_id' => (integer) $request['branch_id'],
+            'delivery_charge_type' => 'distance',
+            'delivery_charge_per_kilometer' => $request['delivery_charge_per_kilometer'],
+            'minimum_delivery_charge' => $request['minimum_delivery_charge'],
+            'minimum_distance_for_free_delivery' => $request['minimum_distance_for_free_delivery'],
+        ];
+
+        if ($request->has('convenient_delivery_charge')) {
+            $data['convenient_delivery_charge'] = $request->filled('convenient_delivery_charge')
+                ? (float) $request['convenient_delivery_charge']
+                : 0.0;
+        }
 
         $this->deliveryChargeSetup->updateOrCreate([
             'branch_id' => (integer) $request['branch_id']
-        ], [
-                'branch_id' => (integer) $request['branch_id'],
-                'delivery_charge_per_kilometer' => $request['delivery_charge_per_kilometer'],
-                'minimum_delivery_charge' => $request['minimum_delivery_charge'],
-                'minimum_distance_for_free_delivery' => $request['minimum_distance_for_free_delivery'],
-            ]
-        );
+        ], $data);
 
         Toastr::success(translate('Settings updated!'));
         return back();
@@ -151,9 +160,7 @@ class DeliveryChargeSetupController extends Controller
 
         if ($status) {
             $googleMapStatus = Helpers::get_business_settings('google_map_status');
-            if ($request['delivery_charge_type'] == 'distance' && $googleMapStatus != 1){
-                return response()->json(['status' => false, 'error' => translate('Can not change delivery charge to distance while Google Map status is off. Please turn on the Google Map status first.')], 200);
-            }
+            // If google map status is off, mobile app automatically falls back to Geolocator distance calculation
 
             $data = $this->deliveryChargeSetup->updateOrCreate(
                 ['branch_id' => $branchId],
@@ -174,9 +181,7 @@ class DeliveryChargeSetupController extends Controller
             }
 
             $googleMapStatus = Helpers::get_business_settings('google_map_status');
-            if ($newDeliveryChargeType == 'distance' && $googleMapStatus != 1){
-                return response()->json(['status' => false, 'error' => translate('Can not change delivery charge to distance while Google Map status is off. Please turn on the Google Map status first.')], 200);
-            }
+            // If google map status is off, mobile app automatically falls back to Geolocator distance calculation
 
             $data = $this->deliveryChargeSetup->updateOrCreate(
                 ['branch_id' => $branchId],

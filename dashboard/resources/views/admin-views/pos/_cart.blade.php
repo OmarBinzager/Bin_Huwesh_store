@@ -2,6 +2,23 @@
     use App\CentralLogics\Helpers;
     use App\Model\Product;
 
+    $selectedBranchId = session()->get('branch_id') ?? (auth('branch')->id() ?? 1);
+    if (!isset($deliveryMen)) {
+        $deliveryMen = \App\Model\DeliveryMan::where(['is_active' => 1])
+            ->where(function($query) use ($selectedBranchId) {
+                $query->where('branch_id', $selectedBranchId)
+                      ->orWhere('branch_id', 0);
+            })->get();
+    }
+    if (!isset($chargeSetup)) {
+        $chargeSetup = \App\Models\DeliveryChargeSetup::where('branch_id', $selectedBranchId)->first();
+    }
+    $fastDeliveryCharge = $chargeSetup?->fast_delivery_charge ?? ($chargeSetup?->fixed_delivery_charge ?? 0);
+    $convenientDeliveryCharge = $chargeSetup?->convenient_delivery_charge ?? 0;
+    $customer = session()->has('customer_id') ? \App\User::find(session('customer_id')) : null;
+    $walletStatus = (bool)(\App\Model\BusinessSetting::where('key', 'wallet_status')->first()->value ?? false);
+    $offlinePaymentMethods = \App\Models\OfflinePaymentMethod::active()->get();
+
     $subtotal = 0;
     $extraDiscount = session()->get('extra_discount', 0);
     $extraDiscountType = session()->get('extra_discount_type', 'amount');
@@ -121,18 +138,21 @@ if ($extraDiscountType === 'percent' && $extraDiscount > 0) {
 $deliveryCharge = 0;
 $productWeightCharge = 0;
 
+$deliveryServiceType = session()->get('delivery_service_type') ?? 'fast_delivery';
 if (session()->get('order_type') == 'home_delivery') {
     $distance = 0;
     $areaId = null;
     if (session()->has('address')) {
         $address = session()->get('address');
-        $distance = $address['distance'];
+        $distance = $address['distance'] ?? 0;
         $areaId = $address['area_id'] ?? null;
     }
-    $deliveryCharge = Helpers::get_delivery_charge(branchId: session('branch_id') ?? 1, distance: $distance, selectedDeliveryArea: $areaId);
-    $productWeightCharge = Helpers::productWeightChargeCalculation(branchId: session()->get('branch_id') ?? 1, weight: $productWeight);
+    $deliveryCharge = Helpers::get_delivery_charge(branchId: $selectedBranchId, distance: $distance, selectedDeliveryArea: $areaId, orderType: $deliveryServiceType);
+    $delivery_charge = $deliveryCharge;
+    $productWeightCharge = Helpers::productWeightChargeCalculation(branchId: $selectedBranchId, weight: $productWeight);
 } else {
     $deliveryCharge = 0;
+    $delivery_charge = 0;
 }
 @endphp
 
@@ -192,39 +212,98 @@ if (session()->get('order_type') == 'home_delivery') {
     <div>
         <form action="{{ route('admin.pos.order') }}" id='order_place' method="post">
             @csrf
+            <div class="pos--delivery-man-options mb-3" style="display: {{ session('order_type') == 'home_delivery' ? 'block' : 'none' }};">
+                <label class="input-label font-weight-semibold text-dark d-flex align-items-center justify-content-between mb-1">
+                    <span><i class="tio-user"></i> {{ translate('Assign Delivery Man') }}</span>
+                    <small class="text-muted">({{ translate('optional') }})</small>
+                </label>
+                <select name="delivery_man_id" id="delivery_man_id" class="form-control js-select2-custom">
+                    <option value="">{{ translate('-- Select Delivery Man --') }}</option>
+                    @if(isset($deliveryMen))
+                        @foreach($deliveryMen as $dm)
+                            <option value="{{ $dm->id }}" {{ session('delivery_man_id') == $dm->id ? 'selected' : '' }}>
+                                {{ $dm->f_name }} {{ $dm->l_name }} ({{ $dm->phone }})
+                            </option>
+                        @endforeach
+                    @endif
+                </select>
+            </div>
+
             <div class="pos--payment-options mt-3 mb-3">
                 <h5 class="mb-3">{{ translate('Payment Method') }}</h5>
-                <ul class="mb-4">
-                    <li
-                        style="display: {{ !session()->has('order_type') || session('order_type') == 'take_away' ? 'block' : 'none' }}">
-                        <label>
+                <ul class="mb-3 d-flex flex-wrap gap-2 list-unstyled">
+                    <li>
+                        <label class="btn btn-outline-secondary mb-0 {{ (!session()->has('order_type') || session('order_type') == 'take_away') ? 'active' : '' }}">
                             <input type="radio" class="paid-by" name="type" value="cash" hidden=""
-                                {{ !session()->has('order_type') || session('order_type') == 'take_away' ? 'checked' : '' }}>
-                            <span>{{ translate('cash') }}</span>
+                                {{ (!session()->has('order_type') || session('order_type') == 'take_away') ? 'checked' : '' }}>
+                            <span><i class="tio-money-vs"></i> {{ translate('cash') }}</span>
                         </label>
                     </li>
-                    <li
-                        style="display: {{ !session()->has('order_type') || session('order_type') == 'take_away' ? 'block' : 'none' }}">
-                        <label>
+                    <li>
+                        <label class="btn btn-outline-secondary mb-0">
                             <input type="radio" class="paid-by" name="type" value="card" hidden="">
-                            <span>{{ translate('card') }}</span>
+                            <span><i class="tio-credit-card"></i> {{ translate('card') }}</span>
                         </label>
                     </li>
                     <li style="display: {{ session('order_type') == 'home_delivery' ? 'block' : 'none' }}">
-                        <label>
+                        <label class="btn btn-outline-secondary mb-0 {{ session('order_type') == 'home_delivery' ? 'active' : '' }}">
                             <input type="radio" class="paid-by" name="type" value="cash_on_delivery" hidden=""
                                 {{ session('order_type') == 'home_delivery' ? 'checked' : '' }}>
-                            <span>{{ translate('cash_on_delivery') }}</span>
+                            <span><i class="tio-bike"></i> {{ translate('cash_on_delivery') }}</span>
                         </label>
                     </li>
+                    @if($walletStatus)
+                    <li style="display: {{ session()->has('customer_id') && session('customer_id') ? 'block' : 'none' }}">
+                        @php($hasBalance = isset($customer) && $customer->wallet_balance >= $totalOrderAmount)
+                        <label class="btn btn-outline-secondary mb-0 {{ !$hasBalance ? 'opacity-50' : '' }}" {{ !$hasBalance ? 'title=' . translate('Insufficient wallet balance') : '' }}>
+                            <input type="radio" class="paid-by" name="type" value="wallet_payment" hidden="" {{ !$hasBalance ? 'disabled' : '' }}>
+                            <span>
+                                <i class="tio-wallet"></i> {{ translate('wallet') }}
+                                @if(isset($customer))
+                                    <small class="badge badge-soft-{{ $hasBalance ? 'success' : 'danger' }}">({{ Helpers::set_symbol($customer->wallet_balance) }})</small>
+                                @endif
+                            </span>
+                        </label>
+                    </li>
+                    @endif
+                    @if(isset($offlinePaymentMethods) && count($offlinePaymentMethods) > 0)
+                    <li>
+                        <label class="btn btn-outline-secondary mb-0">
+                            <input type="radio" class="paid-by" name="type" value="offline_payment" hidden="">
+                            <span><i class="tio-museum"></i> {{ translate('offline_payment') }}</span>
+                        </label>
+                    </li>
+                    @endif
                 </ul>
+
+                @if(isset($offlinePaymentMethods) && count($offlinePaymentMethods) > 0)
+                <div class="offline-payment-details border rounded p-3 bg-light mb-3" id="pos_offline_section" style="display: none;">
+                    <div class="form-group mb-2">
+                        <label class="input-label font-weight-semibold text-dark">{{ translate('Select Payment Method') }} <span class="text-danger">*</span></label>
+                        <select name="offline_payment_id" id="offline_payment_id" class="form-control">
+                            <option value="">{{ translate('-- Select Method --') }}</option>
+                            @foreach($offlinePaymentMethods as $method)
+                                <option value="{{ $method->id }}">{{ $method->method_name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="form-group mb-2">
+                        <label class="input-label font-weight-semibold text-dark">{{ translate('Transaction Reference / Receipt No') }} <span class="text-danger">*</span></label>
+                        <input type="text" name="transaction_reference" class="form-control" placeholder="{{ translate('Ex: TXN12345678') }}">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="input-label font-weight-semibold text-dark">{{ translate('Payment Note') }}</label>
+                        <textarea name="payment_note" class="form-control" rows="2" placeholder="{{ translate('Payment Note (Optional)') }}"></textarea>
+                    </div>
+                </div>
+                @endif
             </div>
 
             <div class="collect-cash-section"
-                style="display: {{ session('order_type') != 'home_delivery' ? 'block' : 'none' }}">
+                style="display: {{ (session('order_type') != 'home_delivery') ? 'block' : 'none' }}">
                 <div class="form-group mb-2 d-flex align-items-center justify-content-between gap-2">
                     <label class="w-50 mb-0">{{ translate('Paid Amount') }} :</label>
-                    <input type="number" class="form-control w-50 text-right" name="paid_amount" step="0.0000000001"
+                    <input type="number" class="form-control w-50 text-right" name="paid_amount" step="0.01"
                         id="paid-amount" min="0" value="{{ $totalOrderAmount }}"
                         onkeyup="calculateAmountDifference()" required>
                     <input type="hidden" class="hidden-paid-amount" value="{{ $totalOrderAmount }}">
@@ -250,7 +329,7 @@ if (session()->get('order_type') == 'home_delivery') {
                     </span>
                 </div>
             </div>
-        </form>
+</form>
     </div>
 </div>
 
@@ -404,7 +483,7 @@ if (session()->get('order_type') == 'home_delivery') {
         let tooltipWrapper = $('#place-order-tooltip-wrapper');
 
         if (paidAmount >= orderAmount) {
-            label.text('Change Amount :');
+            label.text('{{ translate('Change Amount') }} :');
             differenceInput.val(difference.toFixed(2));
             placeOrderButton.prop('disabled', false);
 
@@ -414,12 +493,12 @@ if (session()->get('order_type') == 'home_delivery') {
                 .tooltip('dispose');
 
         } else {
-            label.text('Due Amount :');
+            label.text('{{ translate('Due Amount') }} :');
             differenceInput.val(difference.toFixed(2));
             placeOrderButton.prop('disabled', true);
 
             // Set tooltip
-            tooltipWrapper.attr('title', 'Paid amount must be equal or greater than total amount')
+            tooltipWrapper.attr('title', '{{ translate('Paid amount must be equal or greater than total amount') }}')
                 .tooltip('dispose')
                 .tooltip();
         }
@@ -432,20 +511,40 @@ if (session()->get('order_type') == 'home_delivery') {
     // Update paid-by radio button handler
     $('.paid-by').change(function() {
         var selectedPaymentOption = $(this).val();
-
         var totalOrderAmount = $('.hidden-paid-amount').val();
 
-        // Toggle readonly attribute for paid amount input
-        if (selectedPaymentOption == 'card') {
-            $('#paid-amount').attr('readonly', true);
-            $('#paid-amount').addClass('bg-F5F5F5');
-            // Reset paid amount to order amount
-            $('#paid-amount').val(totalOrderAmount);
+        $('.paid-by').closest('label').removeClass('active');
+        $(this).closest('label').addClass('active');
 
+        if (selectedPaymentOption == 'cash') {
+            $('.collect-cash-section').show();
+            $('#pos_offline_section').hide();
+            $('#paid-amount').removeAttr('readonly').removeClass('bg-F5F5F5');
+            $('#paid-amount').attr('required', true);
             calculateAmountDifference();
+        } else if (selectedPaymentOption == 'card') {
+            $('.collect-cash-section').show();
+            $('#pos_offline_section').hide();
+            $('#paid-amount').attr('readonly', true).addClass('bg-F5F5F5');
+            $('#paid-amount').val(totalOrderAmount);
+            $('#paid-amount').attr('required', true);
+            calculateAmountDifference();
+        } else if (selectedPaymentOption == 'offline_payment') {
+            $('.collect-cash-section').hide();
+            $('#pos_offline_section').show();
+            $('#paid-amount').removeAttr('required');
         } else {
-            $('#paid-amount').removeAttr('readonly');
-            $('#paid-amount').removeClass('bg-F5F5F5');
+            // cash_on_delivery or wallet_payment
+            $('.collect-cash-section').hide();
+            $('#pos_offline_section').hide();
+            $('#paid-amount').removeAttr('required');
+        }
+    });
+
+    $('#delivery_man_id').change(function() {
+        var dmId = $(this).val();
+        if (typeof store_key === 'function') {
+            store_key('delivery_man_id', dmId);
         }
     });
 </script>

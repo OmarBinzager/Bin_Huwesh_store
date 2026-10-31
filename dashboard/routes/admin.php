@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\SystemController;
 use App\Http\Controllers\Admin\DatabaseSettingsController;
 use App\Http\Controllers\Admin\DeliveryManController;
+use App\Http\Controllers\Admin\DeliveryManCustodyController;
 use App\Http\Controllers\Admin\DiscountController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\LanguageController;
@@ -184,6 +185,16 @@ Route::group(['prefix' => 'seller', 'as' => 'seller.', 'middleware' => ['module:
 
             Route::group(['prefix' => 'reviews', 'as' => 'reviews.'], function () {
                 Route::get('list', [DeliveryManController::class, 'reviewsList'])->name('list');
+            });
+
+            Route::group(['prefix' => 'custody', 'as' => 'custody.'], function () {
+                Route::get('list', [DeliveryManCustodyController::class, 'index'])->name('index');
+                Route::get('details/{id}', [DeliveryManCustodyController::class, 'details'])->name('details');
+                Route::post('settle', [DeliveryManCustodyController::class, 'settle'])->name('settle');
+                Route::get('export', [DeliveryManCustodyController::class, 'export'])->name('export');
+                Route::get('dm-cash-orders/{id}', [DeliveryManCustodyController::class, 'getDeliveryManCashOrders'])->name('dm-cash-orders');
+                Route::get('audit-report', [DeliveryManCustodyController::class, 'auditReport'])->name('audit-report');
+                Route::get('export-audit-report', [DeliveryManCustodyController::class, 'exportAuditReport'])->name('export-audit-report');
             });
         });
 
@@ -444,6 +455,9 @@ Route::group(['prefix' => 'seller', 'as' => 'seller.', 'middleware' => ['module:
             Route::get('currency-update/{id}', [BusinessSettingsController::class, 'currencyEdit'])->name('currency-update')->middleware('actch');
             Route::put('currency-update/{id}', [BusinessSettingsController::class, 'currencyUpdate']);
             Route::delete('currency-delete/{id}', [BusinessSettingsController::class, 'currencyDelete'])->name('currency-delete');
+            Route::post('currency-status/{id}', [BusinessSettingsController::class, 'currencyStatus'])->name('currency-status');
+            Route::post('currency-set-base/{id}', [BusinessSettingsController::class, 'currencySetBase'])->name('currency-set-base');
+            Route::post('currency-update-rate/{id}', [BusinessSettingsController::class, 'currencyUpdateRate'])->name('currency-update-rate');
 
             Route::group(['prefix' => 'ai-configuration', 'as' => 'ai-configuration.'], function () {
                 Route::get('', [AIConfigurationController::class, 'index'])->name('index');

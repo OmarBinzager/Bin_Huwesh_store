@@ -28,10 +28,14 @@ class SystemController extends Controller
     public function restaurantData(): \Illuminate\Http\JsonResponse
     {
         $orderCount = DB::table('orders')->where(['checked' => 0])->count();
+        $deliveryEvent = \Illuminate\Support\Facades\Cache::get('latest_delivery_event');
 
         return response()->json([
             'success' => 1,
-            'data' => ['new_order' => $orderCount]
+            'data' => [
+                'new_order' => $orderCount,
+                'delivery_event' => $deliveryEvent,
+            ]
         ]);
     }
 
