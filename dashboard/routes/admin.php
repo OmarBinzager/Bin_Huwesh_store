@@ -34,6 +34,7 @@ use App\Http\Controllers\Admin\OfferController;
 use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\POSController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\SizeChartController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ReviewsController;
 use App\Http\Controllers\Admin\SMSModuleController;
@@ -228,6 +229,17 @@ Route::group(['prefix' => 'seller', 'as' => 'seller.', 'middleware' => ['module:
             Route::get('get-variations', [ProductController::class, 'getVariations'])->name('get-variations');
             Route::post('update-quantity', [ProductController::class, 'updateQuantity'])->name('update-quantity');
             Route::get('feature/{id}/{is_featured}', [ProductController::class, 'feature'])->name('feature');
+        });
+
+        Route::group(['prefix' => 'size-chart', 'as' => 'size-chart.', 'middleware' => ['module:product_management']], function () {
+            Route::get('/', [SizeChartController::class, 'index'])->name('index');
+            Route::get('create', [SizeChartController::class, 'create'])->name('create');
+            Route::post('store', [SizeChartController::class, 'store'])->name('store');
+            Route::get('edit/{id}', [SizeChartController::class, 'edit'])->name('edit');
+            Route::post('update/{id}', [SizeChartController::class, 'update'])->name('update');
+            Route::get('status/{id}/{status}', [SizeChartController::class, 'status'])->name('status');
+            Route::delete('delete/{id}', [SizeChartController::class, 'delete'])->name('delete');
+            Route::get('preview/{id}', [SizeChartController::class, 'preview'])->name('preview');
         });
 
         Route::group(['prefix' => 'orders', 'as' => 'orders.', 'middleware' => ['module:order_management']], function () {

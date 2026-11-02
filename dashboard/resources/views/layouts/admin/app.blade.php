@@ -5,9 +5,9 @@
     <meta charset="utf-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>@yield('title')</title>
+    <title>@yield('title') | بن هويش - BIN HUWESH</title>
     @php($icon = \App\Model\BusinessSetting::where(['key' => 'fav_icon'])->first()->value)
-    <link rel="icon" type="image/x-icon" href="{{ asset('storage/app/public/restaurant/' . $icon ?? '') }}">
+    <link rel="icon" type="image/png" href="{{ !empty($icon) && \Illuminate\Support\Facades\Storage::disk('public')->exists('restaurant/' . $icon) ? asset('storage/app/public/restaurant/' . $icon) : asset('public/assets/admin/img/logo/bin-huwesh-logo.png') }}">
     <link rel="shortcut icon" href="">
     <link rel="stylesheet" href="{{ asset('public/assets/admin') }}/css/vendor.min.css">
     <link rel="stylesheet" href="{{ asset('public/assets/admin') }}/vendor/icon-set/style.css">
@@ -305,6 +305,7 @@
         src="{{ asset('public/assets/admin') }}/vendor/hs-navbar-vertical-aside/hs-navbar-vertical-aside-mini-cache.js">
     </script>
     <link rel="stylesheet" href="{{ asset('public/assets/admin') }}/css/toastr.css">
+    <link rel="stylesheet" href="{{ asset('public/assets/admin') }}/css/bin-huwesh-theme.css">
     <link rel="stylesheet" href="{{ asset('public/assets/admin') }}/css/custom-helper.css">
 </head>
 

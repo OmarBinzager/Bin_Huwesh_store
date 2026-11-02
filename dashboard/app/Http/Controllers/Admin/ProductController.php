@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Model\Tag;
 use App\Model\Review;
 use App\Model\Product;
+use App\Model\SizeChart;
 use App\Model\Category;
 use App\Model\Translation;
 use App\Traits\UploadSizeHelper;
@@ -66,6 +67,16 @@ class ProductController extends Controller
         {
             $productVariations = json_decode(Product::firstWhere('id', $request->product_id)?->variations ?? '[]', true);
         }
+
+        if ($request->has('color_names') && is_array($request->color_names)) {
+            $colorVals = array_values(array_filter(array_map(function($v) {
+                return trim(str_replace(' ', '', (string)$v));
+            }, $request->color_names), fn($v) => $v !== ''));
+            if (!empty($colorVals)) {
+                $options[] = array_values(array_unique($colorVals));
+            }
+        }
+
         if ($request->has('choice_no')) {
             foreach ($request->choice_no as $key => $no) {
                 $name = 'choice_options_' . $no;
@@ -132,10 +143,11 @@ public function index(): View|Factory|Application
     $categories = $this->category->where(['position' => 0])->pluck('name', 'id');
     $brands = $this->brand->active()->orderBy('name')->get();
     $sellers = $this->seller->active()->orderBy('name')->get();
+    $sizeCharts = SizeChart::active()->orderBy('name')->get();
 
-    $aIStatus = AISetting::first()?->status;
+    $aIStatus = \App\CentralLogics\Helpers::is_feature_active('ai_integration') && AISetting::first()?->status;
 
-    return view('admin-views.product.index', compact('categories', 'brands','sellers', 'aIStatus'));
+    return view('admin-views.product.index', compact('categories', 'brands','sellers', 'sizeCharts', 'aIStatus'));
 }
 
     /**
@@ -152,7 +164,12 @@ public function index(): View|Factory|Application
         $search = $request->query('search');
         $queryParam['search'] = $search;
 
-        $products = $this->product->with('order_details.order', 'brand')
+        $imageFilter = $request->query('image_filter', 'all');
+        $colorFilter = $request->query('color');
+        if ($imageFilter && $imageFilter !== 'all') $queryParam['image_filter'] = $imageFilter;
+        if ($colorFilter) $queryParam['color'] = $colorFilter;
+
+        $products = $this->product->with('order_details.order', 'brand', 'size_chart')
             ->when($search, function ($q) use ($search) {
                 $key = explode(' ', $search);
 
@@ -161,6 +178,35 @@ public function index(): View|Factory|Application
                         $sub->orWhere('id', 'like', "%{$value}%")
                             ->orWhere('name', 'like', "%{$value}%");
                     }
+                });
+            })
+            ->when($imageFilter && $imageFilter !== 'all', function ($q) use ($imageFilter) {
+                if ($imageFilter === 'has_color_images') {
+                    $q->whereNotNull('color_images')->whereRaw("JSON_LENGTH(color_images) > 0");
+                } elseif ($imageFilter === 'missing_color_images') {
+                    $q->where(function ($sub) {
+                        $sub->whereNull('color_images')
+                            ->orWhereRaw("JSON_LENGTH(color_images) = 0")
+                            ->orWhere('color_images', '[]')
+                            ->orWhere('color_images', 'null');
+                    });
+                } elseif ($imageFilter === 'has_images') {
+                    $q->whereNotNull('image')->where('image', '!=', '[]')->where('image', '!=', 'null');
+                } elseif ($imageFilter === 'no_images') {
+                    $q->where(function ($sub) {
+                        $sub->whereNull('image')
+                            ->orWhere('image', '[]')
+                            ->orWhere('image', 'null');
+                    });
+                } elseif ($imageFilter === 'has_size_chart') {
+                    $q->whereNotNull('size_chart_id');
+                }
+            })
+            ->when($colorFilter, function ($q) use ($colorFilter) {
+                $q->where(function ($sub) use ($colorFilter) {
+                    $sub->where('color_images', 'like', "%{$colorFilter}%")
+                        ->orWhere('choice_options', 'like', "%{$colorFilter}%")
+                        ->orWhere('variations', 'like', "%{$colorFilter}%");
                 });
             })
             ->latest()
@@ -179,7 +225,7 @@ public function index(): View|Factory|Application
             $product->total_sold = $totalSold;
         }
 
-        return view('admin-views.product.list', compact('products', 'search', 'perPage'));
+        return view('admin-views.product.list', compact('products', 'search', 'perPage', 'imageFilter', 'colorFilter'));
     }
 
     /**
@@ -298,6 +344,20 @@ public function index(): View|Factory|Application
         }
 
         $choiceOptions = [];
+
+        if ($request->has('color_names') && is_array($request->color_names)) {
+            $colorVals = array_values(array_filter(array_map(function($v) {
+                return trim(str_replace(' ', '', (string)$v));
+            }, $request->color_names), fn($v) => $v !== ''));
+            if (!empty($colorVals)) {
+                $choiceOptions[] = [
+                    'name' => 'choice_color',
+                    'title' => 'Color',
+                    'options' => array_values(array_unique($colorVals))
+                ];
+            }
+        }
+
         if ($request->has('choice')) {
             foreach ($request->choice_no as $key => $no) {
                 $str = 'choice_options_' . $no;
@@ -314,6 +374,16 @@ public function index(): View|Factory|Application
 
         $variations = [];
         $options = [];
+
+        if ($request->has('color_names') && is_array($request->color_names)) {
+            $colorVals = array_values(array_filter(array_map(function($v) {
+                return trim(str_replace(' ', '', (string)$v));
+            }, $request->color_names), fn($v) => $v !== ''));
+            if (!empty($colorVals)) {
+                $options[] = array_values(array_unique($colorVals));
+            }
+        }
+
         if ($request->has('choice_no')) {
             foreach ($request->choice_no as $key => $no) {
                 $name = 'choice_options_' . $no;
@@ -422,6 +492,30 @@ public function index(): View|Factory|Application
                 : 0;
         }
 
+        // Fashion & Apparel: Size chart & Color images
+        $product->size_chart_id = ($request->filled('size_chart_id') && is_numeric($request->size_chart_id))
+            ? (int)$request->size_chart_id
+            : null;
+
+        $colorImagesData = [];
+        if ($request->has('color_names') && is_array($request->color_names)) {
+            foreach ($request->color_names as $k => $cName) {
+                $cName = trim($cName);
+                if ($cName === '') continue;
+                $cCode = $request->color_codes[$k] ?? '#000000';
+                $imgName = null;
+                if ($request->hasFile("color_images.{$k}")) {
+                    $imgName = Helpers::upload('product/', APPLICATION_IMAGE_FORMAT, $request->file("color_images.{$k}"));
+                }
+                $colorImagesData[] = [
+                    'color_name' => $cName,
+                    'color_code' => $cCode,
+                    'image'      => $imgName,
+                ];
+            }
+        }
+        $product->color_images = !empty($colorImagesData) ? json_encode($colorImagesData) : null;
+
         $product->save();
 
         $product->tags()->sync($tagIds);
@@ -465,8 +559,9 @@ public function index(): View|Factory|Application
 $sellers = $this->seller->active()->orderBy('name')->get();
 $brands = $this->brand->active()->orderBy('name')->get();
         $categories = $this->category->where(['parent_id' => 0])->get();
-        $aIStatus = AISetting::first()?->status;
-        return view('admin-views.product.edit', compact('product','brands','sellers', 'productCategory', 'categories', 'aIStatus'));
+        $sizeCharts = SizeChart::active()->orderBy('name')->get();
+        $aIStatus = \App\CentralLogics\Helpers::is_feature_active('ai_integration') && AISetting::first()?->status;
+        return view('admin-views.product.edit', compact('product','brands','sellers', 'productCategory', 'categories', 'sizeCharts', 'aIStatus'));
     }
 
     /**
@@ -572,6 +667,20 @@ $brands = $this->brand->active()->orderBy('name')->get();
         }
 
         $choiceOptions = [];
+
+        if ($request->has('color_names') && is_array($request->color_names)) {
+            $colorVals = array_values(array_filter(array_map(function($v) {
+                return trim(str_replace(' ', '', (string)$v));
+            }, $request->color_names), fn($v) => $v !== ''));
+            if (!empty($colorVals)) {
+                $choiceOptions[] = [
+                    'name' => 'choice_color',
+                    'title' => 'Color',
+                    'options' => array_values(array_unique($colorVals))
+                ];
+            }
+        }
+
         if ($request->has('choice')) {
             foreach ($request->choice_no as $key => $no) {
                 $str = 'choice_options_' . $no;
@@ -588,6 +697,16 @@ $brands = $this->brand->active()->orderBy('name')->get();
 
         $variations = [];
         $options = [];
+
+        if ($request->has('color_names') && is_array($request->color_names)) {
+            $colorVals = array_values(array_filter(array_map(function($v) {
+                return trim(str_replace(' ', '', (string)$v));
+            }, $request->color_names), fn($v) => $v !== ''));
+            if (!empty($colorVals)) {
+                $options[] = array_values(array_unique($colorVals));
+            }
+        }
+
         if ($request->has('choice_no')) {
             foreach ($request->choice_no as $key => $no) {
                 $name = 'choice_options_' . $no;
@@ -691,6 +810,30 @@ $brands = $this->brand->active()->orderBy('name')->get();
                 ? (float)$request->purchase_price
                 : 0;
         }
+
+        // Fashion & Apparel: Size chart & Color images
+        $product->size_chart_id = ($request->filled('size_chart_id') && is_numeric($request->size_chart_id))
+            ? (int)$request->size_chart_id
+            : null;
+
+        $colorImagesData = [];
+        if ($request->has('color_names') && is_array($request->color_names)) {
+            foreach ($request->color_names as $k => $cName) {
+                $cName = trim($cName);
+                if ($cName === '') continue;
+                $cCode = $request->color_codes[$k] ?? '#000000';
+                $imgName = $request->color_existing_images[$k] ?? null;
+                if ($request->hasFile("color_images.{$k}")) {
+                    $imgName = Helpers::upload('product/', APPLICATION_IMAGE_FORMAT, $request->file("color_images.{$k}"));
+                }
+                $colorImagesData[] = [
+                    'color_name' => $cName,
+                    'color_code' => $cCode,
+                    'image'      => $imgName,
+                ];
+            }
+        }
+        $product->color_images = !empty($colorImagesData) ? json_encode($colorImagesData) : null;
 
         $product->save();
 

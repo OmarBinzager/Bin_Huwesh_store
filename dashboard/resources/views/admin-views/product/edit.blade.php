@@ -387,6 +387,7 @@
                                             </div>
                                         </div>
 
+                                        @if (\App\CentralLogics\Helpers::is_feature_active('multi_vendor'))
                                         <div class="col-sm-6">
                                             <div class="form-group">
                                                 <label class="input-label"
@@ -407,6 +408,7 @@
                                                 </select>
                                             </div>
                                         </div>
+                                        @endif
 
                                         <div class="col-sm-6">
                                             <div class="form-group">
@@ -416,6 +418,30 @@
                                                 <input type="number" min="0" max="30" step="1"
                                                     value="{{ old('warranty_years', $product->warranty_years) }}" name="warranty_years" id="warranty_years"
                                                     class="form-control" placeholder="{{ translate('Ex : 3') }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="col-sm-6">
+                                            <div class="form-group">
+                                                <label class="input-label font-weight-bold"
+                                                    for="size_chart_id">{{ translate('Linked Size Guide') }} ({{ translate('دليل المقاسات') }})</label>
+
+                                                <select name="size_chart_id" id="size_chart_id"
+                                                    class="form-control js-select2-custom">
+                                                    <option value="">{{ translate('Default (Inherit from Category)') }}</option>
+                                                    @isset($sizeCharts)
+                                                        @foreach ($sizeCharts as $chart)
+                                                            <option value="{{ $chart->id }}" {{ (isset($product) && $product->size_chart_id == $chart->id) ? 'selected' : '' }}>
+                                                                {{ $chart->name }} ({{ $chart->garment_type }} - {{ $chart->unit }})
+                                                            </option>
+                                                        @endforeach
+                                                    @endisset
+                                                </select>
+                                                <small class="text-muted d-block mt-1">
+                                                    <a href="{{ route('admin.size-chart.create') }}" target="_blank" style="color: #A71927; font-weight: 500;">
+                                                        <i class="tio-add"></i> {{ translate('Create New Size Guide') }}
+                                                    </a>
+                                                </small>
                                             </div>
                                         </div>
 
@@ -691,6 +717,8 @@
                                         </div>
                                     </div>
                                     <div class="col-12">
+                                        @include('admin-views.product.partials._color-variants-studio')
+
                                         <div class="form-group __select-attr mb-0">
                                             <label class="input-label"
                                                 for="choice_attributes">{{ translate('select attribute') }}<span

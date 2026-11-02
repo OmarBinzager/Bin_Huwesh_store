@@ -637,6 +637,7 @@
                                     </div>
                                 </div>
 
+                                @if (\App\CentralLogics\Helpers::is_feature_active('delivery_man'))
                                 <div class="col-md-4">
                                     <?php
                                     $dm_self_registration=\App\Model\BusinessSetting::where('key','dm_self_registration')->first()->value;
@@ -661,6 +662,7 @@
                                         </label>
                                     </div>
                                 </div>
+                                @endif
 
                                 <div class="col-md-4">
                                     @php($guest_checkout=\App\CentralLogics\Helpers::get_business_settings('guest_checkout'))
@@ -684,6 +686,7 @@
                                         </label>
                                     </div>
                                 </div>
+                                @if (\App\CentralLogics\Helpers::is_feature_active('customer_wallet'))
                                 <div class="col-md-4 mt-5">
                                     @php($partial_payment=\App\CentralLogics\Helpers::get_business_settings('partial_payment'))
                                     @php($partial_payment_status = $partial_payment == 1 ? 0 : 1)
@@ -723,6 +726,7 @@
                                         </select>
                                     </div>
                                 </div>
+                                @endif
 
                                 <div class="col-md-4 mt-5">
                                     @php($google_map=\App\CentralLogics\Helpers::get_business_settings('google_map_status'))

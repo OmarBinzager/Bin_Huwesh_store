@@ -1,4 +1,4 @@
-<div id="headerMain" class="d-none">
+﻿<div id="headerMain" class="d-none">
     <header id="header"
         class="navbar navbar-expand-lg navbar-fixed navbar-height navbar-flush navbar-container navbar-bordered modern-header">
         <div class="navbar-nav-wrap w-100">
@@ -12,7 +12,7 @@
                 <div class="d-xl-none">
                     @php($logo = \App\Model\BusinessSetting::where(['key' => 'logo'])->first()->value)
                     <a href="{{ route('admin.dashboard') }}" class="mobile-logo">
-                        <img src="{{ App\CentralLogics\Helpers::onErrorImage($logo, asset('storage/app/public/restaurant') . '/' . $logo, asset('public/assets/admin/img/160x160/img2.jpg'), 'restaurant/') }}"
+                        <img src="{{ App\CentralLogics\Helpers::onErrorImage($logo, asset('storage/app/public/restaurant') . '/' . $logo, asset('public/assets/admin/img/logo/bin-huwesh-logo.png'), 'restaurant/') }}"
                             alt="{{ translate('logo') }}" style="height: 32px; width: auto;">
                     </a>
                 </div>
@@ -206,8 +206,8 @@
         }
 
         .sidebar-toggle-btn:hover {
-            background: rgba(16, 121, 128, 0.1);
-            color: #107980;
+            background: rgba(167, 25, 39, 0.08);
+            color: #A71927;
         }
 
         .sidebar-toggle-btn i {
@@ -224,7 +224,7 @@
 
         .language-icon-wrapper i {
             font-size: 18px;
-            color: #107980;
+            color: #A71927;
         }
 
         .language-code {
@@ -252,8 +252,8 @@
         }
 
         .language-item.active {
-            background: rgba(16, 121, 128, 0.1);
-            color: #107980;
+            background: rgba(167, 25, 39, 0.08);
+            color: #A71927;
         }
 
         .vr-divider {
@@ -283,8 +283,8 @@
         }
 
         .notification-btn:hover {
-            background: rgba(16, 121, 128, 0.08);
-            color: #107980;
+            background: rgba(167, 25, 39, 0.08);
+            color: #A71927;
             transform: translateY(-2px);
         }
 
@@ -334,7 +334,7 @@
 
         .user-profile-wrapper:hover {
             background: #f8f9fa;
-            border-color: #107980;
+            border-color: #A71927;
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
@@ -366,7 +366,7 @@
             height: 38px;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid #107980;
+            border: 2px solid #A71927;
             padding: 2px;
         }
 
@@ -403,7 +403,7 @@
 
         .dropdown-header {
             padding: 20px;
-            background: linear-gradient(135deg, rgb(9, 68, 72), #041848);
+            background: linear-gradient(135deg, #A71927, #8E1521);
             color: white;
         }
 
@@ -450,7 +450,7 @@
 
         .menu-icon-wrapper i {
             font-size: 18px;
-            color: #107980;
+            color: #A71927;
         }
 
         @if (app()->getLocale() == 'ar')
@@ -558,7 +558,7 @@
                         text: '{{ translate('You will be redirected to the login page') }}',
                         type: 'warning',
                         showCancelButton: true,
-                        confirmButtonColor: '#107980',
+                        confirmButtonColor: '#A71927',
                         cancelButtonColor: '#6c757d',
                         confirmButtonText: '{{ translate('Yes, Logout') }}',
                         cancelButtonText: '{{ translate('Cancel') }}',

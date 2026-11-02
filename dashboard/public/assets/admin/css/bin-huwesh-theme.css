@@ -1,0 +1,774 @@
+/**
+ * Bin Huwesh Brand System - Admin Panel Theme
+ * Designed strictly according to Bin Huwesh Design Tokens & Foundations
+ * Colors:
+ *   - Primary: #A71927 (Crimson / Burgundy)
+ *   - Primary Hover: #8E1521
+ *   - Primary Tint: #FAEFF0
+ *   - Text / Ink: #171717
+ *   - Muted / Gray: #707070
+ *   - Border: #DDDDDD
+ *   - Surface / BG: #F7F6F4
+ *   - White: #FFFFFF
+ *   - Success: #19764B (Tint: #EAF5EE)
+ * Typography: IBM Plex Sans Arabic (400, 500, 600)
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+
+@font-face {
+    font-family: 'IBM Plex Sans Arabic';
+    src: url('../fonts/IBMPlexSansArabic-Regular.woff') format('woff'),
+         url('../fonts/IBMPlexSansArabic-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'IBM Plex Sans Arabic';
+    src: url('../fonts/IBMPlexSansArabic-Medium.woff') format('woff'),
+         url('../fonts/IBMPlexSansArabic-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'IBM Plex Sans Arabic';
+    src: url('../fonts/IBMPlexSansArabic-SemiBold.woff') format('woff'),
+         url('../fonts/IBMPlexSansArabic-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+:root {
+    /* Bin Huwesh Official Brand Colors */
+    --bh-primary: #A71927;
+    --bh-primary-hover: #8E1521;
+    --bh-primary-active: #77121C;
+    --bh-primary-tint: #FAEFF0;
+    --bh-primary-light: rgba(167, 25, 39, 0.08);
+    --bh-ink: #171717;
+    --bh-muted: #707070;
+    --bh-border: #DDDDDD;
+    --bh-border-light: #EBEAE6;
+    --bh-surface: #F7F6F4;
+    --bh-card-bg: #FFFFFF;
+    --bh-table-header: #EFEEEB;
+    --bh-success: #19764B;
+    --bh-success-tint: #EAF5EE;
+    --bh-warning: #D97706;
+    --bh-warning-tint: #FEF3C7;
+    --bh-info: #2563EB;
+    --bh-info-tint: #EFF6FF;
+
+    /* Legacy Variable Overrides */
+    --primary-clr: #A71927;
+    --primary-clr-2: #8E1521;
+    --secondary-clr: #707070;
+    --title-clr: #171717;
+    --dark-clr: #171717;
+    --base-clr: #A71927;
+    --base-clr-2: #A71927;
+    --border-clr: #DDDDDD;
+    --warning-clr: #D97706;
+    --danger-clr: #A71927;
+    --success-clr: #19764B;
+    --info-clr: #2563EB;
+    --theameColor: #A71927;
+    --title-2: #707070;
+    --title-3: #A71927;
+    --hover-clr: #8E1521;
+    --bs-border-color: #DDDDDD;
+    --bs-white: #FFFFFF;
+    --section-bg: #F7F6F4;
+
+    /* Radii & Font */
+    --bh-radius-sm: 3px;
+    --bh-radius: 4px;
+    --bh-radius-md: 6px;
+    --bh-font: 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ==========================================================================
+   GLOBAL TYPOGRAPHY & RESET
+   ========================================================================== */
+
+body, html, button, input, select, textarea, .form-control, .btn, .nav-link,
+table, th, td, h1, h2, h3, h4, h5, h6, span, p, a, .badge, .dropdown-menu {
+    font-family: var(--bh-font) !important;
+}
+
+body {
+    background-color: var(--bh-surface) !important;
+    color: var(--bh-ink) !important;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+a {
+    color: var(--bh-primary);
+    transition: color 0.16s ease;
+}
+
+a:hover, a:focus {
+    color: var(--bh-primary-hover);
+    text-decoration: none;
+}
+
+/* ==========================================================================
+   SIDEBAR (Bin Huwesh Design Spec: 240px width, Clean White, Tint Active)
+   ========================================================================== */
+
+aside.navbar-vertical-aside,
+.navbar-vertical-container,
+.navbar-vertical-content {
+    background: #FFFFFF !important;
+    border-left: 1px solid var(--bh-border) !important;
+    border-right: none !important;
+}
+
+.navbar-vertical-aside .navbar-brand-wrapper {
+    background: #FFFFFF !important;
+    border-bottom: 1px solid var(--bh-border) !important;
+    padding: 18px 20px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.navbar-vertical-aside .navbar-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.navbar-vertical-aside .navbar-brand .side-logo {
+    max-height: 46px !important;
+    width: auto !important;
+    max-width: 190px !important;
+    object-fit: contain;
+}
+
+.sidebar--search-form {
+    padding: 14px 16px 10px !important;
+    background: transparent !important;
+}
+
+.sidebar--search-form .search--form-group {
+    background: var(--bh-surface) !important;
+    border: 1px solid var(--bh-border) !important;
+    border-radius: var(--bh-radius) !important;
+}
+
+.sidebar--search-form .form--control {
+    background: transparent !important;
+    border: none !important;
+    color: var(--bh-ink) !important;
+    box-shadow: none !important;
+    font-size: 13px !important;
+}
+
+.sidebar--search-form .form--control::placeholder {
+    color: var(--bh-muted) !important;
+}
+
+.sidebar--search-form .search--form-group .btn {
+    color: var(--bh-muted) !important;
+}
+
+.nav-item_title .nav-subtitle {
+    color: var(--bh-muted) !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 14px 20px 6px !important;
+}
+
+aside .nav-item .nav-link,
+.navbar-vertical-content .nav-link {
+    color: var(--bh-ink) !important;
+    font-size: 13.5px !important;
+    font-weight: 500 !important;
+    padding: 10px 18px !important;
+    border-radius: var(--bh-radius) !important;
+    margin: 2px 10px !important;
+    transition: all 0.16s ease !important;
+    position: relative;
+}
+
+aside .nav-item .nav-link .nav-icon,
+.navbar-vertical-content .nav-icon {
+    color: var(--bh-muted) !important;
+    font-size: 18px !important;
+    margin-left: 12px !important;
+    margin-right: 0 !important;
+    transition: color 0.16s ease !important;
+}
+
+aside .nav-item .nav-link:hover,
+.navbar-vertical-content .nav-link:hover {
+    background: var(--bh-primary-tint) !important;
+    color: var(--bh-primary) !important;
+}
+
+aside .nav-item .nav-link:hover .nav-icon,
+.navbar-vertical-content .nav-link:hover .nav-icon {
+    color: var(--bh-primary) !important;
+}
+
+/* Active Menu Item - Bin Huwesh 4px Active Indicator & Tint */
+.navbar-vertical .navbar-nav.nav-tabs .active > .nav-link,
+.navbar-vertical .navbar-nav.nav-tabs .active.nav-link,
+.navbar-vertical-aside-has-menu.active > .nav-link,
+.navbar-vertical-aside-has-menu.show > .nav-link {
+    background: var(--bh-primary-tint) !important;
+    color: var(--bh-primary) !important;
+    font-weight: 600 !important;
+    border-radius: var(--bh-radius) !important;
+}
+
+.navbar-vertical .navbar-nav.nav-tabs .active > .nav-link::before,
+.navbar-vertical .navbar-nav.nav-tabs .active.nav-link::before {
+    content: "" !important;
+    position: absolute !important;
+    top: 4px !important;
+    bottom: 4px !important;
+    right: -10px !important;
+    width: 4px !important;
+    background: var(--bh-primary) !important;
+    border-radius: 2px !important;
+    left: auto !important;
+}
+
+.navbar-vertical .navbar-nav.nav-tabs .active > .nav-link .nav-icon,
+.navbar-vertical .navbar-nav.nav-tabs .active.nav-link .nav-icon,
+.navbar-vertical-aside-has-menu.active > .nav-link .nav-icon,
+.navbar-vertical .navbar-nav.nav-tabs .active > .nav-link i,
+.navbar-vertical .navbar-nav.nav-tabs .active.nav-link i {
+    color: var(--bh-primary) !important;
+}
+
+.navbar-vertical .navbar-nav.nav-tabs .active > .nav-link .text-truncate,
+.navbar-vertical .navbar-nav.nav-tabs .active.nav-link .text-truncate {
+    color: var(--bh-primary) !important;
+}
+
+/* Submenu */
+.nav-sub {
+    padding-right: 28px !important;
+    padding-left: 0 !important;
+    background: transparent !important;
+}
+
+.nav-sub .nav-link {
+    font-size: 12.5px !important;
+    padding: 8px 14px !important;
+    color: #444444 !important;
+}
+
+.nav-sub .nav-link:hover {
+    color: var(--bh-primary) !important;
+}
+
+.nav-sub .nav-item.active > .nav-link {
+    color: var(--bh-primary) !important;
+    font-weight: 600 !important;
+}
+
+.nav-sub .nav-indicator-icon {
+    border-color: var(--bh-primary) !important;
+}
+
+/* ==========================================================================
+   TOPBAR HEADER (Bin Huwesh Design Spec: White Bar, Subtle Border, Crimson Accents)
+   ========================================================================== */
+
+#header,
+.navbar-fixed {
+    background: #FFFFFF !important;
+    border-bottom: 1px solid var(--bh-border) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+    height: 70px !important;
+}
+
+.sidebar-toggle-btn {
+    color: var(--bh-ink) !important;
+    background: var(--bh-surface) !important;
+    border: 1px solid var(--bh-border) !important;
+    border-radius: var(--bh-radius) !important;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.16s ease;
+}
+
+.sidebar-toggle-btn:hover {
+    border-color: var(--bh-primary);
+    color: var(--bh-primary) !important;
+    background: var(--bh-primary-tint) !important;
+}
+
+.notification-btn {
+    color: var(--bh-ink) !important;
+    background: var(--bh-surface) !important;
+    border: 1px solid var(--bh-border) !important;
+    border-radius: var(--bh-radius) !important;
+    transition: all 0.16s ease;
+}
+
+.notification-btn:hover {
+    background: var(--bh-primary-tint) !important;
+    color: var(--bh-primary) !important;
+    border-color: var(--bh-primary) !important;
+}
+
+.notification-badge {
+    background: var(--bh-primary) !important;
+    color: #FFFFFF !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    border: 2px solid #FFFFFF !important;
+    box-shadow: 0 2px 4px rgba(167, 25, 39, 0.25) !important;
+}
+
+.language-dropdown .lang-country-flag {
+    background: var(--bh-surface) !important;
+    border: 1px solid var(--bh-border) !important;
+    border-radius: var(--bh-radius) !important;
+    color: var(--bh-ink) !important;
+    padding: 6px 14px !important;
+}
+
+.language-dropdown .lang-country-flag:hover {
+    border-color: var(--bh-primary) !important;
+    color: var(--bh-primary) !important;
+}
+
+.user-profile-wrapper {
+    background: var(--bh-surface) !important;
+    border: 1px solid var(--bh-border) !important;
+    border-radius: 30px !important;
+    padding: 4px 12px !important;
+    transition: all 0.16s ease;
+}
+
+.user-profile-wrapper:hover {
+    border-color: var(--bh-primary) !important;
+    background: var(--bh-primary-tint) !important;
+}
+
+.user-avatar {
+    border: 2px solid var(--bh-primary) !important;
+}
+
+.user-name {
+    color: var(--bh-ink) !important;
+    font-weight: 600 !important;
+}
+
+.user-role {
+    color: var(--bh-muted) !important;
+}
+
+.user-dropdown-menu .dropdown-header {
+    background: var(--bh-primary) !important;
+    color: #FFFFFF !important;
+}
+
+.user-menu-item:hover {
+    background: var(--bh-primary-tint) !important;
+    color: var(--bh-primary) !important;
+}
+
+.user-menu-item:hover i {
+    color: var(--bh-primary) !important;
+}
+
+/* ==========================================================================
+   BUTTONS (Bin Huwesh Buttons: Primary #A71927, Outline, Clean Radii 4px)
+   ========================================================================== */
+
+.btn {
+    border-radius: var(--bh-radius) !important;
+    font-weight: 500 !important;
+    font-size: 13.5px !important;
+    padding: 8px 18px !important;
+    transition: all 0.16s ease !important;
+}
+
+.btn-primary,
+.btn--primary,
+button.btn-primary {
+    background-color: var(--bh-primary) !important;
+    border-color: var(--bh-primary) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 1px 3px rgba(167, 25, 39, 0.2) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn--primary:hover {
+    background-color: var(--bh-primary-hover) !important;
+    border-color: var(--bh-primary-hover) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 3px 6px rgba(167, 25, 39, 0.3) !important;
+    transform: translateY(-1px);
+}
+
+.btn-outline-primary,
+.btn--secondary {
+    border: 1px solid var(--bh-primary) !important;
+    color: var(--bh-primary) !important;
+    background: transparent !important;
+}
+
+.btn-outline-primary:hover,
+.btn--secondary:hover {
+    background: var(--bh-primary-tint) !important;
+    color: var(--bh-primary) !important;
+    border-color: var(--bh-primary) !important;
+}
+
+.btn-secondary {
+    background: #EFEEEB !important;
+    border-color: var(--bh-border) !important;
+    color: var(--bh-ink) !important;
+}
+
+.btn-secondary:hover {
+    background: #E5E4E0 !important;
+    border-color: #CCCCCC !important;
+    color: var(--bh-ink) !important;
+}
+
+.btn-success {
+    background-color: var(--bh-success) !important;
+    border-color: var(--bh-success) !important;
+    color: #FFFFFF !important;
+}
+
+/* ==========================================================================
+   CARDS & CONTAINERS (Bin Huwesh Surface Architecture)
+   ========================================================================== */
+
+.card,
+.analytics-card,
+.dashboard--card,
+.order--card {
+    background: #FFFFFF !important;
+    border: 1px solid var(--bh-border) !important;
+    border-radius: var(--bh-radius-md) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+.card-header,
+.card-header-custom {
+    background: #FFFFFF !important;
+    border-bottom: 1px solid var(--bh-border) !important;
+    padding: 16px 20px !important;
+}
+
+.card-title {
+    color: var(--bh-ink) !important;
+    font-weight: 600 !important;
+}
+
+.card-subtitle {
+    color: var(--bh-muted) !important;
+}
+
+.card-footer {
+    background: #FFFFFF !important;
+    border-top: 1px solid var(--bh-border) !important;
+}
+
+/* Welcome Card in Dashboard */
+.welcome-card {
+    background: #FFFFFF !important;
+    border: 1px solid var(--bh-border) !important;
+    border-right: 4px solid var(--bh-primary) !important;
+    border-radius: var(--bh-radius-md) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+.welcome-title {
+    color: var(--bh-ink) !important;
+    font-weight: 600 !important;
+}
+
+.text-gradient {
+    color: var(--bh-primary) !important;
+    background: none !important;
+    -webkit-text-fill-color: var(--bh-primary) !important;
+}
+
+.badge.bg-success-soft {
+    background: var(--bh-primary-tint) !important;
+    color: var(--bh-primary) !important;
+    font-weight: 600 !important;
+    border-radius: var(--bh-radius) !important;
+}
+
+/* ==========================================================================
+   TABLES (Bin Huwesh Admin Tables: #EFEEEB Thead, #DDDDDD borders, Clean spacing)
+   ========================================================================== */
+
+.table {
+    color: var(--bh-ink) !important;
+}
+
+.table thead th,
+.table-thead-bordered thead th,
+thead th {
+    background-color: var(--bh-table-header) !important;
+    color: var(--bh-muted) !important;
+    font-weight: 600 !important;
+    font-size: 12.5px !important;
+    border-top: none !important;
+    border-bottom: 1px solid var(--bh-border) !important;
+    padding: 12px 16px !important;
+    letter-spacing: 0.3px;
+}
+
+.table tbody tr td,
+tbody td {
+    border-bottom: 1px solid var(--bh-border) !important;
+    padding: 14px 16px !important;
+    vertical-align: middle !important;
+    font-size: 13.5px !important;
+}
+
+.table tbody tr:hover td {
+    background-color: rgba(250, 239, 240, 0.4) !important;
+}
+
+/* ==========================================================================
+   FORMS & INPUTS (Crisp 1px #DDDDDD, Focus #A71927 Glow)
+   ========================================================================== */
+
+.form-control,
+.form--control,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+select.form-control,
+.custom-select {
+    border: 1px solid var(--bh-border) !important;
+    border-radius: var(--bh-radius) !important;
+    color: var(--bh-ink) !important;
+    background-color: #FFFFFF !important;
+    padding: 9px 14px !important;
+    font-size: 13.5px !important;
+    transition: all 0.16s ease !important;
+}
+
+.form-control:focus,
+.form--control:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--bh-primary) !important;
+    box-shadow: 0 0 0 3px rgba(167, 25, 39, 0.12) !important;
+    outline: none !important;
+    background-color: #FFFFFF !important;
+}
+
+.form-label,
+label {
+    color: var(--bh-ink) !important;
+    font-weight: 500 !important;
+    font-size: 13px !important;
+    margin-bottom: 6px !important;
+}
+
+/* ==========================================================================
+   BADGES & STATUSES (Bin Huwesh Badge Styling)
+   ========================================================================== */
+
+.badge {
+    border-radius: var(--bh-radius) !important;
+    font-weight: 600 !important;
+    padding: 5px 10px !important;
+    font-size: 11.5px !important;
+}
+
+.badge-soft-primary,
+.badge-soft-danger,
+.status-pending,
+.badge-soft-warning {
+    background-color: var(--bh-primary-tint) !important;
+    color: var(--bh-primary) !important;
+    border: 1px solid rgba(167, 25, 39, 0.2) !important;
+}
+
+.badge-soft-success,
+.status-delivered,
+.badge-success {
+    background-color: var(--bh-success-tint) !important;
+    color: var(--bh-success) !important;
+    border: 1px solid rgba(25, 118, 75, 0.2) !important;
+}
+
+.badge-soft-info,
+.status-progress {
+    background-color: var(--bh-info-tint) !important;
+    color: var(--bh-info) !important;
+    border: 1px solid rgba(37, 99, 235, 0.2) !important;
+}
+
+.badge-soft-secondary,
+.status-default {
+    background-color: var(--bh-surface) !important;
+    color: var(--bh-muted) !important;
+    border: 1px solid var(--bh-border) !important;
+}
+
+.status-badge {
+    border-radius: var(--bh-radius) !important;
+    padding: 4px 10px !important;
+    font-weight: 600 !important;
+    font-size: 11.5px !important;
+}
+
+/* ==========================================================================
+   PAGINATION & TABS
+   ========================================================================== */
+
+.pagination .page-item.active .page-link {
+    background-color: var(--bh-primary) !important;
+    border-color: var(--bh-primary) !important;
+    color: #FFFFFF !important;
+}
+
+.pagination .page-link {
+    color: var(--bh-ink) !important;
+    border: 1px solid var(--bh-border) !important;
+    border-radius: var(--bh-radius) !important;
+    margin: 0 2px !important;
+}
+
+.pagination .page-link:hover {
+    background-color: var(--bh-primary-tint) !important;
+    color: var(--bh-primary) !important;
+}
+
+.nav-tabs .nav-link.active,
+.nav-tabs .nav-item.show .nav-link {
+    color: var(--bh-primary) !important;
+    border-color: var(--bh-border) var(--bh-border) #FFFFFF !important;
+    font-weight: 600 !important;
+}
+
+.nav-tabs .nav-link {
+    color: var(--bh-muted) !important;
+    font-weight: 500 !important;
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--bh-primary) !important;
+}
+
+/* ==========================================================================
+   DASHBOARD STATS & METRICS CARDS
+   ========================================================================== */
+
+.dashboard--card,
+.order--card {
+    border-radius: var(--bh-radius-md) !important;
+    transition: transform 0.16s ease, box-shadow 0.16s ease !important;
+}
+
+.dashboard--card:hover,
+.order--card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06) !important;
+    border-color: #CCCCCC !important;
+}
+
+.stat-btn {
+    border-radius: var(--bh-radius) !important;
+    font-weight: 500 !important;
+}
+
+.stat-btn:hover {
+    background: var(--bh-primary-tint) !important;
+    color: var(--bh-primary) !important;
+}
+
+.stat-btn.active {
+    background: var(--bh-primary) !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 2px 6px rgba(167, 25, 39, 0.3) !important;
+}
+
+.view-all-link {
+    color: var(--bh-primary) !important;
+    font-weight: 600 !important;
+}
+
+.view-all-link:hover {
+    color: var(--bh-primary-hover) !important;
+}
+
+/* ==========================================================================
+   SWEETALERT & MODAL DIALOGS
+   ========================================================================== */
+
+.swal2-popup {
+    border-radius: var(--bh-radius-md) !important;
+    font-family: var(--bh-font) !important;
+}
+
+.swal2-styled.swal2-confirm {
+    background-color: var(--bh-primary) !important;
+    border-radius: var(--bh-radius) !important;
+}
+
+.swal2-styled.swal2-cancel {
+    background-color: #EFEEEB !important;
+    color: var(--bh-ink) !important;
+    border: 1px solid var(--bh-border) !important;
+    border-radius: var(--bh-radius) !important;
+}
+
+.modal-content {
+    border-radius: var(--bh-radius-md) !important;
+    border: 1px solid var(--bh-border) !important;
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--bh-border) !important;
+}
+
+.modal-footer {
+    border-top: 1px solid var(--bh-border) !important;
+}
+
+/* ==========================================================================
+   FOOTER (Bin Huwesh Subtle Muted Footer)
+   ========================================================================== */
+
+.footer {
+    background: #FFFFFF !important;
+    border-top: 1px solid var(--bh-border) !important;
+    color: var(--bh-muted) !important;
+    padding: 16px 24px !important;
+}
+
+.footer a {
+    color: var(--bh-muted) !important;
+}
+
+.footer a:hover {
+    color: var(--bh-primary) !important;
+}

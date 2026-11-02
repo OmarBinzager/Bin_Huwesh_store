@@ -23,12 +23,12 @@
         <div class="card">
             <div class="card--header order-top">
                 <div class="d-flex gap-2 align-items-center">
-                    <form action="{{ request()->url() }}" method="GET">
-                        @foreach (request()->except('search', 'page') as $key => $value)
+                    <form action="{{ request()->url() }}" method="GET" class="d-flex align-items-center gap-2 flex-wrap">
+                        @foreach (request()->except('search', 'page', 'image_filter', 'color') as $key => $value)
                             <input type="hidden" name="{{ $key }}" value="{{ $value }}">
                         @endforeach
 
-                        <div class="input-group">
+                        <div class="input-group" style="min-width: 240px;">
                             <input id="datatableSearch_" type="search" name="search" class="form-control"
                                 placeholder="{{ translate('Search_by_ID_or_Name') }}" aria-label="Search"
                                 value="{{ $search }}" autocomplete="off">
@@ -38,6 +38,18 @@
                                     <i class="tio-search"></i>
                                 </button>
                             </div>
+                        </div>
+
+                        <!-- Image & Fashion Variations Filter -->
+                        <div>
+                            <select name="image_filter" class="form-control form-control-sm js-select2-custom" onchange="this.form.submit()">
+                                <option value="all" {{ ($imageFilter ?? 'all') == 'all' ? 'selected' : '' }}>{{ translate('All Images Status') }}</option>
+                                <option value="has_color_images" {{ ($imageFilter ?? '') == 'has_color_images' ? 'selected' : '' }}>{{ translate('Has Color Variant Images') }} (له صور ألوان)</option>
+                                <option value="missing_color_images" {{ ($imageFilter ?? '') == 'missing_color_images' ? 'selected' : '' }}>{{ translate('Missing Color Images') }} (بدون صور ألوان)</option>
+                                <option value="has_images" {{ ($imageFilter ?? '') == 'has_images' ? 'selected' : '' }}>{{ translate('Has Main Images') }} (له صور رئيسية)</option>
+                                <option value="no_images" {{ ($imageFilter ?? '') == 'no_images' ? 'selected' : '' }}>{{ translate('No Images') }} (بدون صور)</option>
+                                <option value="has_size_chart" {{ ($imageFilter ?? '') == 'has_size_chart' ? 'selected' : '' }}>{{ translate('Linked Size Chart') }} (مربوط بدليل مقاسات)</option>
+                            </select>
                         </div>
                     </form>
                 </div>
@@ -142,6 +154,26 @@
                                                     <span class="fs-12px d-block text-gray">
                                                         {{ $variationCount }} {{ translate('Variants') }}
                                                     </span>
+                                                @endif
+
+                                                @if (!empty($product->color_images_list))
+                                                    <div class="d-flex align-items-center gap-1 mt-1" title="{{ translate('Color Variants with Images') }}">
+                                                        @foreach($product->color_images_list as $cImg)
+                                                            <span class="rounded-circle d-inline-block border shadow-xs"
+                                                                  style="width: 13px; height: 13px; background-color: {{ $cImg['color_code'] ?? '#ccc' }}; cursor: pointer;"
+                                                                  data-toggle="tooltip" data-html="true"
+                                                                  title="<div class='p-1 text-center font-size-11'><strong>{{ $cImg['color_name'] }}</strong><br><img src='{{ $cImg['image_url'] }}' style='width: 55px; height: 55px; object-fit: cover; border-radius: 4px; margin-top: 4px;'></div>">
+                                                            </span>
+                                                        @endforeach
+                                                    </div>
+                                                @endif
+
+                                                @if($product->active_size_chart)
+                                                    <a href="{{ route('admin.size-chart.edit', [$product->active_size_chart->id]) }}"
+                                                       class="badge badge-soft-danger px-1 py-0 font-size-10 mt-1 d-inline-block"
+                                                       title="{{ translate('Size Guide') }}">
+                                                        <i class="tio-ruler mr-1"></i> {{ $product->active_size_chart->name }}
+                                                    </a>
                                                 @endif
                                             </span>
                                         </a>

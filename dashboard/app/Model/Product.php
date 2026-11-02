@@ -26,6 +26,8 @@ class Product extends Model
         'seller_id' => 'integer',
         'warranty_years' => 'integer',
         'purchase_price' => 'float',
+        'size_chart_id'  => 'integer',
+        'color_images'   => 'array',
 
 
     ];
@@ -113,9 +115,59 @@ class Product extends Model
     }
 
     public function seller(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-{
-    return $this->belongsTo(Seller::class);
-}
+    {
+        return $this->belongsTo(Seller::class);
+    }
+
+    public function size_chart(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(SizeChart::class, 'size_chart_id');
+    }
+
+    public function getActiveSizeChartAttribute(): ?SizeChart
+    {
+        if ($this->size_chart_id) {
+            $chart = SizeChart::where('id', $this->size_chart_id)->where('is_active', true)->first();
+            if ($chart) return $chart;
+        }
+
+        // Direct product override in size chart
+        $directChart = SizeChart::where('is_active', true)->whereJsonContains('product_ids', (int)$this->id)->first();
+        if ($directChart) return $directChart;
+
+        // Fallback to category size chart
+        $categoryIds = is_array($this->category_ids) ? $this->category_ids : json_decode($this->category_ids, true);
+        if (!empty($categoryIds)) {
+            $catIds = array_column($categoryIds, 'id');
+            $catChart = SizeChart::where('is_active', true)->whereIn('category_id', $catIds)->first();
+            if ($catChart) return $catChart;
+        }
+
+        return null;
+    }
+
+    public function getColorImagesListAttribute(): array
+    {
+        $data = $this->color_images;
+        if (is_string($data)) {
+            $data = json_decode($data, true) ?? [];
+        }
+        if (!is_array($data)) return [];
+
+        foreach ($data as &$item) {
+            if (!empty($item['image'])) {
+                $img = $item['image'];
+                if (\Illuminate\Support\Facades\Storage::disk('public')->exists('product/' . $img)) {
+                    $item['image_url'] = asset('storage/app/public/product/' . $img);
+                } else {
+                    $item['image_url'] = asset('public/assets/admin/img/160x160/2.png');
+                }
+            } else {
+                $item['image_url'] = asset('public/assets/admin/img/160x160/2.png');
+            }
+        }
+        return $data;
+    }
 
 
 

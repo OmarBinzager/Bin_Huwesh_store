@@ -55,7 +55,7 @@ class LoginController extends Controller
     public function login(): Factory|View|Application
     {
         $logoName = Helpers::get_business_settings('logo');
-        $logo = Helpers::onErrorImage($logoName, asset('storage/app/public/restaurant') . '/' . $logoName, asset('public/assets/admin/img/160x160/img2.jpg'), 'restaurant/');
+        $logo = Helpers::onErrorImage($logoName, asset('storage/app/public/restaurant') . '/' . $logoName, asset('public/assets/admin/img/logo/bin-huwesh-logo.png'), 'restaurant/');
         return view('admin-views.auth.login', compact('logo'));
     }
 

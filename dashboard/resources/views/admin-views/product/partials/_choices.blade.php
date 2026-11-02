@@ -1,4 +1,7 @@
 @foreach ($choice_options as $key => $choice)
+    @if(isset($choice['name']) && ($choice['name'] === 'choice_color' || $choice['title'] === 'Color' || $choice['title'] === 'اللون'))
+        @continue
+    @endif
     <div class="row">
         <div class="col-md-3">
             <input type="hidden" name="choice_no[]" value="{{ $choice_no[$key] ?? null }}">

@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap");
+﻿@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;600;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Tajawal+Mono:wght@400;500;600;700&display=swap");
 
 .form--control {
@@ -82,7 +82,7 @@ aside .navbar-vertical-aside-has-menu.active>.nav-link {
 }
 
 .navbar-vertical-content {
-    background: #041848;
+    background: #FFFFFF;
 }
 
 .swal2-popup .swal2-styled.swal2-cancel {
@@ -136,25 +136,25 @@ aside .navbar-vertical-aside-has-menu.active>.nav-link {
 }
 
 :root {
-    --primary-clr: #24bac3;
-    --primary-clr-2: #009faa;
-    --secondary-clr: #99a7ba;
-    --title-clr: #334257;
-    --dark-clr: #041848;
-    --base-clr: #2aa26a;
-    --base-clr-2: #5affba;
-    --border-clr: #99a7ba45;
+    --primary-clr: #A71927;
+    --primary-clr-2: #8E1521;
+    --secondary-clr: #707070;
+    --title-clr: #171717;
+    --dark-clr: #171717;
+    --base-clr: #A71927;
+    --base-clr-2: #A71927;
+    --border-clr: #DDDDDD;
     --warning-clr: #ff7500;
     --danger-clr: #ff6d6d;
     --success-clr: #00aa6d;
     --info-clr: #0096ff;
-    --theameColor: #045cff;
+    --theameColor: #A71927;
     --title-2: #758590;
-    --title-3: #107980;
+    --title-3: #A71927;
     --hover-clr: #1b7fed;
     --bs-border-color: #CBCBCC;
     --bs-white: #fff;
-    --section-bg: #FAFAFA;
+    --section-bg: #F7F6F4;
 
 }
 
@@ -5821,7 +5821,7 @@ input.non-printable.btn-primary~.non-printable {
     position: sticky;
     top: 0;
     z-index: 9;
-    background: #041848;
+    background: #FFFFFF;
 }
 
 aside .navbar-vertical-content {

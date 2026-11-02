@@ -12,11 +12,13 @@
                 {{translate('Business Settings')}}
             </a>
         </li>
+        @if (\App\CentralLogics\Helpers::is_feature_active('branches'))
         <li class="nav-item">
             <a class="nav-link {{Request::is('admin/business-settings/store/main-branch-setup')?'active':''}}" href="{{route('admin.business-settings.store.main-branch-setup')}}">
                 {{translate('Main Branch Setup')}}
             </a>
         </li>
+        @endif
         <li class="nav-item">
             <a class="nav-link {{Request::is('admin/business-settings/store/timeSlot*')?'active':''}}" href="{{route('admin.business-settings.store.timeSlot.add-new')}}">
                 {{translate('Delivery Time Slot')}}

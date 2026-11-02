@@ -103,7 +103,7 @@
                                         <span>{{ translate('ongoing') }} ({{ $data['ongoing_count'] }})</span>
                                     </div>
                                     <div class="legend-item">
-                                        <span class="legend-color" style="background: #107980;"></span>
+                                        <span class="legend-color" style="background: #A71927;"></span>
                                         <span>{{ translate('delivered') }} ({{ $data['delivered_count'] }})</span>
                                     </div>
                                     <div class="legend-item">
@@ -313,7 +313,7 @@
             border-radius: 20px;
             padding: 1.5rem 2rem;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-            border: 1px solid rgba(16, 121, 128, 0.1);
+            border: 1px solid rgba(167, 25, 39, 0.08);
         }
 
         .welcome-badge {
@@ -337,7 +337,7 @@
         }
 
         .text-gradient {
-            background: linear-gradient(135deg, #107980 0%, #20a8a0 100%);
+            background: linear-gradient(135deg, #A71927 0%, #20a8a0 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -395,7 +395,7 @@
         }
 
         .bg-primary-light {
-            background: rgba(16, 121, 128, 0.1);
+            background: rgba(167, 25, 39, 0.08);
         }
 
         .bg-info-light {
@@ -461,14 +461,14 @@
         }
 
         .stat-btn:hover {
-            background: rgba(16, 121, 128, 0.1);
-            color: #107980;
+            background: rgba(167, 25, 39, 0.08);
+            color: #A71927;
         }
 
         .stat-btn.active {
-            background: #107980;
+            background: #A71927;
             color: white;
-            box-shadow: 0 2px 8px rgba(16, 121, 128, 0.3);
+            box-shadow: 0 2px 8px rgba(167, 25, 39, 0.3);
         }
 
         /* الرسم البياني الدائري */
@@ -587,7 +587,7 @@
         }
 
         .view-all-link {
-            color: #107980;
+            color: #A71927;
             text-decoration: none;
             font-size: 0.8rem;
             font-weight: 500;
@@ -612,7 +612,7 @@
         }
 
         .text-primary-light {
-            color: #107980;
+            color: #A71927;
         }
 
         .text-purple {
@@ -643,7 +643,7 @@
             }
 
             .stat-btn.active {
-                box-shadow: 0 2px 8px rgba(16, 121, 128, 0.3);
+                box-shadow: 0 2px 8px rgba(167, 25, 39, 0.3);
             }
 
             .statistics-btn-group {
@@ -768,7 +768,7 @@
                         dataLabels: {
                             enabled: false
                         },
-                        colors: ['#87bcbf', '#107980'],
+                        colors: ['#E89AA2', '#A71927'],
                         stroke: {
                             curve: 'smooth',
                             width: 3
@@ -834,7 +834,7 @@
                             curve: 'straight',
                             width: 2
                         },
-                        colors: ['#87bcbf', '#107980'],
+                        colors: ['#E89AA2', '#A71927'],
                         series: [{
                             name: "{{ translate('Earning') }}",
                             data: response_data.earning
@@ -908,7 +908,7 @@
             dataLabels: {
                 enabled: false
             },
-            colors: ['#87bcbf', '#107980'],
+            colors: ['#E89AA2', '#A71927'],
             stroke: {
                 curve: 'smooth',
                 width: 3
@@ -958,9 +958,9 @@
                     }
                 }
             }],
-            colors: ['#036BB7', '#107980', '#6a5acd', '#0e0def', '#ff00ff', '#f51414'],
+            colors: ['#036BB7', '#A71927', '#6a5acd', '#0e0def', '#ff00ff', '#f51414'],
             fill: {
-                colors: ['#036BB7', '#107980', '#6a5acd', '#0e0def', '#ff00ff', '#f51414']
+                colors: ['#036BB7', '#A71927', '#6a5acd', '#0e0def', '#ff00ff', '#f51414']
             },
             legend: {
                 show: false
@@ -984,7 +984,7 @@
                 curve: 'straight',
                 width: 2
             },
-            colors: ['#87bcbf', '#107980'],
+            colors: ['#E89AA2', '#A71927'],
             series: [{
                 name: "{{ translate('Earning') }}",
                 data: [{{ $earning[1] }}, {{ $earning[2] }}, {{ $earning[3] }}, {{ $earning[4] }},

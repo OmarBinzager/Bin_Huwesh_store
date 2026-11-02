@@ -126,9 +126,23 @@ function findBestVariantData(variantType) {
     return null;
 }
 
-// Compute active options array from choice rows
+// Compute active options array from colors & choice rows
 function getActiveOptions() {
     const options = [];
+
+    // 1. Color variants (first dimension)
+    const colors = [];
+    $('#colorCardsContainer .color-variant-card').each(function () {
+        const val = ($(this).find('input[name^="color_names"]').val() || '').trim().replace(/\s+/g, '');
+        if (val !== '' && !colors.includes(val)) {
+            colors.push(val);
+        }
+    });
+    if (colors.length > 0) {
+        options.push(colors);
+    }
+
+    // 2. Attribute Choice options
     $('#customer_choice_options input[name="choice_no[]"]').each(function () {
         const no = $(this).val();
         const $tagsInput = $('#customer_choice_options input[name="choice_options_' + no + '[]"]');
@@ -343,6 +357,11 @@ function add_more_customer_choice_option(i, name) {
 // When tags are added or removed
 $(document).on('change', '[name^="choice_options_"]', function () {
     if (window.ignoreChoiceChange) return;
+    combination_update();
+});
+
+// When color variant names change
+$(document).on('input change', '#colorCardsContainer input[name^="color_names"]', function () {
     combination_update();
 });
 

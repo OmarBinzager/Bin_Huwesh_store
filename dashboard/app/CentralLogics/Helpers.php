@@ -1194,6 +1194,11 @@ class Helpers
         return false;
     }
 
+    public static function is_feature_active(string $feature): bool
+    {
+        return (bool) config("features.{$feature}", false);
+    }
+
     public static function file_remover(string $dir, $image)
     {
         if (!isset($image)) return true;

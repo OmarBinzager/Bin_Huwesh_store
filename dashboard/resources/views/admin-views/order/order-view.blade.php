@@ -692,7 +692,7 @@
                         </div>
                     @endif
 
-                    @if ($order['order_type'] != 'pos')
+                    @if ($order['order_type'] != 'pos' && \App\CentralLogics\Helpers::is_feature_active('delivery_man'))
                         @if (!$order->delivery_man)
                             <div class="mt-3">
                                 <button class="btn btn--primary w-100" type="button" data-target="#assign_delivey_man_modal"

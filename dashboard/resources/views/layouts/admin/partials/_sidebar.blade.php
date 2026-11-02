@@ -8,7 +8,7 @@
                     @php($logo = \App\Model\BusinessSetting::where(['key' => 'logo'])->first()->value)
                     <a class="navbar-brand" href="{{ route('admin.dashboard') }}" aria-label="Front">
                         <img class="w-100 side-logo"
-                            src="{{ App\CentralLogics\Helpers::onErrorImage($logo, asset('storage/app/public/restaurant') . '/' . $logo, asset('public/assets/admin/img/160x160/img2.jpg'), 'restaurant/') }}"
+                            src="{{ App\CentralLogics\Helpers::onErrorImage($logo, asset('storage/app/public/restaurant') . '/' . $logo, asset('public/assets/admin/img/logo/bin-huwesh-logo.png'), 'restaurant/') }}"
                             alt="{{ translate('logo') }}">
                     </a>
 
@@ -325,7 +325,24 @@
                                             <span class="text-truncate">{{ translate('Limited Stocks') }}</span>
                                         </a>
                                     </li>
+                                    <li class="nav-item {{ Request::is('admin/size-chart*') ? 'active' : '' }}">
+                                        <a class="nav-link" href="{{ route('admin.size-chart.index') }}"
+                                            title="{{ translate('Size Guides') }}">
+                                            <span class="tio-circle nav-indicator-icon"></span>
+                                            <span class="text-truncate">{{ translate('Size Guides') }}</span>
+                                        </a>
+                                    </li>
                                 </ul>
+                            </li>
+
+                            <li
+                                class="navbar-vertical-aside-has-menu {{ Request::is('admin/size-chart*') ? 'active' : '' }}">
+                                <a class="js-navbar-vertical-aside-menu-link nav-link"
+                                    href="{{ route('admin.size-chart.index') }}" title="{{ translate('Size Guides') }}">
+                                    <i class="tio-document-text nav-icon"></i>
+                                    <span
+                                        class="navbar-vertical-aside-mini-mode-hidden-elements text-truncate">{{ translate('Size Guides') }}</span>
+                                </a>
                             </li>
                         @endif
 
@@ -335,6 +352,7 @@
                                 <small class="tio-more-horizontal nav-subtitle-replacer"></small>
                             </li>
 
+                        @if (\App\CentralLogics\Helpers::is_feature_active('banners'))
                             <li
                                 class="navbar-vertical-aside-has-menu {{ Request::is('admin/banner*') ? 'active' : '' }}">
                                 <a class="js-navbar-vertical-aside-menu-link nav-link"
@@ -344,6 +362,7 @@
                                         class="navbar-vertical-aside-mini-mode-hidden-elements text-truncate">{{ translate('banner') }}</span>
                                 </a>
                             </li>
+                        @endif
 
                             <li
                                 class="navbar-vertical-aside-has-menu {{ Request::is('admin/brand*') ? 'active' : '' }}">
@@ -355,6 +374,7 @@
                                 </a>
                             </li>
 
+                        @if (\App\CentralLogics\Helpers::is_feature_active('multi_vendor'))
                             <li
                                 class="navbar-vertical-aside-has-menu {{ Request::is('admin/seller*') ? 'active' : '' }}">
                                 <a class="js-navbar-vertical-aside-menu-link nav-link"
@@ -364,6 +384,7 @@
                                         class="navbar-vertical-aside-mini-mode-hidden-elements text-truncate">{{ translate('seller') }}</span>
                                 </a>
                             </li>
+                        @endif
 
 
                             <li
@@ -387,6 +408,7 @@
                                     </span>
                                 </a>
                             </li>
+                        @if (\App\CentralLogics\Helpers::is_feature_active('flash_sales'))
                             <li
                                 class="navbar-vertical-aside-has-menu {{ Request::is('admin/offer*') ? 'active' : '' }}">
                                 <a class="js-navbar-vertical-aside-menu-link nav-link"
@@ -398,6 +420,7 @@
                                     </span>
                                 </a>
                             </li>
+                        @endif
 
 
                             <li
@@ -526,6 +549,7 @@
                                 </a>
                             </li>
 
+                        @if (\App\CentralLogics\Helpers::is_feature_active('customer_wallet'))
                             <li
                                 class="navbar-vertical-aside-has-menu {{ Request::is('admin/customer/wallet/*') ? 'active' : '' }}">
                                 <a class="js-navbar-vertical-aside-menu-link nav-link nav-link-toggle"
@@ -575,7 +599,9 @@
 
                                 </ul>
                             </li>
+                        @endif
 
+                        @if (\App\CentralLogics\Helpers::is_feature_active('loyalty_points'))
                             <li
                                 class="navbar-vertical-aside-has-menu {{ Request::is('admin/customer/loyalty-point*') ? 'active' : '' }}">
                                 <a class="js-navbar-vertical-aside-menu-link nav-link nav-link-toggle"
@@ -603,6 +629,7 @@
 
                                 </ul>
                             </li>
+                        @endif
 
                             <li
                                 class="navbar-vertical-aside-has-menu {{ Request::is('admin/reviews*') ? 'active' : '' }}">
@@ -627,6 +654,7 @@
                                 </a>
                             </li>
 
+                        @if (\App\CentralLogics\Helpers::is_feature_active('delivery_man'))
                             <li
                                 class="navbar-vertical-aside-has-menu {{ Request::is('admin/delivery-man/*') ? 'active' : '' }}">
                                 <a class="js-navbar-vertical-aside-menu-link nav-link nav-link-toggle"
@@ -700,6 +728,7 @@
 
                                 </ul>
                             </li>
+                        @endif
                             @if (auth('admin')->user()->admin_role_id == 1)
                                 <li
                                     class="navbar-vertical-aside-has-menu {{ Request::is('admin/employee*') ? 'active' : '' }}  {{ Request::is('admin/custom-role*') ? 'active' : '' }}">
@@ -766,6 +795,7 @@
                                 </a>
                             </li>
 
+                        @if (\App\CentralLogics\Helpers::is_feature_active('branches'))
                             <li
                                 class="navbar-vertical-aside-has-menu {{ Request::is('admin/branch*') ? 'active' : '' }}">
                                 <a class="js-navbar-vertical-aside-menu-link nav-link nav-link-toggle"
@@ -792,7 +822,9 @@
                                     </li>
                                 </ul>
                             </li>
+                        @endif
 
+                        @if (\App\CentralLogics\Helpers::is_feature_active('ai_integration'))
                             <li
                                 class="nav-item mt-0
                                 {{ Request::is('admin/business-settings/ai-configuration*') ? 'active' : '' }}">
@@ -808,6 +840,7 @@
                                         class="navbar-vertical-aside-mini-mode-hidden-elements text-truncate">{{ translate('AI_configuration') }}</span>
                                 </a>
                             </li>
+                        @endif
 
                             <li
                                 class="navbar-vertical-aside-has-menu {{ Request::is('admin/business-settings/web-app/payment-method*') ||
@@ -915,7 +948,7 @@
                             </li>
                         @endif
 
-                        @if (Helpers::module_permission_check(MANAGEMENT_SECTION['addon_management']))
+                        @if (Helpers::module_permission_check(MANAGEMENT_SECTION['addon_management']) && \App\CentralLogics\Helpers::is_feature_active('system_addons'))
 
                             <li class="nav-item nav-item_title">
                                 <small class="nav-subtitle">{{ translate('system') }}

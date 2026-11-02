@@ -47,6 +47,7 @@
         <div class="row mb-2 g-2">
 
 
+            @if (\App\CentralLogics\Helpers::is_feature_active('customer_wallet'))
             <div class="col-lg-6 col-md-6 col-sm-6">
                 <div class="resturant-card bg--2">
                     <img class="resturant-icon" src="{{asset('/public/assets/admin/img/dashboard/1.png')}}" alt="{{ translate('image') }}">
@@ -54,8 +55,10 @@
                     <div class="for-card-count">{{ Helpers::set_symbol($customer->wallet_balance??0)}}</div>
                 </div>
             </div>
+            @endif
 
 
+            @if (\App\CentralLogics\Helpers::is_feature_active('loyalty_points'))
             <div class="col-lg-6 col-md-6 col-sm-6">
                 <div class="resturant-card bg--3">
                     <img class="resturant-icon" src="{{asset('/public/assets/admin/img/dashboard/3.png')}}" alt="{{ translate('image') }}">
@@ -63,6 +66,7 @@
                     <div class="for-card-count">{{$customer->loyalty_point??0}}</div>
                 </div>
             </div>
+            @endif
         </div>
 
 

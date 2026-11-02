@@ -19,6 +19,7 @@
                     <div class="card mb-3">
                         <div class="card-body">
                             <div class="row g-3">
+                                @if (\App\CentralLogics\Helpers::is_feature_active('customer_wallet'))
                                 <div class="col-sm-4 col-12">
                                     <div class="form-group mb-0">
                                         <label
@@ -36,6 +37,8 @@
                                         </label>
                                     </div>
                                 </div>
+                                @endif
+                                @if (\App\CentralLogics\Helpers::is_feature_active('loyalty_points'))
                                 <div class="col-sm-4 col-12">
                                     <div class="form-group mb-0">
                                         <label
@@ -53,6 +56,7 @@
                                         </label>
                                     </div>
                                 </div>
+                                @endif
                                 <div class="col-sm-4 col-12">
                                     <div class="form-group mb-0">
                                         <label
@@ -74,6 +78,7 @@
                         </div>
                     </div>
 
+                    @if (\App\CentralLogics\Helpers::is_feature_active('customer_wallet'))
                     <div class="card mb-3 wallet-section">
                         <div class="card-header">
                             <h5 class="card-title">
@@ -100,7 +105,9 @@
                             </div>
                         </div>
                     </div>
+                    @endif
 
+                    @if (\App\CentralLogics\Helpers::is_feature_active('loyalty_points'))
                     <div class="card mb-3 loyalty-point-section">
                         <div class="card-header">
                             <h5 class="card-title">
@@ -139,6 +146,7 @@
                             </div>
                         </div>
                     </div>
+                    @endif
                     <div class="card mb-3 referrer-earning">
                         <div class="card-header">
                             <h5 class="card-title">
