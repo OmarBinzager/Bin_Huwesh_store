@@ -630,7 +630,7 @@
                                     </div>
 
                                     <div class="col-md-12">
-                                        <div class="variant_combination" id="variant_combination"></div>
+                                        <div class="variant_combination" id="variant_combination" data-label-variant="{{ translate('Variant') }}" data-label-purchase-price="{{ translate('purchase_price') }}" data-label-price="{{ translate('Variant Price') }}" data-label-stock="{{ translate('Variant Stock') }}"></div>
                                     </div>
                                 </div>
                             </div>
@@ -715,7 +715,7 @@
     </script>
 
     <script src="{{ asset('public/assets/admin/js/tags-input.min.js') }}"></script>
-    <script src="{{ asset('public/assets/admin/js/product/load-variation.js') }}"></script>
+    <script src="{{ asset('public/assets/admin/js/product/load-variation.js') }}?v={{ time() }}"></script>
     <script>
         submitByAjax('#product_form', {
             hasEditors: true,

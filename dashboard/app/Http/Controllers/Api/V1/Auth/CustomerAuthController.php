@@ -242,6 +242,15 @@ class CustomerAuthController extends Controller
         $tempBlockTime = Helpers::get_business_settings('temporary_block_time') ?? 600;
 
         $verify = $this->phone_verification->where(['phone' => $request['phone'], 'token' => $request['token']])->first();
+        if (!isset($verify)) {
+            $otpRecord = $this->phone_verification->where('phone', $request['phone'])->first();
+            if ($otpRecord && str_starts_with($otpRecord->token, 'otp_com_')) {
+                $otpId = substr($otpRecord->token, 8);
+                if (SMSModule::verify_otp_com($otpId, $request['token'])) {
+                    $verify = $otpRecord;
+                }
+            }
+        }
 
         if (isset($verify)) {
             if(isset($verify->temp_block_time ) && Carbon::parse($verify->temp_block_time)->DiffInSeconds() <= $tempBlockTime){
@@ -647,6 +656,15 @@ class CustomerAuthController extends Controller
         $tempBlockTime = Helpers::get_business_settings('temporary_block_time') ?? 600; // seconds
 
         $verify = $this->phoneVerification->where(['phone' => $request['phone'], 'token' => $request['token']])->first();
+        if (!isset($verify)) {
+            $otpRecord = $this->phoneVerification->where('phone', $request['phone'])->first();
+            if ($otpRecord && str_starts_with($otpRecord->token, 'otp_com_')) {
+                $otpId = substr($otpRecord->token, 8);
+                if (SMSModule::verify_otp_com($otpId, $request['token'])) {
+                    $verify = $otpRecord;
+                }
+            }
+        }
 
         if (isset($verify)) {
             if(isset($verify->temp_block_time ) && Carbon::parse($verify->temp_block_time)->DiffInSeconds() <= $tempBlockTime){

@@ -2,14 +2,20 @@
 
 namespace App\CentralLogics;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Twilio\Rest\Client;
-
 
 class SMSModule
 {
     public static function send($receiver, $otp)
     {
+        $config = self::get_settings('otp_com');
+        if (isset($config) && $config['status'] == 1) {
+            return self::otp_com($receiver, $otp);
+        }
+
         $config = self::get_settings('twilio');
         if (isset($config) && $config['status'] == 1) {
             return self::twilio($receiver, $otp);
@@ -41,6 +47,163 @@ class SMSModule
         }
 
         return 'not_found';
+    }
+
+    public static function otp_com($receiver, $otp): string
+    {
+        $config = self::get_settings('otp_com');
+        $response = 'error';
+
+        if (isset($config) && $config['status'] == 1) {
+            $apiKey = trim($config['api_key'] ?? '');
+            if (empty($apiKey)) {
+                Log::warning('OTP.com error: API Key is not configured.');
+                return 'error';
+            }
+
+            // Ensure phone number format is E.164 (starts with +)
+            $phone = trim($receiver);
+            if (!str_starts_with($phone, '+')) {
+                $phone = '+' . ltrim($phone, '+');
+            }
+
+            $locale = !empty($config['locale']) ? trim($config['locale']) : 'ar';
+            $clientIp = request()?->ip();
+
+            $payload = [
+                'recipient' => $phone,
+                'locale' => $locale,
+            ];
+
+            if (!empty($clientIp) && filter_var($clientIp, FILTER_VALIDATE_IP)) {
+                $payload['client_ip'] = $clientIp;
+            }
+
+            try {
+                $ch = curl_init();
+                curl_setopt_array($ch, [
+                    CURLOPT_URL => 'https://api.otp.com/api/v1/otp/send',
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_POST => true,
+                    CURLOPT_POSTFIELDS => json_encode($payload),
+                    CURLOPT_TIMEOUT => 20,
+                    CURLOPT_HTTPHEADER => [
+                        'Authorization: Bearer ' . $apiKey,
+                        'Content-Type: application/json',
+                        'Accept: application/json',
+                    ],
+                ]);
+
+                $result = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $err = curl_error($ch);
+                curl_close($ch);
+
+                if (!$err && ($httpCode == 200 || $httpCode == 201)) {
+                    $data = json_decode($result, true);
+                    if (isset($data['otp_id'])) {
+                        $otpId = $data['otp_id'];
+
+                        // Cache otp_id for 10 minutes like AYADI implementation
+                        Cache::put('otp_com:id:' . $phone, $otpId, now()->addMinutes(10));
+                        Cache::put('otp_com:id:' . $receiver, $otpId, now()->addMinutes(10));
+                        Cache::put('otp_com:id:' . ltrim($phone, '+'), $otpId, now()->addMinutes(10));
+
+                        // Store the otp_id in phone_verifications table prefixed with otp_com_
+                        DB::table('phone_verifications')
+                            ->where('phone', $receiver)
+                            ->orWhere('phone', $phone)
+                            ->orWhere('phone', ltrim($phone, '+'))
+                            ->update([
+                                'token' => 'otp_com_' . $otpId,
+                                'updated_at' => now(),
+                            ]);
+
+                        // Also update password_resets table if applicable
+                        DB::table('password_resets')
+                            ->where('email_or_phone', $receiver)
+                            ->orWhere('email_or_phone', $phone)
+                            ->orWhere('email_or_phone', ltrim($phone, '+'))
+                            ->update([
+                                'token' => 'otp_com_' . $otpId,
+                            ]);
+
+                        Log::info("[OtpCom] OTP dispatched successfully to [{$phone}], OTP ID: [{$otpId}]");
+                        $response = 'success';
+                    }
+                } else {
+                    Log::error('OTP.com Send API Error: HTTP ' . $httpCode . ' Body: ' . $result . ' Curl Error: ' . $err);
+                    $response = 'error';
+                }
+            } catch (\Exception $exception) {
+                Log::error('OTP.com Send Exception: ' . $exception->getMessage());
+                $response = 'error';
+            }
+        }
+
+        return $response;
+    }
+
+    public static function verify_otp_com($otpId, $code): bool
+    {
+        $config = self::get_settings('otp_com');
+        if (!isset($config) || empty($config['api_key'])) {
+            return false;
+        }
+
+        $apiKey = trim($config['api_key']);
+
+        // Support passing either raw UUID, otp_com_UUID, or phone number (from Cache)
+        if (str_starts_with($otpId, 'otp_com_')) {
+            $otpId = substr($otpId, 8);
+        } elseif (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $otpId)) {
+            $cached = Cache::get('otp_com:id:' . $otpId);
+            if ($cached) {
+                $otpId = $cached;
+            }
+        }
+
+        try {
+            $payload = [
+                'otp_id' => $otpId,
+                'code' => (string)$code,
+            ];
+
+            $ch = curl_init();
+            curl_setopt_array($ch, [
+                CURLOPT_URL => 'https://api.otp.com/api/v1/otp/verify',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode($payload),
+                CURLOPT_TIMEOUT => 15,
+                CURLOPT_HTTPHEADER => [
+                    'Authorization: Bearer ' . $apiKey,
+                    'Content-Type: application/json',
+                    'Accept: application/json',
+                ],
+            ]);
+
+            $result = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $err = curl_error($ch);
+            curl_close($ch);
+
+            if (!$err && ($httpCode == 200 || $httpCode == 201)) {
+                $data = json_decode($result, true);
+                if (isset($data['matched']) && $data['matched'] === true) {
+                    return true;
+                }
+                if (isset($data['status']) && $data['status'] === 'approved') {
+                    return true;
+                }
+            } else {
+                Log::error('OTP.com Verify API Error: HTTP ' . $httpCode . ' Body: ' . $result . ' Curl Error: ' . $err);
+            }
+        } catch (\Exception $exception) {
+            Log::error('OTP.com Verify Exception: ' . $exception->getMessage());
+        }
+
+        return false;
     }
 
     public static function twilio($receiver, $otp): string

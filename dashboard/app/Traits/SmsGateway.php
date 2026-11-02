@@ -12,6 +12,10 @@ trait  SmsGateway
 {
     public static function send($receiver, $otp): string
     {
+        $config = self::get_settings('otp_com');
+        if (isset($config) && $config['status'] == 1) {
+            return self::otp_com($receiver, $otp);
+        }
         $config = self::get_settings('twilio');
         if (isset($config) && $config['status'] == 1) {
             return self::twilio($receiver, $otp);
@@ -611,9 +615,28 @@ trait  SmsGateway
 
 
 
+    public static function otp_com($receiver, $otp): string
+    {
+        return \App\CentralLogics\SMSModule::otp_com($receiver, $otp);
+    }
+
+    public static function verify_otp_com($otpId, $code): bool
+    {
+        return \App\CentralLogics\SMSModule::verify_otp_com($otpId, $code);
+    }
+
     public static function get_settings($name)
     {
-        $data = config_settings($name, 'sms_config');
+        if (function_exists("config_settings")) {
+            $data = config_settings($name, "sms_config");
+            if (isset($data) && !is_null($data->live_values)) {
+                return json_decode($data->live_values, true);
+            }
+        }
+        $config = \Illuminate\Support\Facades\DB::table("addon_settings")->where("key_name", $name)->where("settings_type", "sms_config")->first();
+        if (isset($config) && !is_null($config->live_values)) {
+            return json_decode($config->live_values, true);
+        }
         if (isset($data) && !is_null($data->live_values)) {
             return json_decode($data->live_values, true);
         }

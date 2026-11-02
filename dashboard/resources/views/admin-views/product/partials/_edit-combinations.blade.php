@@ -24,21 +24,21 @@
                     <label for="" class="control-label">{{ $combination['type'] }}</label>
                 </td>
                 <td>
-                    <input type="number" name="purchase_price_{{ $combination['type'] }}"
+                    <input type="number" name="purchase_price_{{ $combination['type'] }}" data-variant-type="{{ $combination['type'] }}" data-field="purchase_price"
                            value="{{ $combination['purchase_price'] ?? ($product['purchase_price'] ?? 0) }}" min="0"
                            step="any"
-                           class="form-control" required>
+                           class="form-control variant-input" required>
                 </td>
                 <td>
-                    <input type="number" name="price_{{ $combination['type'] }}"
+                    <input type="number" name="price_{{ $combination['type'] }}" data-variant-type="{{ $combination['type'] }}" data-field="price"
                            value="{{$combination['price']}}" min="0"
                            step="any"
-                           class="form-control" required>
+                           class="form-control variant-input" required>
                 </td>
                 <td>
-                    <input type="number" name="stock_{{ $combination['type'] }}" value="{{ $combination['stock']??0 }}"
+                    <input type="number" name="stock_{{ $combination['type'] }}" data-variant-type="{{ $combination['type'] }}" data-field="stock" value="{{ $combination['stock']??0 }}"
                            min="0" max="1000000" onkeyup="update_qty()"
-                           class="form-control" required>
+                           class="form-control variant-input" required>
                 </td>
             </tr>
         @endforeach

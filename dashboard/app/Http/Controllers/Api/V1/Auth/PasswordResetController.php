@@ -154,6 +154,23 @@ class PasswordResetController extends Controller
                   ->orWhere('email_or_phone', $cleanPhone)
                   ->orWhere('email_or_phone', $plusPhone);
             })->first();
+        if (!isset($verify)) {
+            $otpRecord = DB::table('password_resets')
+                ->where(function ($q) use ($phone, $cleanPhone, $plusPhone) {
+                    $q->where('email_or_phone', $phone)
+                      ->orWhere('email_or_phone', $cleanPhone)
+                      ->orWhere('email_or_phone', $plusPhone);
+                })->first();
+            if ($otpRecord && str_starts_with($otpRecord->token, 'otp_com_')) {
+                $otpId = substr($otpRecord->token, 8);
+                if (SMSModule::verify_otp_com($otpId, $request['reset_token'])) {
+                    DB::table('password_resets')
+                        ->where('email_or_phone', $otpRecord->email_or_phone)
+                        ->update(['token' => $request['reset_token']]);
+                    $verify = $otpRecord;
+                }
+            }
+        }
         if (isset($verify)) {
             if(isset($verify->temp_block_time ) && Carbon::parse($verify->temp_block_time)->DiffInSeconds() <= $temp_block_time){
                 $time = $temp_block_time - Carbon::parse($verify->temp_block_time)->DiffInSeconds();

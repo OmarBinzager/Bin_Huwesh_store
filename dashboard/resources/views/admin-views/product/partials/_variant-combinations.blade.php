@@ -1,4 +1,4 @@
-@if(count($combinations[0]) > 0)
+@if(count($combinations) > 0 && isset($combinations[0]) && count($combinations[0]) > 0)
     <table class="table table-bordered">
         <thead>
         <tr>
@@ -22,11 +22,13 @@
             @php
                 $str = '';
                 foreach ($combination as $combinationKey => $item){
-                    if($combinationKey > 0 ){
-                        $str .= '-'.str_replace(' ', '', $item);
+                    $trimmedItem = trim((string)$item);
+                    if ($trimmedItem === '') continue;
+                    if(strlen($str) > 0 ){
+                        $str .= '-'.str_replace(' ', '', $trimmedItem);
                     }
                     else{
-                        $str .= str_replace(' ', '', $item);
+                        $str .= str_replace(' ', '', $trimmedItem);
                     }
                 }
                 $matchedVariation = collect($productVariations ?? [])->firstWhere('type', $str);
@@ -37,16 +39,16 @@
                         <label for="" class="control-label">{{ $str }}</label>
                      </td>
                     <td>
-                        <input type="number" name="purchase_price_{{ $str }}" value="{{ $matchedVariation['purchase_price'] ?? ($purchase_price ?? 0) }}" min="0" step="any"
-                               class="form-control" required>
+                        <input type="number" name="purchase_price_{{ $str }}" data-variant-type="{{ $str }}" data-field="purchase_price" value="{{ $matchedVariation['purchase_price'] ?? ($purchase_price ?? 0) }}" min="0" step="any"
+                               class="form-control variant-input" required>
                     </td>
                     <td>
-                        <input type="number" name="price_{{ $str }}" value="{{ $matchedVariation['price'] ?? $price }}" min="0" step="any"
-                               class="form-control" required>
+                        <input type="number" name="price_{{ $str }}" data-variant-type="{{ $str }}" data-field="price" value="{{ $matchedVariation['price'] ?? $price }}" min="0" step="any"
+                               class="form-control variant-input" required>
                     </td>
                     <td>
-                        <input type="number" name="stock_{{ $str }}" value="{{ $matchedVariation['stock'] ?? 0 }}" min="0" max="1000000"
-                               class="form-control" onkeyup="update_qty()" required>
+                        <input type="number" name="stock_{{ $str }}" data-variant-type="{{ $str }}" data-field="stock" value="{{ $matchedVariation['stock'] ?? 0 }}" min="0" max="1000000"
+                               class="form-control variant-input" onkeyup="update_qty()" required>
                     </td>
                 </tr>
             @endif

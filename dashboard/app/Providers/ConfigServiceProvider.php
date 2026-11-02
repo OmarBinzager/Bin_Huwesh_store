@@ -57,6 +57,7 @@ class ConfigServiceProvider extends ServiceProvider
                     Config::set('mail.mailers.smtp.encryption', $emailServices['encryption'] ?? 'tls');
                     Config::set('mail.mailers.smtp.username', $emailServices['username'] ?? '');
                     Config::set('mail.mailers.smtp.password', $emailServices['password'] ?? '');
+                    Config::set('mail.mailers.smtp.timeout', 5);
                     Config::set('mail.from.address', $emailServices['email_id'] ?? '');
                     Config::set('mail.from.name', $emailServices['name'] ?? '');
                 }

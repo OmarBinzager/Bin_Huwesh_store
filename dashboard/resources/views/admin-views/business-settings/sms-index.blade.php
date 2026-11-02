@@ -30,10 +30,20 @@
                 @foreach($dataValues as $gateway)
                     <div class="col-md-6 mb-30 sms-gatway-cards margin-bottom-30px">
                         <div class="card">
-                            <div class="card-header">
-                                <h4 class="page-title">{{translate($gateway->key_name)}}</h4>
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h4 class="page-title m-0">
+                                    {{ $gateway->key_name == 'otp_com' ? translate('otp_com') : translate($gateway->key_name) }}
+                                </h4>
+                                @if($gateway->key_name == 'otp_com')
+                                    <span class="badge badge-soft-success text-uppercase">WhatsApp / Multi-channel</span>
+                                @endif
                             </div>
                             <div class="card-body p-30">
+                                @if($gateway->key_name == 'otp_com')
+                                    <div class="alert alert-soft-info p-2 mb-3">
+                                        <small><i class="tio-info mr-1"></i> {{ translate('otp_com_description') }}</small>
+                                    </div>
+                                @endif
                                 <form action="{{route('admin.business-settings.web-app.sms-module-update',[$gateway->key_name])}}" method="POST"
                                       id="{{$gateway->key_name}}-form" enctype="multipart/form-data">
                                     @csrf
@@ -61,7 +71,17 @@
                                         @foreach($dataValues->where('key_name',$gateway->key_name)->first()->live_values as $key=>$value)
                                             @if(!in_array($key,$skip))
                                                 <div class="form-floating mb-30 mt-30">
-                                                    <label for="exampleFormControlInput1" class="form-label">{{translate($key)}} *</label>
+                                                    <label for="exampleFormControlInput1" class="form-label">
+                                                        @if($gateway->key_name == 'otp_com' && $key == 'api_key')
+                                                            {{ translate('api_key') }} ({{ translate('Bearer Token') }}) *
+                                                        @elseif($gateway->key_name == 'otp_com' && $key == 'locale')
+                                                            {{ translate('locale') }} *
+                                                        @elseif($gateway->key_name == 'otp_com' && $key == 'otp_template')
+                                                            {{ translate('otp_template') }} ({{ translate('optional') }})
+                                                        @else
+                                                            {{ translate($key) }} *
+                                                        @endif
+                                                    </label>
                                                     <input type="text" class="form-control mb-3"
                                                            name="{{$key}}"
                                                            placeholder="{{translate($key)}} *"

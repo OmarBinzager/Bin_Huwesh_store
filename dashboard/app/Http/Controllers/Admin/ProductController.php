@@ -69,20 +69,30 @@ class ProductController extends Controller
         if ($request->has('choice_no')) {
             foreach ($request->choice_no as $key => $no) {
                 $name = 'choice_options_' . $no;
-                $my_str = implode('', $request[$name]);
-                $options[] = explode(',', $my_str);
+                if (!isset($request[$name])) {
+                    continue;
+                }
+                $raw = is_array($request[$name]) ? implode(',', $request[$name]) : (string)$request[$name];
+                $vals = array_values(array_filter(array_map('trim', explode(',', $raw)), function($val) {
+                    return $val !== '';
+                }));
+                if (!empty($vals)) {
+                    $options[] = $vals;
+                }
             }
         }
 
         $result = [[]];
-        foreach ($options as $property => $property_values) {
-            $tmp = [];
-            foreach ($result as $result_item) {
-                foreach ($property_values as $property_value) {
-                    $tmp[] = array_merge($result_item, [$property => $property_value]);
+        if (!empty($options)) {
+            foreach ($options as $property => $property_values) {
+                $tmp = [];
+                foreach ($result as $result_item) {
+                    foreach ($property_values as $property_value) {
+                        $tmp[] = array_merge($result_item, [$property => $property_value]);
+                    }
                 }
+                $result = $tmp;
             }
-            $result = $tmp;
         }
         $combinations = $result;
 
@@ -307,11 +317,17 @@ public function index(): View|Factory|Application
         if ($request->has('choice_no')) {
             foreach ($request->choice_no as $key => $no) {
                 $name = 'choice_options_' . $no;
-                $my_str = implode('|', $request[$name]);
-                $options[] = explode(',', $my_str);
+                if (!isset($request[$name])) {
+                    continue;
+                }
+                $raw = is_array($request[$name]) ? implode(',', $request[$name]) : (string)$request[$name];
+                $vals = array_values(array_filter(array_map('trim', explode(',', $raw)), fn($v) => $v !== ''));
+                if (!empty($vals)) {
+                    $options[] = $vals;
+                }
             }
         }
-        $combinations = Helpers::combinations($options);
+        $combinations = !empty($options) ? Helpers::combinations($options) : [[]];
 
         $stockCount = 0;
         if (count($combinations[0]) > 0) {
@@ -575,12 +591,18 @@ $brands = $this->brand->active()->orderBy('name')->get();
         if ($request->has('choice_no')) {
             foreach ($request->choice_no as $key => $no) {
                 $name = 'choice_options_' . $no;
-                $my_str = implode('|', $request[$name]);
-                $options[] = explode(',', $my_str);
+                if (!isset($request[$name])) {
+                    continue;
+                }
+                $raw = is_array($request[$name]) ? implode(',', $request[$name]) : (string)$request[$name];
+                $vals = array_values(array_filter(array_map('trim', explode(',', $raw)), fn($v) => $v !== ''));
+                if (!empty($vals)) {
+                    $options[] = $vals;
+                }
             }
         }
 
-        $combinations = Helpers::combinations($options);
+        $combinations = !empty($options) ? Helpers::combinations($options) : [[]];
         $stockCount = 0;
         if (count($combinations[0]) > 0) {
             foreach ($combinations as $key => $combination) {

@@ -11,6 +11,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class SMSModuleController extends Controller
 {
@@ -38,7 +39,29 @@ class SMSModuleController extends Controller
             }
         }
 
-        $dataValues=  AddonSetting::where('settings_type','sms_config')->whereIn('key_name', ['twilio','nexmo','2factor','msg91', 'signal_wire', 'alphanet_sms'])->get() ?? [];
+        // Ensure otp_com exists in addon_settings
+        $otpComExists = AddonSetting::where('settings_type', 'sms_config')->where('key_name', 'otp_com')->first();
+        if (!$otpComExists) {
+            $defaultConfig = [
+                'gateway' => 'otp_com',
+                'mode' => 'live',
+                'status' => 0,
+                'api_key' => '',
+                'locale' => 'ar',
+                'otp_template' => 'Your verification code is #OTP#',
+            ];
+            AddonSetting::create([
+                'id' => (string) Str::uuid(),
+                'key_name' => 'otp_com',
+                'live_values' => $defaultConfig,
+                'test_values' => $defaultConfig,
+                'settings_type' => 'sms_config',
+                'mode' => 'live',
+                'is_active' => 0,
+            ]);
+        }
+
+        $dataValues = AddonSetting::where('settings_type', 'sms_config')->whereIn('key_name', ['otp_com', 'twilio', 'nexmo', '2factor', 'msg91', 'signal_wire', 'alphanet_sms'])->get() ?? [];
         return view('admin-views.business-settings.sms-index', compact('publishedStatus', 'paymentUrl', 'dataValues'));
     }
 
@@ -49,7 +72,14 @@ class SMSModuleController extends Controller
      */
     public function smsUpdate(Request $request, $module): RedirectResponse
     {
-        if ($module == 'twilio') {
+        if ($module == 'otp_com' || $request['gateway'] == 'otp_com') {
+            $additionalData = [
+                'status' => $request['status'],
+                'api_key' => $request['api_key'],
+                'locale' => $request['locale'] ?? 'ar',
+                'otp_template' => $request['otp_template'] ?? null,
+            ];
+        } elseif ($module == 'twilio') {
             $additionalData = [
                 'status' => $request['status'],
                 'sid' => $request['sid'],
@@ -90,7 +120,7 @@ class SMSModuleController extends Controller
                 'from' => $request['from'],
                 'otp_template' => $request['otp_template'],
             ];
-        }elseif ($request['gateway'] == 'alphanet_sms') {
+        } elseif ($request['gateway'] == 'alphanet_sms') {
             $additionalData = [
                 'status' => $request['status'],
                 'api_key' => $request['api_key'],
@@ -99,23 +129,23 @@ class SMSModuleController extends Controller
         }
 
         $data= [
-            'gateway' => $module ,
-            'mode' =>  isset($request['status']) == 1  ?  'live': 'test'
+            'gateway' => $module,
+            'mode' => isset($request['status']) == 1 ? 'live' : 'test'
         ];
 
-        $credentials= json_encode(array_merge($data, $additionalData));
+        $credentials = json_encode(array_merge($data, $additionalData ?? []));
 
         DB::table('addon_settings')->updateOrInsert(['key_name' => $module, 'settings_type' => 'sms_config'], [
             'key_name' => $module,
             'live_values' => $credentials,
             'test_values' => $credentials,
             'settings_type' => 'sms_config',
-            'mode' => isset($request['status']) == 1  ?  'live': 'test',
-            'is_active' => isset($request['status']) == 1  ?  1: 0 ,
+            'mode' => isset($request['status']) == 1 ? 'live' : 'test',
+            'is_active' => isset($request['status']) == 1 ? 1 : 0,
         ]);
 
         if ($request['status'] == 1) {
-            foreach (['twilio','nexmo','2factor','msg91', 'signal_wire', 'alphanet_sms'] as $gateway) {
+            foreach (['otp_com', 'twilio', 'nexmo', '2factor', 'msg91', 'signal_wire', 'alphanet_sms'] as $gateway) {
                 if ($module != $gateway) {
                     $keep = AddonSetting::where(['key_name' => $gateway, 'settings_type' => 'sms_config'])->first();
                     if (isset($keep)) {
@@ -134,8 +164,8 @@ class SMSModuleController extends Controller
 
             DB::table('business_settings')->updateOrInsert(['key' => 'firebase_otp_verification'], [
                 'value' => json_encode([
-                    'status'  => 0,
-                    'web_api_key' => $firebaseOTP['web_api_key'],
+                    'status' => 0,
+                    'web_api_key' => $firebaseOTP['web_api_key'] ?? '',
                 ]),
             ]);
         }
