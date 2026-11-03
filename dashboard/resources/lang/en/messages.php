@@ -1,6 +1,4 @@
-<?php
-
-return array (
+<?php return array (
   'attribute' => 'Attribute',
   'update' => 'Update',
   'name' => 'Name',
@@ -2028,9 +2026,7 @@ return array (
   'payment_gateway_title' => 'Payment gateway title',
   'Your current payment settings are disabled, because you have enabled
                                 payment gateway addon, To visit your currently active payment gateway settings please follow
-                                the link.' => 'Your current payment settings are disabled, because you have enabled
-                                payment gateway addon, To visit your currently active payment gateway settings please follow
-                                the link.',
+                                the link.' => 'Your current payment settings are disabled, because you have enabled payment gateway addon, To visit your currently active payment gateway settings please follow the link.',
   'choose logo' => 'Choose logo',
   'Your current sms settings are disabled, because you have enabled
                                 sms gateway addon, To visit your currently active sms gateway settings please follow
@@ -3784,9 +3780,6 @@ return array (
   'By turning on this option, you can be able to see the map on customer app & website, admin panel, branch panel and deliveryman app. You can now also setup your delivery charges based on distance(km) from' => 'By turning on this option, you can be able to see the map on customer app & website, admin panel, branch panel and deliveryman app. You can now also setup your delivery charges based on distance(km) from',
   'Failed to update status' => 'Failed to update status',
   'To work properly Weight based delivery charge need to update your product weight from' => 'To work properly Weight based delivery charge need to update your product weight from',
-  'Your current payment settings are disabled, because you have enabled
-                                payment gateway addon, To visit your currently active payment gateway settings please follow
-                                the link.' => 'Your current payment settings are disabled, because you have enabled payment gateway addon, To visit your currently active payment gateway settings please follow the link.',
   'Add a' => 'Add a',
   'Select reCAPTCHA v3 as' => 'Select reCAPTCHA v3 as',
   'Settlements & Financial Audit Log' => 'Settlements & Financial Audit Log',
@@ -3883,7 +3876,6 @@ return array (
   'Bearer Token' => 'Bearer Token',
   'OTP Message Note / Template' => 'OTP Message Note / Template',
   'Language Locale (e.g. ar, en)' => 'Language Locale (e.g. ar, en)',
-
   'Size Guides' => 'Size Guides',
   'Size Guide Editor' => 'Size Guide Editor',
   'Bin Huwesh • Operations Panel' => 'Bin Huwesh • Operations Panel',
@@ -3964,4 +3956,60 @@ return array (
   'Colors' => 'Colors',
   'Quick Fashion Colors' => 'Quick Fashion Colors',
   'Attach Image to Color' => 'Attach Image to Color',
+  'محتوى الرئيسية' => 'Home Content',
+  'Home Content' => 'Home Content',
+  'حفظ ومعاينة' => 'Save & Preview',
+  'القسم الرئيسي' => 'Hero Section',
+  'صورة' => 'Image',
+  'فيديو' => 'Video',
+  'صورة القسم الرئيسي' => 'Hero Section Image',
+  'فيديو القسم الرئيسي' => 'Hero Section Video',
+  'العنوان' => 'Title',
+  'الوصف' => 'Description',
+  'نص الزر' => 'Button Text',
+  'رابط الزر' => 'Button Link',
+  'الترتيب' => 'Order',
+  'معاينة الموبايل' => 'Mobile Preview',
+  'الأقسام قابلة للإدارة' => 'Manageable Sections',
+  'Home content and sections updated successfully!' => 'Home content and sections updated successfully!',
+  'وصل حديثاً' => 'New Arrivals',
+  'الأقسام الرئيسية' => 'Main Categories',
+  'الأكثر مبيعاً' => 'Best Sellers',
+  'العروض والتخفيضات' => 'Special Offers',
+  'التشكيلة المختارة' => 'Curated Collection',
+  'المعاينة المباشرة' => 'Live Preview',
+  'موبايل' => 'Mobile',
+  'ديسكتوب' => 'Desktop',
+  'معاينة الويب ديسكتوب' => 'Desktop Web Preview',
+  'عرض بطاقة المنتج العائمة (Floating Card)' => 'Show Floating Product Card',
+  'نمط تصميم الهيرو للويب (Web Hero Style)' => 'Web Hero Style Layout',
+  'منقسم تحريري 50/50' => 'Split Editorial 50/50',
+  'غلاف كامل عريض' => 'Full-Width Cover',
+  'إطار بوتيكي فاخر' => 'Framed Boutique',
+  'عرض متمركز فائق' => 'Minimalist Centered',
+  'وسم الإصدار أو الفئة المصغرة (Edition Tag)' => 'Edition Tag',
+  'إدارة المتجر' => 'إدارة المتجر',
+  'بن هويش • لوحة العمليات' => 'بن هويش • لوحة العمليات',
+  'اختر شكل تخطيط العرض الرئيسي على المتجر الإلكتروني وشاشات الكمبيوتر.' => 'اختر شكل تخطيط العرض الرئيسي على المتجر الإلكتروني وشاشات الكمبيوتر.',
+  '(المطابق للتصميم)' => '(المطابق للتصميم)',
+  '(نصوص عائمة)' => '(نصوص عائمة)',
+  '(بطاقة زجاجية)' => '(بطاقة زجاجية)',
+  '(أناقة عصرية)' => '(أناقة عصرية)',
+  'انقر هنا لاختيار صورة (أو اسحب وأفلت الملف)' => 'انقر هنا لاختيار صورة (أو اسحب وأفلت الملف)',
+  'انقر هنا لاختيار ملف فيديو (أو اسحب وأفلت الملف)' => 'انقر هنا لاختيار ملف فيديو (أو اسحب وأفلت الملف)',
+  'صورة غلاف الفيديو (Poster - اختياري):' => 'صورة غلاف الفيديو (Poster - اختياري):',
+  'أدخل العنوان الرئيسي' => 'أدخل العنوان الرئيسي',
+  'أدخل الوصف المختصر' => 'أدخل الوصف المختصر',
+  'نص الزر (مثال: اكتشف التشكيلة)' => 'نص الزر (مثال: اكتشف التشكيلة)',
+  'رابط التوجيه (مثال: new/ أو رابط فئة أو منتج)' => 'رابط التوجيه (مثال: new/ أو رابط فئة أو منتج)',
+  'بطاقة أنيقة تعرض صورة وسعر منتج مميز فوق واجهة البانر.' => 'بطاقة أنيقة تعرض صورة وسعر منتج مميز فوق واجهة البانر.',
+  'اختر المنتج لعرض صورته وبياناته:' => 'اختر المنتج لعرض صورته وبياناته:',
+  '--- استخدام النموذج الافتراضي (بولو محبوك) ---' => '--- استخدام النموذج الافتراضي (بولو محبوك) ---',
+  'إدارة وترتيب أقسام الصفحة الرئيسية' => 'إدارة وترتيب أقسام الصفحة الرئيسية',
+  'حدد ترتيب ظهور الأقسام في المتجر والتطبيق، ويمكنك استخدام الأسهم أو السحب لتغيير الترتيب، أو إخفاء أي قسم بالنقر على المفتاح.' => 'حدد ترتيب ظهور الأقسام في المتجر والتطبيق، ويمكنك استخدام الأسهم أو السحب لتغيير الترتيب، أو إخفاء أي قسم بالنقر على المفتاح.',
+  'اسحب للترتيب' => 'اسحب للترتيب',
+  'تحريك لأعلى' => 'تحريك لأعلى',
+  'تحريك لأسفل' => 'تحريك لأسفل',
+  'إظهار / إخفاء' => 'إظهار / إخفاء',
+  'صورة أو فيديو مع غلاف، عنوان ووصف وزر ورابط، وترتيب وإظهار وإخفاء الأقسام وبطاقاتها.' => 'صورة أو فيديو مع غلاف، عنوان ووصف وزر ورابط، وترتيب وإظهار وإخفاء الأقسام وبطاقاتها.',
 );

@@ -335,7 +335,15 @@
                                 </ul>
                             </li>
 
-                            <li
+                                                        <li class="navbar-vertical-aside-has-menu {{ Request::is('admin/home-content*') ? 'active' : '' }}">
+                                <a class="js-navbar-vertical-aside-menu-link nav-link"
+                                    href="{{ route('admin.home-content.index') }}" title="{{ translate('محتوى الرئيسية') }}">
+                                    <i class="tio-gallery-outlined nav-icon"></i>
+                                    <span class="navbar-vertical-aside-mini-mode-hidden-elements text-truncate">{{ translate('محتوى الرئيسية') }}</span>
+                                </a>
+                            </li>
+
+<li
                                 class="navbar-vertical-aside-has-menu {{ Request::is('admin/size-chart*') ? 'active' : '' }}">
                                 <a class="js-navbar-vertical-aside-menu-link nav-link"
                                     href="{{ route('admin.size-chart.index') }}" title="{{ translate('Size Guides') }}">

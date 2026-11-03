@@ -56,6 +56,8 @@ Route::group(['middleware'=>'localization'], function () {
         Route::get('delivery-fee', [ConfigController::class, 'deliveryFree']);
     });
 
+    Route::get('home-content', [\App\Http\Controllers\Admin\HomeContentController::class, 'getHomeContentApi']);
+
     Route::group(['prefix' => 'products'], function () {
         Route::get('all', [ProductController::class, 'getAllProducts']);
         Route::get('latest', [ProductController::class, 'getLatestProducts']);

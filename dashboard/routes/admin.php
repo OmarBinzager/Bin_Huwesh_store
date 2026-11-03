@@ -35,6 +35,7 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\POSController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\SizeChartController;
+use App\Http\Controllers\Admin\HomeContentController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ReviewsController;
 use App\Http\Controllers\Admin\SMSModuleController;
@@ -229,6 +230,11 @@ Route::group(['prefix' => 'seller', 'as' => 'seller.', 'middleware' => ['module:
             Route::get('get-variations', [ProductController::class, 'getVariations'])->name('get-variations');
             Route::post('update-quantity', [ProductController::class, 'updateQuantity'])->name('update-quantity');
             Route::get('feature/{id}/{is_featured}', [ProductController::class, 'feature'])->name('feature');
+        });
+
+                Route::group(['prefix' => 'home-content', 'as' => 'home-content.', 'middleware' => ['module:product_management']], function () {
+            Route::get('/', [HomeContentController::class, 'index'])->name('index');
+            Route::post('update', [HomeContentController::class, 'update'])->name('update');
         });
 
         Route::group(['prefix' => 'size-chart', 'as' => 'size-chart.', 'middleware' => ['module:product_management']], function () {
