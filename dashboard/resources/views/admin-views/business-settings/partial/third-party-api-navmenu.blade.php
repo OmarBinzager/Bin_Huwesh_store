@@ -48,4 +48,9 @@
             {{translate('Firebase Auth Verification')}}
         </a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link {{ Request::is('admin/infosoft*') ? 'active' : '' }}" href="{{ route('admin.infosoft.index') }}">
+            <i class="tio-cloud mr-1"></i> {{ translate('InfoSoft ERP') }}
+        </a>
+    </li>
 </ul>

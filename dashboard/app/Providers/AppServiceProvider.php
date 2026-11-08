@@ -10,6 +10,8 @@ use App\Models\LoginSetup;
 use App\Observers\BannerObserver;
 use App\Observers\BusinessSettingObserver;
 use App\Observers\CategoryObserver;
+use App\Observers\OrderObserver;
+use App\Model\Order;
 use App\Observers\LoginSetupObserver;
 use App\Traits\SystemAddonTrait;
 use Barryvdh\DomPDF\PDF;
@@ -47,6 +49,7 @@ class AppServiceProvider extends ServiceProvider
         LoginSetup::observe(LoginSetupObserver::class);
         Banner::observe(BannerObserver::class);
         Category::observe(CategoryObserver::class);
+        Order::observe(OrderObserver::class);
 
         //for system addon
         Config::set('addon_admin_routes',$this->get_addon_admin_routes());

@@ -140,6 +140,23 @@ class OrderController extends Controller
             'selected_delivery_area' => $request['selected_delivery_area'],
             'order_type' => $request['order_type'],
         ];
+                // InfoSoft ERP Live Available Stock Check
+        $infoSoftSetting = \App\Model\InfoSoftSetting::getActive();
+        if ($infoSoftSetting->is_enabled && $infoSoftSetting->live_stock_check) {
+            $stockService = app(\App\Services\InfoSoft\InfoSoftStockService::class);
+            $stockCheck = $stockService->validateCartStock($request['cart'] ?? []);
+            if (!$stockCheck['valid']) {
+                $stockErrors = [];
+                foreach ($stockCheck['out_of_stock'] as $oos) {
+                    $stockErrors[] = [
+                        'code'    => 'stock-001',
+                        'message' => translate('Insufficient stock in ERP for item') . ': ' . ($oos['name'] ?? 'Item') . ' (Requested: ' . $oos['requested_qty'] . ', Available: ' . $oos['available_stock'] . ')'
+                    ];
+                }
+                return response()->json(['errors' => $stockErrors], 403);
+            }
+        }
+
         $isPartiallyPaid = (bool)$request['is_partial'] == 1;
         $paymentInfo = [
             'payment_method' => $request['payment_method'],

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AIConfigurationController;
+use App\Http\Controllers\Admin\InfoSoftERPController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AnalyticController;
 use App\Http\Controllers\Admin\Auth\LoginController;
@@ -553,5 +554,18 @@ Route::group(['prefix' => 'seller', 'as' => 'seller.', 'middleware' => ['module:
 
         Route::get('verify-offline-payment/quick-view-details', [OfflinePaymentMethodController::class, 'quickViewDetails'])->name('offline-modal-view');
         Route::get('verify-offline-payment/{status}', [OfflinePaymentMethodController::class, 'offlinePaymentList'])->name('verify-offline-payment');
+        // InfoSoft ERP Integration Routes
+        Route::group(['prefix' => 'infosoft', 'as' => 'infosoft.'], function () {
+            Route::get('/', [InfoSoftERPController::class, 'index'])->name('index');
+            Route::post('update-settings', [InfoSoftERPController::class, 'updateSettings'])->name('update-settings');
+            Route::post('test-connection', [InfoSoftERPController::class, 'testConnection'])->name('test-connection');
+            Route::post('sync-all', [InfoSoftERPController::class, 'syncAllItems'])->name('sync-all');
+            Route::post('sync-incremental', [InfoSoftERPController::class, 'syncIncremental'])->name('sync-incremental');
+            Route::post('sync-packing', [InfoSoftERPController::class, 'syncPackingUnits'])->name('sync-packing');
+            Route::get('invoices', [InfoSoftERPController::class, 'invoices'])->name('invoices');
+            Route::post('retry-invoice/{id}', [InfoSoftERPController::class, 'retryInvoice'])->name('retry-invoice');
+            Route::get('invoice-payload/{id}', [InfoSoftERPController::class, 'invoicePayload'])->name('invoice-payload');
+            Route::get('mappings', [InfoSoftERPController::class, 'mappings'])->name('mappings');
+        });
     });
 });

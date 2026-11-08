@@ -633,4 +633,20 @@ class ProductController extends Controller
         return response()->json($products, 200);
     }
 
+
+    /**
+     * Live InfoSoft ERP Stock Check for Cart Items
+     */
+    public function checkInfoSoftStock(Request $request): JsonResponse
+    {
+        $cart = $request->input('cart', []);
+        if (empty($cart)) {
+            return response()->json(['valid' => true, 'out_of_stock' => []], 200);
+        }
+
+        $stockService = app(\App\Services\InfoSoft\InfoSoftStockService::class);
+        $result = $stockService->validateCartStock($cart);
+
+        return response()->json($result, 200);
+    }
 }

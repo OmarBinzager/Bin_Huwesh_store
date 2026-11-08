@@ -791,6 +791,38 @@
                                 <small class="tio-more-horizontal nav-subtitle-replacer"></small>
                             </li>
 
+                                                        <!-- InfoSoft ERP Integration -->
+                            <li class="navbar-vertical-aside-has-menu {{ Request::is('admin/infosoft*') ? 'active' : '' }}">
+                                <a class="js-navbar-vertical-aside-menu-link nav-link nav-link-toggle" href="javascript:"
+                                   title="{{ translate('InfoSoft ERP') }}">
+                                    <i class="tio-cloud-outlined nav-icon"></i>
+                                    <span class="navbar-vertical-aside-mini-mode-hidden-elements text-truncate">
+                                        {{ translate('InfoSoft ERP') }}
+                                        <span class="badge badge-info badge-pill ml-1">ZATCA</span>
+                                    </span>
+                                </a>
+                                <ul class="js-navbar-vertical-aside-submenu nav nav-sub"
+                                    style="display: {{ Request::is('admin/infosoft*') ? 'block' : 'none' }}">
+                                    <li class="nav-item {{ Request::is('admin/infosoft') ? 'active' : '' }}">
+                                        <a class="nav-link" href="{{ route('admin.infosoft.index') }}" title="{{ translate('Settings & Mapping') }}">
+                                            <span class="tio-circle nav-indicator-icon"></span>
+                                            <span class="text-truncate">{{ translate('Settings & Sync') }}</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item {{ Request::is('admin/infosoft/invoices*') ? 'active' : '' }}">
+                                        <a class="nav-link" href="{{ route('admin.infosoft.invoices') }}" title="{{ translate('Invoices & DLQ') }}">
+                                            <span class="tio-circle nav-indicator-icon"></span>
+                                            <span class="text-truncate">{{ translate('Invoices Log & DLQ') }}</span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item {{ Request::is('admin/infosoft/mappings*') ? 'active' : '' }}">
+                                        <a class="nav-link" href="{{ route('admin.infosoft.mappings') }}" title="{{ translate('Product Mappings') }}">
+                                            <span class="tio-circle nav-indicator-icon"></span>
+                                            <span class="text-truncate">{{ translate('Product Mappings') }}</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
                             <li
                                 class="navbar-vertical-aside-has-menu {{ Request::is('admin/business-settings/store*') ? 'active' : '' }}">
                                 <a class="js-navbar-vertical-aside-menu-link nav-link"

@@ -22,14 +22,12 @@ class Product extends Model
         'updated_at'  => 'datetime',
         'is_featured' => 'integer',
         'weight'      => 'float',
-        'brand_id'    => 'integer', // أضف هذا السطر
-        'seller_id' => 'integer',
+        'brand_id'    => 'integer',
+        'seller_id'   => 'integer',
         'warranty_years' => 'integer',
         'purchase_price' => 'float',
         'size_chart_id'  => 'integer',
         'color_images'   => 'array',
-
-
     ];
 
     public function translations(): \Illuminate\Database\Eloquent\Relations\MorphMany
@@ -107,9 +105,7 @@ class Product extends Model
         return $imageUrlArray;
     }
 
-
-
- public function brand(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function brand(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Brand::class);
     }
@@ -169,7 +165,13 @@ class Product extends Model
         return $data;
     }
 
+    public function erp_mappings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(InfoSoftProductMapping::class, 'product_id');
+    }
 
-
-
+    public function erp_mapping(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(InfoSoftProductMapping::class, 'product_id');
+    }
 }

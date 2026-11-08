@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        //
+        Commands\SyncInfoSoftERP::class,
     ];
 
     /**
@@ -24,7 +24,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')->hourly();
+        // Periodic incremental sync with InfoSoft ERP
+        $schedule->command('infosoft:sync --type=incremental')->everyThirtyMinutes()->withoutOverlapping();
     }
 
     /**

@@ -40,6 +40,9 @@ class Order extends Model
         'payment_method',
         'payment_status',
         'bring_change_amount',
+        'erp_invoice_id',
+        'erp_sync_status',
+        'erp_sync_error',
     ];
 
     public function details(): \Illuminate\Database\Eloquent\Relations\HasMany
@@ -121,4 +124,13 @@ class Order extends Model
         return $this->hasOne(OrderChangeAmount::class, 'order_id');
     }
 
+    public function erp_invoice_logs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(InfoSoftInvoiceLog::class, 'order_id')->latest();
+    }
+
+    public function latest_erp_invoice_log(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(InfoSoftInvoiceLog::class, 'order_id')->latestOfMany();
+    }
 }

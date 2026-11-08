@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\OfflinePaymentMethodController;
 use App\Http\Controllers\Api\V1\ProductController;
 use App\Http\Controllers\Api\V1\TimeSlotController;
+use App\Http\Controllers\Api\V1\WishlistController;
 
 Route::group(['middleware'=>'localization'], function () {
     Route::group(['prefix' => 'auth', 'namespace' => 'Auth'], function () {
@@ -60,6 +61,7 @@ Route::group(['middleware'=>'localization'], function () {
 
     Route::group(['prefix' => 'products'], function () {
         Route::get('all', [ProductController::class, 'getAllProducts']);
+        Route::post('check-stock', [ProductController::class, 'checkInfoSoftStock']);
         Route::get('latest', [ProductController::class, 'getLatestProducts']);
         Route::get('popular', [ProductController::class, 'getPopularProducts']);
         Route::get('discounted', [ProductController::class, 'getDiscountedProducts']);
