@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Model\InfoSoftInvoiceLog;
 use App\Model\InfoSoftPackingUnit;
 use App\Model\InfoSoftProductMapping;
+use App\Model\InfoSoftVariantDictionary;
 use App\Model\InfoSoftSetting;
 use App\Model\Order;
 use App\Model\Product;
@@ -72,8 +73,10 @@ class InfoSoftERPController extends Controller
             'default_invoice_type'   => $request->default_invoice_type,
             'shipping_account'       => trim($request->shipping_account ?? ''),
             'live_stock_check'       => $request->has('live_stock_check'),
-            'is_barcode'             => $request->has('is_barcode'),
-            'sync_days_lookback'     => max(1, (int)$request->sync_days_lookback),
+            'is_barcode'               => $request->has('is_barcode'),
+            'variant_grouping_enabled' => $request->has('variant_grouping_enabled'),
+            'variant_separator'        => trim($request->variant_separator ?? '-') ?: '-',
+            'sync_days_lookback'       => max(1, (int)$request->sync_days_lookback),
             'sync_frequency_minutes' => max(5, (int)$request->sync_frequency_minutes),
         ];
 
@@ -237,6 +240,46 @@ class InfoSoftERPController extends Controller
         $mappings = $query->latest()->paginate(25);
         $packingUnits = InfoSoftPackingUnit::all();
 
-        return view('admin-views.infosoft.mapping', compact('mappings', 'packingUnits'));
+        $dictionaries = InfoSoftVariantDictionary::orderBy('type')->orderBy('raw_keyword')->get();
+        return view('admin-views.infosoft.mapping', compact('mappings', 'packingUnits', 'dictionaries'));
+    }
+
+    /**
+     * Store or update variant normalization dictionary rule
+     */
+    public function storeDictionary(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'type'               => 'required|in:color,size',
+            'raw_keyword'        => 'required|string|max:100',
+            'normalized_name_ar' => 'required|string|max:100',
+        ]);
+
+        InfoSoftVariantDictionary::updateOrCreate(
+            [
+                'type'        => $request->type,
+                'raw_keyword' => trim($request->raw_keyword),
+            ],
+            [
+                'normalized_name_ar' => trim($request->normalized_name_ar),
+                'normalized_name_en' => trim($request->normalized_name_en ?: $request->normalized_name_ar),
+                'hex_color'          => $request->hex_color ? trim($request->hex_color) : null,
+            ]
+        );
+
+        Toastr::success(translate('Variant dictionary rule saved successfully!'));
+        return back();
+    }
+
+    /**
+     * Delete variant normalization dictionary rule
+     */
+    public function deleteDictionary(int $id): RedirectResponse
+    {
+        $entry = InfoSoftVariantDictionary::findOrFail($id);
+        $entry->delete();
+
+        Toastr::success(translate('Dictionary rule deleted successfully!'));
+        return back();
     }
 }

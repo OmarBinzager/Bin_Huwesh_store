@@ -100,10 +100,37 @@ class InfoSoftStockService
         }
 
         $skusToCheck = [];
-        foreach ($cartItems as $item) {
-            $sku = $item['erp_item_id'] ?? $item['sku'] ?? $item['product_id'] ?? null;
+        $itemToSkuMap = [];
+
+        foreach ($cartItems as $index => $item) {
+            $productId = $item['product_id'] ?? $item['id'] ?? null;
+            $variant = $item['variant'] ?? $item['variation'] ?? null;
+
+            $sku = null;
+            if ($productId && !empty($variant)) {
+                $mapping = \App\Model\InfoSoftProductMapping::where('product_id', $productId)
+                    ->where('variation_type', $variant)
+                    ->first();
+                if ($mapping) {
+                    $sku = $mapping->erp_item_id;
+                }
+            }
+
+            if (!$sku && $productId) {
+                $mapping = \App\Model\InfoSoftProductMapping::where('product_id', $productId)->first();
+                if ($mapping) {
+                    $sku = $mapping->erp_item_id;
+                }
+            }
+
+            if (!$sku) {
+                $sku = $item['erp_item_id'] ?? $item['sku'] ?? $productId;
+            }
+
             if ($sku) {
-                $skusToCheck[] = (string)$sku;
+                $skuStr = (string)$sku;
+                $skusToCheck[] = $skuStr;
+                $itemToSkuMap[$index] = $skuStr;
             }
         }
 
@@ -114,16 +141,17 @@ class InfoSoftStockService
         $stockMap = $this->getAvailableStock($skusToCheck);
         $outOfStock = [];
 
-        foreach ($cartItems as $item) {
-            $sku = (string)($item['erp_item_id'] ?? $item['sku'] ?? $item['product_id'] ?? '');
+        foreach ($cartItems as $index => $item) {
+            $sku = $itemToSkuMap[$index] ?? (string)($item['erp_item_id'] ?? $item['sku'] ?? $item['product_id'] ?? '');
             $requestedQty = (float)($item['quantity'] ?? 1);
 
             if (isset($stockMap[$sku])) {
                 $available = (float)$stockMap[$sku];
                 if ($available < $requestedQty) {
+                    $variantLabel = !empty($item['variant']) ? " ({$item['variant']})" : '';
                     $outOfStock[] = [
                         'sku'            => $sku,
-                        'name'           => $item['name'] ?? 'Product',
+                        'name'           => ($item['name'] ?? 'Product') . $variantLabel,
                         'requested_qty'  => $requestedQty,
                         'available_stock'=> $available,
                     ];

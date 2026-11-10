@@ -313,6 +313,25 @@
                             </small>
                         </div>
 
+                        <div class="mb-3">
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" class="custom-control-input" id="variant_grouping_enabled" name="variant_grouping_enabled" {{ $settings->variant_grouping_enabled ? 'checked' : '' }}>
+                                <label class="custom-control-label font-weight-bold text-primary" for="variant_grouping_enabled">
+                                    {{ translate('Auto Variant Matrix Grouping') }}
+                                </label>
+                            </div>
+                            <small class="text-muted d-block mt-1">
+                                {{ translate('Automatically groups InfoSoft flat variant items (e.g. 100-BLACK-S, 100-RED-XL) under one single parent Product.') }}
+                            </small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label font-weight-bold">{{ translate('Variant Code Separator') }}</label>
+                            <input type="text" name="variant_separator" class="form-control" style="max-width: 100px;"
+                                   value="{{ old('variant_separator', $settings->variant_separator ?? '-') }}" maxlength="5" required>
+                            <small class="text-muted">{{ translate('Delimiter used in InfoSoft items, e.g. "-" in "100-BLACK-S"') }}</small>
+                        </div>
+
                         <hr>
 
                         <div class="mb-3">

@@ -52,8 +52,18 @@ class InfoSoftInvoiceService
                 $cmbkey = $product->erp_cmbkey ?? ($itemId . '01');
                 $barcode = $product->erp_barcode ?? null;
 
-                // Lookup packaging mapping if available
-                $mapping = InfoSoftProductMapping::where('product_id', $detail->product_id)->first();
+                // Lookup packaging or variant mapping
+                $variant = $detail->variant ?? $detail->variation ?? null;
+                $mapping = null;
+                if (!empty($variant)) {
+                    $mapping = InfoSoftProductMapping::where('product_id', $detail->product_id)
+                        ->where('variation_type', $variant)
+                        ->first();
+                }
+                if (!$mapping) {
+                    $mapping = InfoSoftProductMapping::where('product_id', $detail->product_id)->first();
+                }
+
                 if ($mapping) {
                     $cmbkey = $mapping->erp_cmbkey ?: $cmbkey;
                     $barcode = $mapping->barcode ?: $barcode;
@@ -217,15 +227,28 @@ class InfoSoftInvoiceService
             $lineItems = [];
             foreach ($order->details as $detail) {
                 $product = $detail->product;
-                $itemId = $product->erp_item_id ?? (string)$detail->product_id;
-                $cmbkey = $product->erp_cmbkey ?? ($itemId . '01');
+                $variant = $detail->variant ?? $detail->variation ?? null;
+
+                $mapping = null;
+                if (!empty($variant)) {
+                    $mapping = InfoSoftProductMapping::where('product_id', $detail->product_id)
+                        ->where('variation_type', $variant)
+                        ->first();
+                }
+                if (!$mapping) {
+                    $mapping = InfoSoftProductMapping::where('product_id', $detail->product_id)->first();
+                }
+
+                $itemId = $mapping ? $mapping->erp_item_id : ($product->erp_item_id ?? (string)$detail->product_id);
+                $cmbkey = $mapping ? $mapping->erp_cmbkey : ($product->erp_cmbkey ?? ($itemId . '01'));
+                $barcode = $mapping ? $mapping->barcode : ($product->erp_barcode ?? '');
 
                 $qty = (float)($detail->quantity ?? 1);
                 $price = (float)($detail->price ?? 0);
 
                 $lineItems[] = [
                     'cmbkey'  => (string)$cmbkey,
-                    'barcode' => (string)($product->erp_barcode ?? ''),
+                    'barcode' => (string)($barcode ?? ''),
                     'qty'     => $qty,
                     'fqty'    => 0.0,
                     'price'   => $price,

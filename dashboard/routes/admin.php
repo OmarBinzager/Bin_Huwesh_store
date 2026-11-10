@@ -566,6 +566,8 @@ Route::group(['prefix' => 'seller', 'as' => 'seller.', 'middleware' => ['module:
             Route::post('retry-invoice/{id}', [InfoSoftERPController::class, 'retryInvoice'])->name('retry-invoice');
             Route::get('invoice-payload/{id}', [InfoSoftERPController::class, 'invoicePayload'])->name('invoice-payload');
             Route::get('mappings', [InfoSoftERPController::class, 'mappings'])->name('mappings');
+            Route::post('store-dictionary', [InfoSoftERPController::class, 'storeDictionary'])->name('store-dictionary');
+            Route::post('delete-dictionary/{id}', [InfoSoftERPController::class, 'deleteDictionary'])->name('delete-dictionary');
         });
     });
 });
