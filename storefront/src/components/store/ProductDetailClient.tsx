@@ -10,22 +10,41 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
   const { product, related_products } = data;
   const bag = useDemoBag();
 
+  const isUniquePatterns =
+    product.variant_mode === "unique_patterns" && (product.patterns?.length ?? 0) > 0;
+
+  const availablePatterns = useMemo(() => {
+    if (!isUniquePatterns) return [];
+    return (product.patterns ?? []).filter((p) => !p.is_sold && p.stock > 0);
+  }, [isUniquePatterns, product.patterns]);
+
   const galleryImages = useMemo(() => {
     const list: string[] = [];
-    if (product.image) list.push(product.image);
+    if (isUniquePatterns) {
+      for (const p of availablePatterns) {
+        if (p.image_url && !list.includes(p.image_url)) list.push(p.image_url);
+      }
+    }
+    if (product.image && !list.includes(product.image)) list.push(product.image);
     for (const img of product.images ?? []) {
       if (img && !list.includes(img)) list.push(img);
     }
-    for (const ci of product.color_images ?? []) {
-      const url = ci.image_url || ci.image;
-      if (url && !list.includes(url)) list.push(url);
+    if (!isUniquePatterns) {
+      for (const ci of product.color_images ?? []) {
+        const url = ci.image_url || ci.image;
+        if (url && !list.includes(url)) list.push(url);
+      }
     }
     return list;
-  }, [product]);
+  }, [product, isUniquePatterns, availablePatterns]);
 
-  const [selectedImage, setSelectedImage] = useState<string>(galleryImages[0] || "");
+  const [selectedImage, setSelectedImage] = useState<string>(
+    (isUniquePatterns && availablePatterns[0]?.image_url) || galleryImages[0] || "",
+  );
   const [selectedColor, setSelectedColor] = useState<string>(
-    product.color_images?.[0]?.color_name || product.color_images?.[0]?.color || "",
+    isUniquePatterns
+      ? availablePatterns[0]?.name || ""
+      : product.color_images?.[0]?.color_name || product.color_images?.[0]?.color || "",
   );
   const availableSizes = useMemo(() => {
     if (product.sizes && product.sizes.length > 0) return product.sizes;
@@ -40,8 +59,18 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
   const [sizeChartOpen, setSizeChartOpen] = useState(false);
   const [addedFeedback, setAddedFeedback] = useState(false);
 
+  const activePattern = useMemo(() => {
+    if (!isUniquePatterns) return null;
+    return availablePatterns.find((p) => p.name === selectedColor) || availablePatterns[0] || null;
+  }, [isUniquePatterns, availablePatterns, selectedColor]);
+
   // Match variation price & stock if variations exist
   const activeVariation = useMemo(() => {
+    if (isUniquePatterns) {
+      return activePattern
+        ? { type: activePattern.type, price: activePattern.price, stock: activePattern.stock }
+        : { type: "", price: product.price, stock: 0 };
+    }
     if (!product.variations || product.variations.length === 0) return null;
     const sizeNorm = selectedSize.trim().toLowerCase();
     const colorNorm = selectedColor.trim().toLowerCase();
@@ -55,14 +84,17 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
       product.variations.find((v) => v.type.toLowerCase().includes(sizeNorm)) ||
       null
     );
-  }, [product.variations, selectedSize, selectedColor]);
+  }, [isUniquePatterns, activePattern, product.price, product.variations, selectedSize, selectedColor]);
+
+  const basePrice =
+    activeVariation && activeVariation.price > 0 ? activeVariation.price : product.price;
 
   const activePrice =
-    activeVariation && activeVariation.price > 0
-      ? product.discount > 0 && product.discount_type === "percent"
-        ? Math.max(0, Math.round(activeVariation.price * (1 - product.discount / 100)))
-        : activeVariation.price
-      : product.final_price;
+    product.discount > 0
+      ? product.discount_type === "percent"
+        ? Math.max(0, Math.round(basePrice * (1 - product.discount / 100)))
+        : Math.max(0, Math.round(basePrice - product.discount))
+      : basePrice;
 
   const activeStock = activeVariation ? activeVariation.stock : product.total_stock;
   const outOfStock = activeStock <= 0;
@@ -97,7 +129,12 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
     setTimeout(() => setAddedFeedback(false), 1800);
   };
 
-  const hasDiscount = product.discount > 0 && product.final_price < product.price;
+  const hasDiscount = product.discount > 0 && activePrice < basePrice;
+  const discountLabel = hasDiscount
+    ? product.discount_type === "percent"
+      ? `خصم ${Math.round(product.discount)}%`
+      : `وفر ${formatPrice(basePrice - activePrice)}`
+    : null;
 
   return (
     <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-8 sm:py-10">
@@ -136,9 +173,9 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
                 لا توجد صورة متاحة
               </div>
             )}
-            {hasDiscount && (
+            {hasDiscount && discountLabel && (
               <span className="absolute top-4 right-4 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-white">
-                خصم خاص
+                {discountLabel}
               </span>
             )}
           </div>
@@ -178,57 +215,135 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
           <div className="mt-4 flex flex-wrap items-baseline gap-3">
             <span className="text-2xl font-bold text-ink">{formatPrice(activePrice)}</span>
             {hasDiscount && (
-              <span className="text-base text-muted line-through">
-                {formatPrice(product.price)}
-              </span>
+              <>
+                <span className="text-base text-muted line-through">
+                  {formatPrice(basePrice)}
+                </span>
+                {discountLabel && (
+                  <span className="rounded-full bg-brand/12 px-2.5 py-0.5 text-xs font-semibold text-brand">
+                    {discountLabel}
+                  </span>
+                )}
+              </>
             )}
             <span
               className={`mr-auto rounded-full px-3 py-1 text-xs font-medium ${
                 outOfStock
                   ? "bg-red-500/10 text-red-500"
-                  : "bg-emerald-500/10 text-emerald-600"
+                  : isUniquePatterns && activeStock === 1
+                    ? "bg-amber-500/15 text-amber-600"
+                    : "bg-emerald-500/10 text-emerald-600"
               }`}
             >
-              {outOfStock ? "نفذت الكمية" : `متوفر (${activeStock})`}
+              {outOfStock
+                ? "نفذت الكمية"
+                : isUniquePatterns && activeStock === 1
+                  ? "قطعة فريدة — متبقي 1 فقط"
+                  : `متوفر (${activeStock})`}
             </span>
           </div>
 
-          {/* Color Swatches */}
-          {product.color_images && product.color_images.length > 0 && (
+          {/* Unique Patterns Visual Grid (Maawaz / One-of-a-kind pieces) */}
+          {isUniquePatterns ? (
             <div className="mt-6">
-              <div className="mb-2 flex items-center justify-between text-[13px]">
-                <span className="font-medium text-ink">اللون:</span>
-                <span className="text-muted">{selectedColor}</span>
+              <div className="mb-2.5 flex items-center justify-between text-[13px]">
+                <span className="font-medium text-ink">اختر الشكل / النقشة:</span>
+                <span className="font-semibold text-brand">
+                  {activePattern ? activePattern.name : "غير متوفر"}
+                </span>
               </div>
-              <div className="flex flex-wrap gap-2.5">
-                {product.color_images.map((ci, idx) => {
-                  const name = ci.color_name || ci.color || `لون ${idx + 1}`;
-                  const active = selectedColor === name;
-                  const hex = ci.color?.startsWith("#") ? ci.color : undefined;
-                  return (
-                    <button
-                      key={`${name}-${idx}`}
-                      type="button"
-                      onClick={() => handleSelectColor(ci)}
-                      title={name}
-                      className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] transition-all ${
-                        active
-                          ? "border-brand bg-brand/10 font-semibold text-ink"
-                          : "border-line bg-card text-muted hover:border-ink/40"
-                      }`}
-                    >
-                      {hex && (
-                        <span
-                          className="h-3.5 w-3.5 rounded-full border border-black/15"
-                          style={{ backgroundColor: hex }}
-                        />
-                      )}
-                      <span>{name}</span>
-                    </button>
-                  );
-                })}
-              </div>
+              {availablePatterns.length > 0 ? (
+                <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-4">
+                  {availablePatterns.map((p) => {
+                    const active = activePattern?.name === p.name;
+                    return (
+                      <button
+                        key={p.type}
+                        type="button"
+                        onClick={() => {
+                          setSelectedColor(p.name);
+                          if (p.image_url) setSelectedImage(p.image_url);
+                          setQty((q) => Math.min(q, Math.max(1, p.stock)));
+                        }}
+                        className={`group relative overflow-hidden rounded-2xl border text-right transition-all ${
+                          active
+                            ? "border-brand ring-2 ring-brand/30"
+                            : "border-line hover:border-ink/40"
+                        }`}
+                      >
+                        <div className="aspect-[3/4] w-full overflow-hidden bg-stage">
+                          <img
+                            src={p.image_url}
+                            alt={p.name}
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        </div>
+                        <div className="flex items-center justify-between gap-1 bg-card px-2 py-1.5 text-[11px]">
+                          <span className="truncate font-medium text-ink">{p.name}</span>
+                          <span className="shrink-0 rounded-full bg-stage px-1.5 py-0.5 text-[10px] text-muted">
+                            {p.stock === 1 ? "وحيدة" : `${p.stock}`}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-line bg-stage p-4 text-center text-[13px] text-muted">
+                  تم بيع جميع النقشات المتوفرة حالياً لهذا الصنف.
+                </div>
+              )}
             </div>
+          ) : (
+            /* Color Swatches (with thumbnail or color dot) */
+            product.color_images &&
+            product.color_images.length > 0 && (
+              <div className="mt-6">
+                <div className="mb-2 flex items-center justify-between text-[13px]">
+                  <span className="font-medium text-ink">اللون:</span>
+                  <span className="text-muted">{selectedColor}</span>
+                </div>
+                <div className="flex flex-wrap gap-2.5">
+                  {product.color_images.map((ci, idx) => {
+                    const name = ci.color_name || ci.color || `لون ${idx + 1}`;
+                    const active = selectedColor === name;
+                    const hex = ci.color_code?.startsWith("#")
+                      ? ci.color_code
+                      : ci.color?.startsWith("#")
+                        ? ci.color
+                        : undefined;
+                    const thumbUrl = ci.image_url && !ci.image_url.endsWith("/2.png") ? ci.image_url : undefined;
+                    return (
+                      <button
+                        key={`${name}-${idx}`}
+                        type="button"
+                        onClick={() => handleSelectColor(ci)}
+                        title={name}
+                        className={`flex items-center gap-2 rounded-2xl border px-3 py-1.5 text-[12px] transition-all ${
+                          active
+                            ? "border-brand bg-brand/10 font-semibold text-ink ring-1 ring-brand/40"
+                            : "border-line bg-card text-muted hover:border-ink/40"
+                        }`}
+                      >
+                        {thumbUrl ? (
+                          <img
+                            src={thumbUrl}
+                            alt={name}
+                            className="h-6 w-6 rounded-lg border border-black/10 object-cover"
+                          />
+                        ) : hex ? (
+                          <span
+                            className="h-4 w-4 rounded-full border border-black/15"
+                            style={{ backgroundColor: hex }}
+                          />
+                        ) : null}
+                        <span>{name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )
           )}
 
           {/* Size Selector */}
@@ -264,6 +379,73 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
                     </button>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* Full Variants Matrix Table (for standard products with variations) */}
+          {!isUniquePatterns && product.variations && product.variations.length > 0 && (
+            <div className="mt-6">
+              <div className="mb-2 flex items-center justify-between text-[13px]">
+                <span className="font-medium text-ink">جدول المتغيرات المتاحة:</span>
+                <span className="text-[11px] text-muted">اختر من الجدول أو من الأعلى</span>
+              </div>
+              <div className="no-scrollbar max-h-56 overflow-auto rounded-2xl border border-line bg-card">
+                <table className="w-full border-collapse text-right text-[12px]">
+                  <thead className="sticky top-0 bg-stage text-ink">
+                    <tr className="border-b border-line">
+                      <th className="px-3 py-2 font-semibold">المتغير</th>
+                      <th className="px-3 py-2 font-semibold">السعر</th>
+                      <th className="px-3 py-2 font-semibold">المخزون</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {product.variations.map((v) => {
+                      const isActive = activeVariation?.type === v.type;
+                      const mergedLabel = v.type.split("-").filter(Boolean).join(" • ");
+                      const varPrice =
+                        product.discount > 0 && product.discount_type === "percent"
+                          ? Math.max(0, Math.round(v.price * (1 - product.discount / 100)))
+                          : v.price;
+                      return (
+                        <tr
+                          key={v.type}
+                          onClick={() => {
+                            const parts = v.type.split("-").filter(Boolean);
+                            if (parts.length >= 2) {
+                              const matchedColor = product.color_images?.find(
+                                (ci) =>
+                                  (ci.color_name || ci.color || "").replace(/\s+/g, "").toLowerCase() ===
+                                  parts[0].toLowerCase(),
+                              );
+                              if (matchedColor) {
+                                handleSelectColor(matchedColor);
+                              } else {
+                                setSelectedColor(parts[0]);
+                              }
+                              setSelectedSize(parts.slice(1).join("-"));
+                            } else if (parts.length === 1) {
+                              setSelectedSize(parts[0]);
+                            }
+                          }}
+                          className={`cursor-pointer border-b border-line/60 transition-colors last:border-0 ${
+                            isActive ? "bg-brand/10 font-semibold text-ink" : "hover:bg-stage/70 text-muted"
+                          }`}
+                        >
+                          <td className="px-3 py-2 text-ink">{mergedLabel}</td>
+                          <td className="px-3 py-2">{formatPrice(varPrice)}</td>
+                          <td className="px-3 py-2">
+                            {v.stock > 0 ? (
+                              <span className="text-emerald-600">متوفر ({v.stock})</span>
+                            ) : (
+                              <span className="text-red-500">نفد</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -414,15 +596,20 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
                   </tr>
                 </thead>
                 <tbody>
-                  {product.size_chart.rows.map((row, rIdx) => (
-                    <tr key={rIdx} className="border-b border-line/60">
-                      {row.map((cell, cIdx) => (
-                        <td key={cIdx} className="px-3 py-2 text-muted">
-                          {cell}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
+                  {product.size_chart.rows.map((row, rIdx) => {
+                    const cells = Array.isArray(row)
+                      ? row
+                      : product.size_chart!.columns.map((col) => String((row as Record<string, unknown>)[col] ?? ""));
+                    return (
+                      <tr key={rIdx} className="border-b border-line/60">
+                        {cells.map((cell, cIdx) => (
+                          <td key={cIdx} className="px-3 py-2 text-muted">
+                            {cell}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

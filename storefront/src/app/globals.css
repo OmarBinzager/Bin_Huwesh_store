@@ -210,6 +210,15 @@ html.theme-ready aside {
   contain-intrinsic-size: auto 420px auto 270px;
 }
 
+/* Utility to hide scrollbars while maintaining scroll functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* Motion is decorative throughout, so it degrades to static layout cleanly. */
 @media (prefers-reduced-motion: reduce) {
   *,
