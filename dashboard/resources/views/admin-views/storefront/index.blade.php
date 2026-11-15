@@ -41,6 +41,28 @@
         border-radius: 8px;
         border: 1px solid #e2e8f0;
     }
+    .sf-example-box {
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 10px;
+        padding: 10px 12px;
+    }
+    .sf-example-thumb {
+        width: 68px;
+        height: 84px;
+        object-fit: contain;
+        cursor: zoom-in;
+        transition: transform .15s ease;
+    }
+    .sf-example-thumb:hover {
+        transform: scale(1.06);
+    }
+    .sf-example-thumb-wide {
+        width: 112px;
+        height: 68px;
+        object-fit: contain;
+        cursor: zoom-in;
+    }
 </style>
 @endpush
 
@@ -177,7 +199,17 @@
                             <div class="col-12">
                                 <label class="input-label">{{ translate('صورة المودل المفرغة (WebP/PNG بخلفية شفافة)') }}</label>
                                 <input type="file" accept="image/png,image/webp" class="form-control" onchange="uploadProcessedLook(this)">
-                                <small class="text-muted">{{ translate('يتم قص الهوامش الشفافة وتوحيد الارتفاع إلى 1400px بصيغة WebP تلقائيًا في المتصفح.') }}</small>
+                                <small class="text-muted d-block mt-1">{{ translate('يتم قص الهوامش الشفافة وتوحيد الارتفاع إلى 1400px بصيغة WebP تلقائيًا في المتصفح.') }}</small>
+                                <div class="sf-example-box d-flex align-items-center gap-3 mt-2">
+                                    <img src="{{ asset('public/assets/admin/img/storefront-examples/look-example.webp') }}"
+                                         alt="مثال صورة الإطلالة"
+                                         class="sf-checker sf-example-thumb"
+                                         onclick="openExampleModal(this.src, 'مثال صورة الإطلالة الكاملة (Hero Look)', 'صورة كاملة الجسم من الرأس حتى الحذاء على خلفية شفافة (PNG/WebP)، بدون قص الرأس أو القدمين، ارتفاع مثالي 1400px.')">
+                                    <div class="small">
+                                        <div class="fw-bold text-dark">{{ translate('مثال مثالي لصورة الإطلالة:') }}</div>
+                                        <div class="text-muted">{{ translate('مودل كامل الجسم (من الرأس للحذاء) بخلفية شفافة PNG/WebP · ارتفاع 1400px · اضغط على الصورة للتكبير') }}</div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="col-md-5 text-center">
@@ -282,6 +314,22 @@
                                         <div class="col-12"><button type="button" class="btn btn-sm btn-outline-primary" onclick="addVfColor()">+ {{ translate('معالجة ورفع اللون') }}</button></div>
                                     </div>
                                     <div id="vfColorsList" class="mt-2 d-flex flex-wrap gap-2"></div>
+                                    <div class="sf-example-box d-flex flex-wrap align-items-center gap-3 mt-3">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <img src="{{ asset('public/assets/admin/img/storefront-examples/vf-garment-example.webp') }}"
+                                                 alt="مثال صورة القطعة"
+                                                 class="sf-checker sf-example-thumb"
+                                                 onclick="openExampleModal(this.src, 'مثال صورة القطعة (Ghost Mannequin)', 'صورة القطعة وحدها مفرغة على خلفية شفافة PNG/WebP، بنسبة مربعة (800×800px مثالي) لعرضها على القوس الدائري.')">
+                                            <img src="{{ asset('public/assets/admin/img/storefront-examples/vf-model-example.webp') }}"
+                                                 alt="مثال صورة المودل"
+                                                 class="sf-checker sf-example-thumb"
+                                                 onclick="openExampleModal(this.src, 'مثال صورة المودل للقياس الافتراضي (VirtualFit)', 'صورة مفرغة للمودل من الرأس حتى منتصف الفخذ بارتفاع 1360px، الرأس متمركز بالأعلى (~25px) وبنفس الوقفة والإضاءة لجميع الألوان.')">
+                                        </div>
+                                        <div class="small flex-grow-1" style="min-width:220px;">
+                                            <div class="fw-bold text-dark">{{ translate('مثال مثالي للقياس الافتراضي (صورتان متطابقتان):') }}</div>
+                                            <div class="text-muted">{{ translate('1) القطعة مفرغة مربعة 800×800 · 2) المودل مفرغ بارتفاع 1360px من الرأس لمنتصف الفخذ بنفس الوقفة. اضغط للتكبير') }}</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -361,6 +409,16 @@
                                         <div class="col-md-2"><button type="button" class="btn btn-sm btn-outline-primary w-100" onclick="addShoeColor()">+ {{ translate('رفع') }}</button></div>
                                     </div>
                                     <div id="shColorsList" class="mt-2 d-flex flex-wrap gap-2"></div>
+                                    <div class="sf-example-box d-flex align-items-center gap-3 mt-3">
+                                        <img src="{{ asset('public/assets/admin/img/storefront-examples/shoe-example.webp') }}"
+                                             alt="مثال صورة الحذاء"
+                                             class="sf-checker sf-example-thumb-wide"
+                                             onclick="openExampleModal(this.src, 'مثال صورة الحذاء (ShoeShelf 3D)', 'لقطة جانبية مفرغة على خلفية شفافة PNG/WebP، المقدمة متجهة لليسار، ويتم ضبط المقاس إلى 1400×800px مع محاذاة خط النعل عند 88%.')">
+                                        <div class="small">
+                                            <div class="fw-bold text-dark">{{ translate('مثال مثالي لصورة الحذاء:') }}</div>
+                                            <div class="text-muted">{{ translate('لقطة جانبية مفرغة (المقدمة لليسار) · يتم توحيدها تلقائيًا إلى 1400×800px مع خط نعل ثابت · اضغط للتكبير') }}</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -427,6 +485,19 @@
                             <div class="col-md-4"><label class="input-label">أمامي (Front)</label><input type="file" accept="image/png,image/webp" class="form-control" onchange="uploadSimple(this, 'rail', 'rail_front_path')"></div>
                             <div class="col-md-4"><label class="input-label">خلفي (Back)</label><input type="file" accept="image/png,image/webp" class="form-control" onchange="uploadSimple(this, 'rail', 'rail_back_path')"></div>
                             <div class="col-md-4"><label class="input-label">جانبي (Side)</label><input type="file" accept="image/png,image/webp" class="form-control" onchange="uploadSimple(this, 'rail', 'rail_side_path')"></div>
+                            <div class="col-12">
+                                <div class="sf-example-box d-flex flex-wrap align-items-center gap-3">
+                                    <div class="d-flex gap-2">
+                                        <img src="{{ asset('public/assets/admin/img/storefront-examples/rail-front-example.webp') }}" alt="أمامي" class="sf-checker sf-example-thumb" onclick="openExampleModal(this.src, 'مثال زاوية أمامية (Rail Front)', 'صورة أمامية مفرغة على خلفية شفافة PNG/WebP، متمركزة في نفس الإطار مع الخلفية والجانبية.')">
+                                        <img src="{{ asset('public/assets/admin/img/storefront-examples/rail-back-example.webp') }}" alt="خلفي" class="sf-checker sf-example-thumb" onclick="openExampleModal(this.src, 'مثال زاوية خلفية (Rail Back)', 'صورة خلفية مفرغة بنفس الأبعاد والتمركز لضمان دوران سلس 360°.')">
+                                        <img src="{{ asset('public/assets/admin/img/storefront-examples/rail-side-example.webp') }}" alt="جانبي" class="sf-checker sf-example-thumb" onclick="openExampleModal(this.src, 'مثال زاوية جانبية (Rail Side)', 'صورة جانبية مفرغة بنفس ارتفاع الإطار وبخلفية شفافة PNG/WebP.')">
+                                    </div>
+                                    <div class="small flex-grow-1" style="min-width:220px;">
+                                        <div class="fw-bold text-dark">{{ translate('مثال مثالي لزوايا العلّاقة الثلاث (أمامي · خلفي · جانبي):') }}</div>
+                                        <div class="text-muted">{{ translate('3 صور مفرغة PNG/WebP بنفس الأبعاد والتمركز حتى تدور القطعة بسلاسة دون اهتزاز · اضغط للتكبير') }}</div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="col-md-8"><label class="input-label">{{ translate('الوصف') }}</label><input type="text" name="description" class="form-control"></div>
                             <div class="col-md-4"><label class="input-label">{{ translate('التفاصيل (مفصولة بفاصلة)') }}</label><input type="text" name="details" class="form-control" placeholder="قطن 100%,قصة مريحة"></div>
                         </div>
@@ -488,7 +559,21 @@
                             <div class="col-md-4"><label class="input-label">Slug *</label><input type="text" name="slug" class="form-control" required placeholder="men / shoes"></div>
                             <div class="col-md-4"><label class="input-label">{{ translate('تركيز X (%)') }}</label><input type="number" name="focus_x" class="form-control" value="50" min="0" max="100"></div>
                             <div class="col-md-4"><label class="input-label">{{ translate('تركيز Y (%)') }}</label><input type="number" name="focus_y" class="form-control" value="50" min="0" max="100"></div>
-                            <div class="col-12"><label class="input-label">{{ translate('صورة البطاقة (4:5)') }}</label><input type="file" accept="image/*" class="form-control" onchange="uploadSimple(this, 'categories', 'cat_image_path')"></div>
+                            <div class="col-12">
+                                <label class="input-label">{{ translate('صورة البطاقة (4:5)') }}</label>
+                                <input type="file" accept="image/*" class="form-control" onchange="uploadSimple(this, 'categories', 'cat_image_path')">
+                                <div class="sf-example-box d-flex align-items-center gap-3 mt-2">
+                                    <img src="{{ asset('public/assets/admin/img/storefront-examples/category-example.webp') }}"
+                                         alt="مثال بطاقة القسم"
+                                         class="sf-checker sf-example-thumb"
+                                         style="object-fit: cover;"
+                                         onclick="openExampleModal(this.src, 'مثال صورة بطاقة القسم (نسبة 4:5)', 'صورة تحريرية عمودية بنسبة 4:5 (مثلاً 1000×1250px) بخلفية كاملة، مع تحديد نقطة التركيز X/Y لحماية الوجه أو القطعة عند القص.')">
+                                    <div class="small">
+                                        <div class="fw-bold text-dark">{{ translate('مثال مثالي لصورة القسم:') }}</div>
+                                        <div class="text-muted">{{ translate('صورة عمودية بنسبة 4:5 (مثل 1000×1250px) · حدد تركيز X/Y على الوجه أو العنصر الأساسي · اضغط للتكبير') }}</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="mt-3 text-end"><button type="submit" class="btn btn-primary">{{ translate('حفظ البطاقة') }}</button></div>
                     </form>
@@ -705,5 +790,33 @@ async function addShoeColor() {
         toastr.success('تمت معايرة الحذاء (1400×800) ورفعه');
     } catch (e) { toastr.error(e.message); }
 }
+
+function openExampleModal(src, title, desc) {
+    document.getElementById('sfExModalImg').src = src;
+    document.getElementById('sfExModalTitle').textContent = title;
+    document.getElementById('sfExModalDesc').textContent = desc;
+    if (window.jQuery && jQuery.fn.modal) {
+        jQuery('#sfExampleModal').modal('show');
+    } else if (window.bootstrap && bootstrap.Modal) {
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('sfExampleModal')).show();
+    }
+}
 </script>
+
+<div class="modal fade" id="sfExampleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="sfExModalTitle"></h5>
+                <button type="button" class="close btn-close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="sfExModalImg" src="" alt="" class="sf-checker img-fluid p-2" style="max-height: 65vh; object-fit: contain;">
+                <p id="sfExModalDesc" class="text-muted mt-3 mb-0"></p>
+            </div>
+        </div>
+    </div>
+</div>
 @endpush
