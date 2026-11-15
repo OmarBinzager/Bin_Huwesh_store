@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Keyb
 import { useDemoBag } from "@/components/store/DemoBag";
 import type { Shoe } from "@/content/shoes-types";
 import { formatYER } from "@/lib/catalog";
+import { useI18n } from "@/lib/i18n/context";
 import { Camera } from "./camera";
 import s from "./shoe-shelf.module.css";
 
@@ -31,6 +32,8 @@ const OMEGA = { open: 6.4, pan: 7.2, close: 7.6 } as const;
 type Props = { shoes: Shoe[] };
 
 export default function ShoeShelf({ shoes }: Props) {
+  const { locale } = useI18n();
+  const isEn = locale === "en";
   const bag = useDemoBag();
   const stageRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
@@ -440,16 +443,20 @@ export default function ShoeShelf({ shoes }: Props) {
       </div>
 
       <p className={s.hint} aria-hidden={open}>
-        <span className={s.hintHover}>مرّر المؤشر لإضاءة الحذاء، واضغط لرؤيته عن قرب</span>
-        <span className={s.hintTouch}>اضغط على أي حذاء لرؤيته عن قرب</span>
+        <span className={s.hintHover}>
+          {isEn ? "Hover to illuminate a shoe, click for a closer look" : "مرّر المؤشر لإضاءة الحذاء، واضغط لرؤيته عن قرب"}
+        </span>
+        <span className={s.hintTouch}>
+          {isEn ? "Tap any shoe for a closer look" : "اضغط على أي حذاء لرؤيته عن قرب"}
+        </span>
       </p>
 
-      <aside ref={panelRef} className={s.panel} aria-label="تفاصيل الحذاء" inert={!open || undefined} aria-hidden={!open}>
+      <aside ref={panelRef} className={s.panel} aria-label={isEn ? "Shoe details" : "تفاصيل الحذاء"} inert={!open || undefined} aria-hidden={!open}>
         <div className={s.panelHead}>
           <span className={s.count} dir="ltr">
             {two(current + 1)} / {two(n)}
           </span>
-          <button type="button" className={s.close} onClick={close} aria-label="إغلاق التفاصيل والعودة إلى الرفوف">
+          <button type="button" className={s.close} onClick={close} aria-label={isEn ? "Close details and return to shelves" : "إغلاق التفاصيل والعودة إلى الرفوف"}>
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden>
               <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
             </svg>
@@ -457,7 +464,7 @@ export default function ShoeShelf({ shoes }: Props) {
         </div>
 
         <p className={s.srOnly} aria-live="polite">
-          {open ? `${shoe.name} — ${formatYER(shoe.price)} (${current + 1} من ${n})` : ""}
+          {open ? `${shoe.name} — ${formatYER(shoe.price, locale)} (${current + 1} / ${n})` : ""}
         </p>
         <div key={shoe.id} className={s.panelBody}>
           <h3 ref={headingRef} tabIndex={-1} className={s.name}>
@@ -465,15 +472,15 @@ export default function ShoeShelf({ shoes }: Props) {
           </h3>
           {shoe.description && <p className={s.desc}>{shoe.description}</p>}
           <p className={s.price} dir="ltr">
-            {formatYER(shoe.price)}
+            {formatYER(shoe.price, locale)}
           </p>
 
           {shoe.colors.length > 1 ? (
             <div className={s.block}>
               <p className={s.blockLabel}>
-                اللون · <span>{color.name}</span>
+                {isEn ? "Color" : "اللون"} · <span>{color.name}</span>
               </p>
-              <div role="radiogroup" aria-label="اللون" className={s.swatches}>
+              <div role="radiogroup" aria-label={isEn ? "Color" : "اللون"} className={s.swatches}>
                 {shoe.colors.map((c, j) => (
                   <button
                     key={c.id}
@@ -491,13 +498,14 @@ export default function ShoeShelf({ shoes }: Props) {
             </div>
           ) : (
             <p className={s.blockLabel}>
-              اللون · <span>{color.name}</span>
+              {isEn ? "Color" : "اللون"} · <span>{color.name}</span>
             </p>
           )}
 
           <div className={s.block}>
             <p className={s.blockLabel} id="shoe-size-label">
-              المقاس (أوروبي){needSize && !size && <span className={s.warn}> — اختر مقاسك أولًا</span>}
+              {isEn ? "Size (EU)" : "المقاس (أوروبي)"}
+              {needSize && !size && <span className={s.warn}> — {isEn ? "Select size first" : "اختر مقاسك أولًا"}</span>}
             </p>
             <SizeGroup sizes={shoe.sizes} value={size} onChange={(z) => (setSize(z), setNeedSize(false))} warn={needSize && !size} />
           </div>
@@ -510,12 +518,12 @@ export default function ShoeShelf({ shoes }: Props) {
             aria-disabled={!size}
             onClick={addToBag}
           >
-            {justAdded ? "أُضيف إلى السلة ✓" : size ? (
+            {justAdded ? (isEn ? "Added to Bag ✓" : "أُضيف إلى السلة ✓") : size ? (
               <>
-                أضف إلى السلة · <span dir="ltr">{formatYER(shoe.price)}</span>
+                {isEn ? "Add to Bag" : "أضف إلى السلة"} · <span dir="ltr">{formatYER(shoe.price, locale)}</span>
               </>
             ) : (
-              "اختر المقاس للإضافة"
+              isEn ? "Select Size to Add" : "اختر المقاس للإضافة"
             )}
           </button>
 
@@ -525,20 +533,28 @@ export default function ShoeShelf({ shoes }: Props) {
                 {/* eslint-disable-next-line @next/next/no-img-element -- tiny thumbnail of the added shoe */}
                 <img src={added.image} alt="" width={56} height={32} />
                 <span>
-                  أُضيف «{added.label}» مقاس <span dir="ltr">{added.size}</span> إلى السلة التجريبية.
+                  {isEn ? (
+                    <>Added &ldquo;{added.label}&rdquo; size <span dir="ltr">{added.size}</span> to your bag.</>
+                  ) : (
+                    <>أُضيف «{added.label}» مقاس <span dir="ltr">{added.size}</span> إلى السلة التجريبية.</>
+                  )}
                 </span>
               </p>
             )}
           </div>
-          {!justAdded && <p className={s.note}>سعر ومقاسات تجريبية — لا يُرسل أي طلب شراء.</p>}
+          {!justAdded && (
+            <p className={s.note}>
+              {isEn ? "Sample price & sizes — no purchase order is sent." : "سعر ومقاسات تجريبية — لا يُرسل أي طلب شراء."}
+            </p>
+          )}
         </div>
 
         <div className={s.panelNav}>
-          <button type="button" className={s.navBtn} onClick={() => void go(-1)} aria-label="الحذاء السابق">
-            <span aria-hidden>→</span> السابق
+          <button type="button" className={s.navBtn} onClick={() => void go(-1)} aria-label={isEn ? "Previous shoe" : "الحذاء السابق"}>
+            <span aria-hidden>→</span> {isEn ? "Previous" : "السابق"}
           </button>
-          <button type="button" className={s.navBtn} onClick={() => void go(1)} aria-label="الحذاء التالي">
-            التالي <span aria-hidden>←</span>
+          <button type="button" className={s.navBtn} onClick={() => void go(1)} aria-label={isEn ? "Next shoe" : "الحذاء التالي"}>
+            {isEn ? "Next" : "التالي"} <span aria-hidden>←</span>
           </button>
         </div>
       </aside>

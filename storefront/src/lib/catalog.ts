@@ -1,4 +1,5 @@
 import type { LookItem } from "@/content/types";
+import type { Locale } from "@/lib/i18n/config";
 
 /**
  * Catalogue adapter — the single place the hero asks "what does this piece
@@ -18,7 +19,8 @@ export function resolvePrice(item: LookItem): ResolvedPrice {
 
 const yer = new Intl.NumberFormat("en-US");
 
-/** "24,000 ر.ي" — Latin digits, as used by the Bin Huwesh app. */
-export function formatYER(amount: number): string {
-  return `${yer.format(Math.round(amount))} ر.ي`;
+/** "24,000 ر.ي" or "24,000 YER" — Latin digits, as used by the Bin Huwesh app. */
+export function formatYER(amount: number, locale: Locale = "ar"): string {
+  const unit = locale === "en" ? "YER" : "ر.ي";
+  return `${yer.format(Math.round(amount))} ${unit}`;
 }

@@ -2,20 +2,24 @@ import CurvedLensCarousel, { type LensSlide } from "@/components/ui/3d-curved-ca
 import { getStoreCategory } from "@/content/categories";
 import type { ShopCategoriesFile } from "@/content/category-card-types";
 import { visibleCards } from "@/content/shop-categories";
+import { getDirection } from "@/lib/i18n/config";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 
-/**
- * «تسوّق حسب القسم» — department carousel under the clothing rail.
- * Content (names, descriptions, images, order, links, crop) comes from
- * src/content/shop-categories.json; motion from the curved-lens carousel.
- * The previous layout (components/ui/category-bento-grid.tsx) is kept, unused.
- */
-export default function ShopByCategorySection({ data }: { data: ShopCategoriesFile }) {
+export default function ShopByCategorySection({
+  data,
+  locale = "ar",
+}: {
+  data: ShopCategoriesFile;
+  locale?: "ar" | "en";
+}) {
   const cards = visibleCards(data.cards);
   if (cards.length === 0) return null;
+  const t = getDictionary(locale);
+  const dir = getDirection(locale);
   const { title, subtitle, cta } = data.settings;
   const slides: LensSlide[] = cards.map((c) => ({
     title: c.name,
-    caption: c.caption?.trim() || getStoreCategory(c.categoryId)?.blurb,
+    caption: c.caption?.trim() || t.categories[c.categoryId]?.blurb || getStoreCategory(c.categoryId)?.blurb,
     image: c.image,
     alt: c.alt || c.name,
     href: c.href,
@@ -33,9 +37,9 @@ export default function ShopByCategorySection({ data }: { data: ShopCategoriesFi
         </header>
         <CurvedLensCarousel
           slides={slides}
-          dir="rtl"
-          label="أقسام بن هويش"
-          hint="اسحب لاستكشاف الأقسام"
+          dir={dir}
+          label={t.sections.categoriesAriaLabel}
+          hint={t.sections.categoriesHint}
           cta={cta}
           className="rounded-3xl"
         />

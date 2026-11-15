@@ -12,6 +12,7 @@ import {
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Look } from "@/content/types";
 import { formatYER, resolvePrice } from "@/lib/catalog";
+import { useI18n } from "@/lib/i18n/context";
 import { ArrowIcon, CloseIcon, PauseIcon, PlayIcon, PlusIcon } from "@/components/store/icons";
 import LookFigure, { type Focus } from "./LookFigure";
 import LookReceipt from "./LookReceipt";
@@ -35,6 +36,8 @@ export default function LooksHero({
   /** Height classes; the admin preview passes its own. */
   className?: string;
 }) {
+  const { locale } = useI18n();
+  const isEn = locale === "en";
   const n = looks.length;
   const reducedRaw = useReducedMotion();
   const [mounted, setMounted] = useState(false);
@@ -249,7 +252,7 @@ export default function LooksHero({
   if (!n || !look) {
     return (
       <section className={`grid place-items-center bg-stage text-muted ${className}`}>
-        لا توجد إطلالات منشورة بعد.
+        {isEn ? "No published looks yet." : "لا توجد إطلالات منشورة بعد."}
       </section>
     );
   }
@@ -257,7 +260,7 @@ export default function LooksHero({
   return (
     <section
       aria-roledescription="carousel"
-      aria-label="إطلالات بن هويش"
+      aria-label={isEn ? "Bin Huwesh Looks" : "إطلالات بن هويش"}
       onKeyDown={onKeyDown}
       className={`relative isolate overflow-hidden bg-stage text-ink ${className}`}
     >
@@ -345,7 +348,9 @@ export default function LooksHero({
               exit={{ opacity: 0 }}
               className="pointer-events-auto"
             >
-              <p className="nums text-[12px] text-muted">إطلالة {String(safeActive + 1).padStart(2, "0")}</p>
+              <p className="nums text-[12px] text-muted">
+                {isEn ? "Look" : "إطلالة"} {String(safeActive + 1).padStart(2, "0")}
+              </p>
               <h2 className="font-display text-2xl font-semibold sm:text-4xl">{look.title}</h2>
               <p className="mt-1 hidden text-[13px] text-muted sm:block">{look.subtitle}</p>
             </motion.div>
@@ -357,12 +362,12 @@ export default function LooksHero({
               exit={{ opacity: 0 }}
               className="text-[12px] tracking-wide text-muted"
             >
-              إطلالات بن هويش · مجموعة الموسم
+              {isEn ? "Bin Huwesh Looks · Season Collection" : "إطلالات بن هويش · مجموعة الموسم"}
             </motion.p>
           )}
         </AnimatePresence>
         <p className="hidden rounded-full border border-ink/10 bg-card/70 px-3 py-1 text-[11px] text-muted backdrop-blur sm:block">
-          نموذج معاينة — الصور مولّدة والأسعار تجريبية
+          {isEn ? "Preview — generated visuals & sample prices" : "نموذج معاينة — الصور مولّدة والأسعار تجريبية"}
         </p>
       </div>
 
@@ -402,7 +407,15 @@ export default function LooksHero({
                     <button
                       type="button"
                       onClick={() => setPaused((p) => !p)}
-                      aria-label={paused ? "تشغيل العرض التلقائي" : "إيقاف العرض التلقائي"}
+                      aria-label={
+                        paused
+                          ? isEn
+                            ? "Play slideshow"
+                            : "تشغيل العرض التلقائي"
+                          : isEn
+                            ? "Pause slideshow"
+                            : "إيقاف العرض التلقائي"
+                      }
                       className="grid size-6 place-items-center rounded-full border border-ink/15 hover:border-ink/50"
                     >
                       {paused ? <PlayIcon width={11} height={11} /> : <PauseIcon width={11} height={11} />}
@@ -447,7 +460,9 @@ export default function LooksHero({
                           </span>
                           <span>
                             <span className="block text-[12px] leading-tight font-medium">{it.label}</span>
-                            <span className="nums block text-[11px] text-muted">{formatYER(resolvePrice(it).amount)}</span>
+                            <span className="nums block text-[11px] text-muted">
+                              {formatYER(resolvePrice(it).amount, locale)}
+                            </span>
                           </span>
                         </button>
                       </li>
@@ -461,7 +476,9 @@ export default function LooksHero({
                 onClick={() => openDetail(safeActive)}
                 className="group flex shrink-0 items-center gap-3"
               >
-                <span className="hidden text-[13px] font-medium sm:inline">تسوّق الإطلالة</span>
+                <span className="hidden text-[13px] font-medium sm:inline">
+                  {isEn ? "Shop the Look" : "تسوّق الإطلالة"}
+                </span>
                 <span className="grid size-14 place-items-center rounded-full bg-brand text-white shadow-[0_10px_30px_-10px_rgba(208,16,31,0.8)] transition-transform group-hover:scale-105">
                   <PlusIcon />
                 </span>
@@ -479,7 +496,7 @@ export default function LooksHero({
               key="close"
               type="button"
               onClick={closeDetail}
-              aria-label="إغلاق تفاصيل الإطلالة"
+              aria-label={isEn ? "Close look details" : "إغلاق تفاصيل الإطلالة"}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1, transition: { delay: dur(0.35) } }}
               exit={{ opacity: 0, scale: 0.8 }}
@@ -493,7 +510,7 @@ export default function LooksHero({
 
             <motion.aside
               key="receipt"
-              aria-label="قطع الإطلالة"
+              aria-label={isEn ? "Look items" : "قطع الإطلالة"}
               initial={compact ? { y: "100%" } : { x: -40, opacity: 0 }}
               animate={
                 compact
@@ -521,7 +538,7 @@ export default function LooksHero({
                 className="pointer-events-none absolute bottom-5 z-[700] -translate-x-1/2 text-[12px] text-muted"
                 style={m && stage ? { left: (24 + m.panelW + stage.w) / 2 } : undefined}
               >
-                اضغط على رقم لعرض القطعة وسعرها
+                {isEn ? "Click a number to view item & price" : "اضغط على رقم لعرض القطعة وسعرها"}
               </motion.p>
             )}
           </>

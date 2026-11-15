@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useId, useState, useSyncExternalStore } from "react";
 import type { FooterGroup as Group } from "@/content/closing-types";
+import { useI18n } from "@/lib/i18n/context";
 import { ArrowUpIcon, ChevronIcon } from "./icons";
 import s from "./closing.module.css";
 
@@ -48,11 +49,12 @@ export function FooterLink({ href, children, className }: { href: string; childr
 
 /** Back to the top of the page; focus goes to the first header link (keyboard users stay oriented). */
 export function BackToTop() {
+  const { t } = useI18n();
   return (
     <button
       type="button"
       className={s.toTop}
-      aria-label="العودة إلى أعلى الصفحة"
+      aria-label={t.sections.footer.backToTop}
       onClick={() => {
         const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
         window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" });

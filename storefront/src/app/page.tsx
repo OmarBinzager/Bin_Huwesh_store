@@ -9,12 +9,14 @@ import ShopByCategorySection from "@/components/sections/ShopByCategorySection";
 import ShoesSection from "@/components/sections/ShoesSection";
 import { DemoBagProvider } from "@/components/store/DemoBag";
 import StoreHeader from "@/components/store/StoreHeader";
+import { getServerLocale } from "@/lib/i18n/server";
 import { fetchStorefrontBootstrap } from "@/lib/storefront-api";
 
 export const revalidate = 300;
 
 export default async function Home() {
-  const data = await fetchStorefrontBootstrap();
+  const locale = await getServerLocale();
+  const data = await fetchStorefrontBootstrap(locale);
   return (
     <DemoBagProvider>
       <StoreHeader />
@@ -22,7 +24,7 @@ export default async function Home() {
         <LooksHero looks={data.looks} />
         <BrandStrip data={data.brands} />
         <RailGallerySection items={data.rail} />
-        <ShopByCategorySection data={data.categories} />
+        <ShopByCategorySection data={data.categories} locale={locale} />
         <NewArrivalsSection data={data.virtualFit} />
         <ShoesSection data={data.shoes} />
         <TestimonialsSection data={data.closing} />

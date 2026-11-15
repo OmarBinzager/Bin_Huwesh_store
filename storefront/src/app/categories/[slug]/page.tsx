@@ -7,6 +7,8 @@ import StoreHeader from "@/components/store/StoreHeader";
 import { STORE_CATEGORIES, categoryHref, getStoreCategory } from "@/content/categories";
 import { shopCategoriesData } from "@/content/shop-categories";
 import { formatYER as formatPrice } from "@/lib/catalog";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { getServerLocale } from "@/lib/i18n/server";
 import { fetchCategoryCatalog } from "@/lib/storefront-api";
 
 export function generateStaticParams() {
@@ -28,23 +30,46 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+  const locale = await getServerLocale();
+  const t = getDictionary(locale);
   const cat = getStoreCategory(slug);
-  if (cat) {
-    return { title: `${cat.name} — بن هويش`, description: cat.blurb };
-  }
-  const catalog = await fetchCategoryCatalog(slug, { limit: 1 });
-  if (catalog) {
-    return { title: `${catalog.category.name} — بن هويش` };
-  }
-  return {};
-}
+  const localizedCat = t.categories[slug];
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://binhuwesh.com";
 
-const SORT_OPTIONS = [
-  { id: "newest", label: "الأحدث" },
-  { id: "popular", label: "الأكثر مبيعاً" },
-  { id: "price_asc", label: "السعر: من الأقل" },
-  { id: "price_desc", label: "السعر: من الأعلى" },
-];
+  let title = t.meta.siteTitle;
+  let description = t.meta.siteDescription;
+
+  if (cat) {
+    title = `${localizedCat?.name ?? cat.name} — ${t.meta.brandSuffix}`;
+    description = localizedCat?.blurb ?? cat.blurb;
+  } else {
+    const catalog = await fetchCategoryCatalog(slug, { limit: 1 }, locale);
+    if (catalog) {
+      title = `${catalog.category.name} — ${t.meta.brandSuffix}`;
+      description = `تصفح أحدث وأفضل منتجات ${catalog.category.name} في متجر بن هويش للأزياء باليمن.`;
+    }
+  }
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: `/categories/${slug}`,
+    },
+    openGraph: {
+      type: "website",
+      locale: locale === "ar" ? "ar_YE" : "en_US",
+      url: `${siteUrl}/categories/${slug}`,
+      title,
+      description,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+  };
+}
 
 export default async function CategoryCatalogPage({
   params,
@@ -55,28 +80,41 @@ export default async function CategoryCatalogPage({
 }) {
   const { slug } = await params;
   const sp = await searchParams;
+  const locale = await getServerLocale();
+  const t = getDictionary(locale);
   const sortBy = sp.sort_by || "newest";
   const offset = Math.max(0, Number(sp.offset || 0) || 0);
   const limit = 24;
 
+  const SORT_OPTIONS = [
+    { id: "newest", label: t.catalog.sortNewest },
+    { id: "popular", label: t.catalog.sortPopular },
+    { id: "price_asc", label: t.catalog.sortPriceAsc },
+    { id: "price_desc", label: t.catalog.sortPriceDesc },
+  ];
+
   const cat = getStoreCategory(slug);
-  const catalog = await fetchCategoryCatalog(slug, {
-    limit,
-    offset,
-    sort_by: sortBy,
-    q: sp.q,
-    brand_id: sp.brand_id,
-    min_price: sp.min_price,
-    max_price: sp.max_price,
-  });
+  const localizedCat = t.categories[slug];
+  const catalog = await fetchCategoryCatalog(
+    slug,
+    {
+      limit,
+      offset,
+      sort_by: sortBy,
+      q: sp.q,
+      brand_id: sp.brand_id,
+      min_price: sp.min_price,
+      max_price: sp.max_price,
+    },
+    locale,
+  );
 
   if (!cat && !catalog) {
     notFound();
   }
 
-  const title = catalog?.category.name || cat?.name || slug;
-  const blurb =
-    cat?.blurb || `تصفّح أحدث منتجات ${title} المتوفرة في متجر بن هويش.`;
+  const title = catalog?.category.name || localizedCat?.name || cat?.name || slug;
+  const blurb = localizedCat?.blurb || cat?.blurb || t.catalog.defaultBlurb(title);
   const card = cat ? shopCategoriesData.cards.find((c) => c.id === cat.id) : undefined;
   const heroImage = card?.image || catalog?.category.image || "";
   const others = STORE_CATEGORIES.filter((c) => c.id !== cat?.id);
@@ -108,17 +146,17 @@ export default async function CategoryCatalogPage({
       <StoreHeader current={cat?.id ?? slug} />
       <main className="bg-background">
         <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-8 sm:py-10">
-          <nav aria-label="مسار التصفح" className="mb-5 text-[13px] text-muted">
+          <nav aria-label={t.breadcrumbs.ariaLabel} className="mb-5 text-[13px] text-muted">
             <ol className="flex flex-wrap items-center gap-1.5">
               <li>
                 <Link href="/" className="hover:text-ink">
-                  الرئيسية
+                  {t.breadcrumbs.home}
                 </Link>
               </li>
               <li aria-hidden>/</li>
               <li>
                 <Link href="/#shop-by-category" className="hover:text-ink">
-                  الأقسام
+                  {t.breadcrumbs.categories}
                 </Link>
               </li>
               <li aria-hidden>/</li>
@@ -139,7 +177,7 @@ export default async function CategoryCatalogPage({
               </p>
               {catalog && (
                 <p className="mt-4 text-[13px] font-medium text-white/75 sm:text-muted">
-                  {totalSize} منتج متاح
+                  {t.catalog.availableCount(totalSize)}
                 </p>
               )}
             </div>
@@ -189,27 +227,27 @@ export default async function CategoryCatalogPage({
                 type="search"
                 name="q"
                 defaultValue={sp.q || ""}
-                placeholder={`ابحث في ${title}...`}
+                placeholder={t.catalog.searchPlaceholder(title)}
                 className="h-10 w-56 rounded-full border border-line bg-card px-4 text-[13px] text-ink outline-none focus:border-brand sm:w-64"
               />
               <button
                 type="submit"
                 className="h-10 rounded-full bg-ink px-4 text-[13px] font-medium text-on-ink transition-colors hover:bg-brand hover:text-white"
               >
-                بحث
+                {t.catalog.searchBtn}
               </button>
               {sp.q && (
                 <Link
                   href={buildUrl({ q: undefined, offset: 0 })}
                   className="text-[12px] text-muted underline hover:text-ink"
                 >
-                  مسح
+                  {t.catalog.clearBtn}
                 </Link>
               )}
             </form>
 
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="ml-1 text-[12px] text-muted">ترتيب:</span>
+              <span className="me-1 text-[12px] text-muted">{t.catalog.sortLabel}</span>
               {SORT_OPTIONS.map((opt) => {
                 const active = sortBy === opt.id;
                 return (
@@ -233,25 +271,25 @@ export default async function CategoryCatalogPage({
           {catalog === null ? (
             <div className="mt-8 rounded-2xl border border-line bg-card p-6 sm:p-8">
               <h2 className="font-display text-lg font-semibold text-ink">
-                جاري تحميل الكتالوج أو الخادم غير متصل
+                {t.catalog.offlineTitle}
               </h2>
               <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-muted">
-                تعذر الاتصال بخادم المتجر لعرض منتجات هذا القسم حالياً. يمكنك العودة إلى الصفحة الرئيسية أو المحاولة لاحقاً.
+                {t.catalog.offlineBody}
               </p>
               <Link
                 href="/#shop-by-category"
                 className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-ink px-5 py-2.5 text-[13px] font-medium text-on-ink transition-colors hover:bg-brand hover:text-white"
               >
-                العودة إلى الأقسام
+                {t.catalog.backToCategories}
               </Link>
             </div>
           ) : products.length === 0 ? (
             <div className="mt-8 rounded-2xl border border-line bg-card p-8 text-center">
               <p className="font-display text-lg font-semibold text-ink">
-                لا توجد منتجات مطابقة في هذا القسم حالياً
+                {t.catalog.emptyTitle}
               </p>
               <p className="mt-2 text-[14px] text-muted">
-                جرّب تعديل كلمات البحث أو تصفّح أقسام المتجر الأخرى.
+                {t.catalog.emptyBody}
               </p>
             </div>
           ) : (
@@ -276,17 +314,19 @@ export default async function CategoryCatalogPage({
                           />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center text-xs text-muted">
-                            بدون صورة
+                            {t.catalog.noImage}
                           </div>
                         )}
                         {hasDiscount && (
                           <span className="absolute top-3 right-3 rounded-full bg-brand px-2.5 py-1 text-[11px] font-semibold text-white">
-                            خصم
+                            {product.discount_type === "percent"
+                              ? t.catalog.discountPct(Math.round(product.discount))
+                              : t.catalog.discountAmt(formatPrice(product.price - product.final_price, locale))}
                           </span>
                         )}
                         {outOfStock && (
                           <span className="absolute inset-x-3 bottom-3 rounded-full bg-black/75 py-1 text-center text-[11px] font-medium text-white">
-                            نفذت الكمية
+                            {t.catalog.outOfStock}
                           </span>
                         )}
                       </div>
@@ -305,12 +345,12 @@ export default async function CategoryCatalogPage({
 
                         <div className="mt-3 flex items-baseline justify-between gap-2">
                           <div className="flex items-baseline gap-2">
-                            <span className="text-[15px] font-bold text-ink">
-                              {formatPrice(product.final_price)}
+                            <span className="nums text-[15px] font-bold text-ink">
+                              {formatPrice(product.final_price, locale)}
                             </span>
                             {hasDiscount && (
-                              <span className="text-[12px] text-muted line-through">
-                                {formatPrice(product.price)}
+                              <span className="nums text-[12px] text-muted line-through">
+                                {formatPrice(product.price, locale)}
                               </span>
                             )}
                           </div>
@@ -334,18 +374,22 @@ export default async function CategoryCatalogPage({
                       href={buildUrl({ offset: Math.max(0, offset - limit) })}
                       className="rounded-full border border-line bg-card px-5 py-2 text-[13px] font-medium text-ink hover:border-brand hover:text-brand"
                     >
-                      السابق
+                      {t.catalog.prev}
                     </Link>
                   )}
-                  <span className="text-[13px] text-muted">
-                    عرض {offset + 1} - {Math.min(offset + products.length, totalSize)} من {totalSize}
+                  <span className="nums text-[13px] text-muted">
+                    {t.catalog.showingRange(
+                      offset + 1,
+                      Math.min(offset + products.length, totalSize),
+                      totalSize,
+                    )}
                   </span>
                   {offset + products.length < totalSize && (
                     <Link
                       href={buildUrl({ offset: offset + limit })}
                       className="rounded-full border border-line bg-card px-5 py-2 text-[13px] font-medium text-ink hover:border-brand hover:text-brand"
                     >
-                      التالي
+                      {t.catalog.next}
                     </Link>
                   )}
                 </div>
@@ -355,7 +399,7 @@ export default async function CategoryCatalogPage({
 
           <section aria-labelledby="other-cats" className="mt-12 sm:mt-16">
             <h2 id="other-cats" className="mb-4 font-display text-xl font-semibold text-ink">
-              أقسام أخرى
+              {t.catalog.otherCategoriesTitle}
             </h2>
             <ul className="flex flex-wrap gap-2">
               {others.map((c) => (
@@ -364,7 +408,7 @@ export default async function CategoryCatalogPage({
                     href={categoryHref(c.id)}
                     className="inline-block rounded-full border border-line px-4 py-2 text-[14px] text-ink transition-colors hover:border-brand hover:text-brand"
                   >
-                    {c.name}
+                    {t.categories[c.id]?.name ?? c.name}
                   </Link>
                 </li>
               ))}

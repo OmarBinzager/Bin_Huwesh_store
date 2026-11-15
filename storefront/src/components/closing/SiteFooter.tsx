@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import BrandLogo from "@/components/store/BrandLogo";
 import { telHref, whatsappHref, type ClosingFile } from "@/content/closing-types";
+import { useI18n } from "@/lib/i18n/context";
 import { BackToTop, CurrentYear, FooterGroup } from "./FooterParts";
 import { PhoneIcon, PinIcon, SOCIAL_META, WhatsAppIcon } from "./icons";
 import s from "./closing.module.css";
@@ -15,15 +18,16 @@ const BUILD_YEAR = new Date().getFullYear();
  */
 export default function SiteFooter({ data }: { data: ClosingFile }) {
   const { footer, contact } = data;
+  const { t, locale } = useI18n();
   return (
     <footer className={s.footer} aria-labelledby="footer-title">
       <h2 id="footer-title" className="sr-only">
-        معلومات الموقع
+        {t.sections.footer.siteInfoSr}
       </h2>
       <div className="mx-auto max-w-[1440px] px-4 pt-12 sm:px-8 sm:pt-16">
         <div className={s.fGrid} style={{ "--groups": footer.groups.length } as CSSProperties}>
           <div className={s.fBrand}>
-            <Link href="/" aria-label="شركة بن هويش التجارية — الرئيسية" className={s.fLogo}>
+            <Link href="/" aria-label={t.meta.brandHomeAria} className={s.fLogo}>
               <BrandLogo height={50} className="hidden sm:inline-block" />
               <BrandLogo height={42} className="inline-block sm:hidden" />
             </Link>
@@ -42,12 +46,12 @@ export default function SiteFooter({ data }: { data: ClosingFile }) {
               <li>
                 <WhatsAppIcon width={17} height={17} />
                 <a href={whatsappHref(contact.phoneIntl)} target="_blank" rel="noopener noreferrer" className={s.fLink}>
-                  واتساب
+                  {t.sections.footer.whatsapp}
                 </a>
               </li>
             </ul>
             {footer.social.length > 0 && (
-              <ul className={s.social} aria-label="حساباتنا">
+              <ul className={s.social} aria-label={t.sections.footer.socialAria}>
                 {footer.social.map((x) => {
                   const m = SOCIAL_META[x.platform];
                   const Icon = m.icon;
@@ -73,7 +77,7 @@ export default function SiteFooter({ data }: { data: ClosingFile }) {
 
         <div className={s.fBottom}>
           <p>
-            © <CurrentYear fallback={BUILD_YEAR} /> {contact.company}. جميع الحقوق محفوظة.
+            © <CurrentYear fallback={BUILD_YEAR} /> {contact.company}. {locale === "en" ? "All rights reserved." : "جميع الحقوق محفوظة."}
           </p>
           <BackToTop />
         </div>

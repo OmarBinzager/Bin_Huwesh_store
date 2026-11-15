@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useDemoBag } from "@/components/store/DemoBag";
 import { formatYER as formatPrice } from "@/lib/catalog";
+import { useI18n } from "@/lib/i18n/context";
 import { API_BASE_URL } from "@/lib/storefront-api";
 
 type OfflineMethod = {
@@ -14,11 +15,12 @@ type OfflineMethod = {
 };
 
 export default function CheckoutClient() {
+  const { locale, t } = useI18n();
   const bag = useDemoBag();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [city, setCity] = useState("حضرموت - المكلا");
+  const [city, setCity] = useState(locale === "en" ? "Hadramout - Al Mukalla" : "حضرموت - المكلا");
   const [address, setAddress] = useState("");
   const [orderNote, setOrderNote] = useState("");
 
@@ -42,7 +44,7 @@ export default function CheckoutClient() {
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/v1/offline-payment-method/list`, {
-      headers: { Accept: "application/json" },
+      headers: { Accept: "application/json", "X-localization": locale },
     })
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
@@ -60,7 +62,7 @@ export default function CheckoutClient() {
         if (u?.phone) setPhone(u.phone);
       }
     } catch {}
-  }, []);
+  }, [locale]);
 
   const ensureAuthHeaders = async (): Promise<{
     headers: Record<string, string>;
@@ -72,6 +74,7 @@ export default function CheckoutClient() {
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
+          "X-localization": locale,
           Authorization: `Bearer ${token}`,
         },
       };
@@ -81,7 +84,7 @@ export default function CheckoutClient() {
     if (!guestId) {
       const res = await fetch(`${API_BASE_URL}/api/v1/guest/add`, {
         method: "POST",
-        headers: { Accept: "application/json", "Content-Type": "application/json" },
+        headers: { Accept: "application/json", "Content-Type": "application/json", "X-localization": locale },
         body: JSON.stringify({}),
       });
       if (res.ok) {
@@ -96,6 +99,7 @@ export default function CheckoutClient() {
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        "X-localization": locale,
         ...(guestId ? { "guest-id": guestId } : {}),
       },
     };
@@ -114,7 +118,7 @@ export default function CheckoutClient() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setCouponMsg(data?.errors?.[0]?.message || data?.message || "الكوبون غير صالح");
+        setCouponMsg(data?.errors?.[0]?.message || data?.message || t.checkout.couponInvalid);
         return;
       }
 
@@ -126,24 +130,24 @@ export default function CheckoutClient() {
 
       setAppliedCoupon(couponCode.trim());
       setCouponDiscount(Math.min(bag.subtotal, Math.max(0, computedDiscount)));
-      setCouponMsg("تم تطبيق كود الخصم بنجاح ✓");
+      setCouponMsg(t.checkout.couponApplied(formatPrice(computedDiscount, locale)));
     } catch {
-      setCouponMsg("تعذر التحقق من الكوبون حالياً.");
+      setCouponMsg(t.checkout.couponInvalid);
     }
   };
 
-  const finalTotal = Math.max(0, bag.subtotal - couponDiscount);
+  const finalTotal = Math.max(0, bag.subtotal - bag.lookDiscount - couponDiscount);
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
     if (bag.lines.length === 0) {
-      setErrorMsg("حقيبة التسوق فارغة.");
+      setErrorMsg(t.checkout.emptyTitle);
       return;
     }
     if (!name.trim() || !phone.trim() || !address.trim()) {
-      setErrorMsg("يرجى تعبئة الاسم ورقم الجوال وعنوان التوصيل.");
+      setErrorMsg(t.checkout.fillRequired);
       return;
     }
 
@@ -152,7 +156,9 @@ export default function CheckoutClient() {
     );
     if (purchasableLines.length === 0) {
       setErrorMsg(
-        "القطع المختارة حالياً للعرض التجريبي فقط ولم تُربط بمنتجات المخزون بعد. يمكنك تصفح الأقسام لاختيار منتجات متاحة للطلب.",
+        locale === "en"
+          ? "Selected items are preview-only and not yet linked to live inventory. Browse categories to add purchasable products."
+          : "القطع المختارة حالياً للعرض التجريبي فقط ولم تُربط بمنتجات المخزون بعد. يمكنك تصفح الأقسام لاختيار منتجات متاحة للطلب.",
       );
       return;
     }
@@ -182,7 +188,7 @@ export default function CheckoutClient() {
         throw new Error(
           stockErr?.message ||
             stockErr?.errors?.[0]?.message ||
-            "بعض المنتجات غير متوفرة حالياً في المخزون.",
+            t.checkout.orderFailed,
         );
       }
 
@@ -200,7 +206,7 @@ export default function CheckoutClient() {
       });
       if (!addrRes.ok) {
         const addrErr = await addrRes.json().catch(() => ({}));
-        throw new Error(addrErr?.errors?.[0]?.message || "تعذر حفظ عنوان التوصيل.");
+        throw new Error(addrErr?.errors?.[0]?.message || t.checkout.orderFailed);
       }
 
       // Fetch created address id
@@ -211,6 +217,14 @@ export default function CheckoutClient() {
       const listData = listRes.ok ? await listRes.json() : [];
       const addresses = Array.isArray(listData) ? listData : listData?.addresses ?? [];
       const latestAddressId = addresses[0]?.id ?? addresses[addresses.length - 1]?.id;
+
+      const lookIds = Array.from(
+        new Set(
+          purchasableLines
+            .filter((l) => l.lookDiscountPct && l.lookDiscountPct > 0 && l.lookId && l.lookId !== "catalog")
+            .map((l) => l.lookId),
+        ),
+      );
 
       // 3. Place order
       const placeRes = await fetch(`${API_BASE_URL}/api/v1/customer/order/place`, {
@@ -223,6 +237,7 @@ export default function CheckoutClient() {
           order_type: "delivery",
           branch_id: 1,
           delivery_address_id: latestAddressId,
+          ...(lookIds.length > 0 ? { look_ids: lookIds } : {}),
           ...(guestId ? { guest_id: guestId } : {}),
           ...(appliedCoupon ? { coupon_code: appliedCoupon } : {}),
           ...(orderNote.trim() ? { order_note: orderNote.trim() } : {}),
@@ -240,7 +255,7 @@ export default function CheckoutClient() {
         throw new Error(
           placeData?.errors?.[0]?.message ||
             placeData?.message ||
-            "تعذر إتمام الطلب، يرجى التحقق من البيانات.",
+            t.checkout.orderFailed,
         );
       }
 
@@ -248,7 +263,7 @@ export default function CheckoutClient() {
       bag.clear();
       setOrderSuccess({ orderId: createdOrderId, total: finalTotal });
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "حدث خطأ غير متوقع.");
+      setErrorMsg(err instanceof Error ? err.message : t.checkout.orderFailed);
     } finally {
       setSubmitting(false);
     }
@@ -261,18 +276,18 @@ export default function CheckoutClient() {
           <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15 text-2xl text-emerald-600">
             ✓
           </span>
-          <h1 className="font-display text-2xl font-semibold text-ink">تم استلام طلبك بنجاح!</h1>
+          <h1 className="font-display text-2xl font-semibold text-ink">{t.checkout.successTitle}</h1>
           <p className="mt-2 text-[14px] text-muted">
-            رقم الطلب: <strong className="text-ink">#{orderSuccess.orderId}</strong>
+            {t.checkout.orderNumber} <strong className="nums text-ink">#{orderSuccess.orderId}</strong>
           </p>
           <p className="mt-1 text-[14px] text-muted">
-            الإجمالي: <strong className="text-ink">{formatPrice(orderSuccess.total)}</strong>
+            {t.checkout.totalPaid} <strong className="nums text-ink">{formatPrice(orderSuccess.total, locale)}</strong>
           </p>
           <Link
             href="/"
             className="mt-6 inline-flex rounded-full bg-ink px-6 py-2.5 text-[13px] font-medium text-on-ink hover:bg-brand hover:text-white"
           >
-            العودة إلى المتجر
+            {t.checkout.continueShopping}
           </Link>
         </div>
       </div>
@@ -281,53 +296,54 @@ export default function CheckoutClient() {
 
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-8 sm:py-12">
-      <h1 className="mb-8 font-display text-3xl font-semibold text-ink">إتمام الطلب</h1>
+      <h1 className="mb-8 font-display text-3xl font-semibold text-ink">{t.checkout.title}</h1>
 
       {bag.lines.length === 0 ? (
         <div className="rounded-3xl border border-line bg-card p-8 text-center">
-          <p className="text-[15px] text-muted">حقيبة التسوق فارغة حالياً.</p>
+          <p className="text-[15px] text-muted">{t.checkout.emptyTitle}</p>
           <Link
             href="/#shop-by-category"
             className="mt-4 inline-flex rounded-full bg-ink px-6 py-2.5 text-[13px] font-medium text-on-ink hover:bg-brand hover:text-white"
           >
-            تصفح الأقسام
+            {t.checkout.backToStore}
           </Link>
         </div>
       ) : (
         <div className="grid gap-8 lg:grid-cols-12">
           <form onSubmit={handlePlaceOrder} className="space-y-6 lg:col-span-7">
             <div className="rounded-3xl border border-line bg-card p-6">
-              <h2 className="mb-4 font-display text-lg font-semibold text-ink">بيانات التوصيل</h2>
+              <h2 className="mb-4 font-display text-lg font-semibold text-ink">{t.checkout.customerSection}</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mb-1.5 block text-[13px] font-medium text-ink">
-                    الاسم الكامل *
+                    {t.checkout.fullName} *
                   </label>
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="الاسم الثلاثي"
+                    placeholder={t.checkout.fullNamePlaceholder}
                     className="h-11 w-full rounded-xl border border-line bg-background px-3.5 text-[14px] text-ink outline-none focus:border-brand"
                   />
                 </div>
                 <div>
                   <label className="mb-1.5 block text-[13px] font-medium text-ink">
-                    رقم الجوال *
+                    {t.checkout.phone} *
                   </label>
                   <input
                     type="tel"
                     required
+                    dir="ltr"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="7xxxxxxxx"
+                    placeholder={t.checkout.phonePlaceholder}
                     className="h-11 w-full rounded-xl border border-line bg-background px-3.5 text-[14px] text-ink outline-none focus:border-brand"
                   />
                 </div>
                 <div>
                   <label className="mb-1.5 block text-[13px] font-medium text-ink">
-                    المحافظة / المدينة *
+                    {t.checkout.city} *
                   </label>
                   <input
                     type="text"
@@ -339,34 +355,34 @@ export default function CheckoutClient() {
                 </div>
                 <div>
                   <label className="mb-1.5 block text-[13px] font-medium text-ink">
-                    العنوان التفصيلي *
+                    {t.checkout.address} *
                   </label>
                   <input
                     type="text"
                     required
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    placeholder="الحي، الشارع، أقرب معلم"
+                    placeholder={t.checkout.addressPlaceholder}
                     className="h-11 w-full rounded-xl border border-line bg-background px-3.5 text-[14px] text-ink outline-none focus:border-brand"
                   />
                 </div>
               </div>
               <div className="mt-4">
                 <label className="mb-1.5 block text-[13px] font-medium text-ink">
-                  ملاحظات إضافية (اختياري)
+                  {t.checkout.orderNote}
                 </label>
                 <textarea
                   rows={2}
                   value={orderNote}
                   onChange={(e) => setOrderNote(e.target.value)}
-                  placeholder="ملاحظات للمندوب أو التجهيز..."
+                  placeholder={t.checkout.orderNotePlaceholder}
                   className="w-full rounded-xl border border-line bg-background p-3 text-[14px] text-ink outline-none focus:border-brand"
                 />
               </div>
             </div>
 
             <div className="rounded-3xl border border-line bg-card p-6">
-              <h2 className="mb-4 font-display text-lg font-semibold text-ink">طريقة الدفع</h2>
+              <h2 className="mb-4 font-display text-lg font-semibold text-ink">{t.checkout.paymentSection}</h2>
               <div className="space-y-3">
                 <label className="flex cursor-pointer items-center gap-3 rounded-2xl border border-line p-4 transition-colors hover:border-brand">
                   <input
@@ -376,8 +392,10 @@ export default function CheckoutClient() {
                     onChange={() => setPaymentMethod("cash_on_delivery")}
                   />
                   <div>
-                    <p className="text-[14px] font-semibold text-ink">الدفع عند الاستلام</p>
-                    <p className="text-[12px] text-muted">ادفع نقداً عند وصول الطلب</p>
+                    <p className="text-[14px] font-semibold text-ink">{t.checkout.cashOnDelivery}</p>
+                    <p className="text-[12px] text-muted">
+                      {locale === "en" ? "Pay cash when your order arrives" : "ادفع نقداً عند وصول الطلب"}
+                    </p>
                   </div>
                 </label>
 
@@ -389,8 +407,12 @@ export default function CheckoutClient() {
                     onChange={() => setPaymentMethod("offline_payment")}
                   />
                   <div>
-                    <p className="text-[14px] font-semibold text-ink">تحويل بنكي / محفظة إلكترونية</p>
-                    <p className="text-[12px] text-muted">حوّل المبلغ وأدخل رقم الحوالة أو المرجع</p>
+                    <p className="text-[14px] font-semibold text-ink">{t.checkout.offlinePayment}</p>
+                    <p className="text-[12px] text-muted">
+                      {locale === "en"
+                        ? "Transfer the amount and enter your reference number"
+                        : "حوّل المبلغ وأدخل رقم الحوالة أو المرجع"}
+                    </p>
                   </div>
                 </label>
 
@@ -399,7 +421,7 @@ export default function CheckoutClient() {
                     {offlineMethods.length > 0 && (
                       <div>
                         <label className="mb-1 block text-[12px] font-medium text-ink">
-                          اختر الحساب / البنك
+                          {locale === "en" ? "Select Account / Bank" : "اختر الحساب / البنك"}
                         </label>
                         <select
                           value={selectedOfflineName}
@@ -416,13 +438,13 @@ export default function CheckoutClient() {
                     )}
                     <div>
                       <label className="mb-1 block text-[12px] font-medium text-ink">
-                        رقم الحوالة / المرجع
+                        {t.checkout.paymentRef}
                       </label>
                       <input
                         type="text"
                         value={paymentReference}
                         onChange={(e) => setPaymentReference(e.target.value)}
-                        placeholder="أدخل رقم الإشعار أو اسم المحوّل"
+                        placeholder={t.checkout.paymentRefPlaceholder}
                         className="h-10 w-full rounded-xl border border-line bg-card px-3 text-[13px] text-ink"
                       />
                     </div>
@@ -442,25 +464,25 @@ export default function CheckoutClient() {
               disabled={submitting}
               className="h-12 w-full rounded-full bg-ink text-[15px] font-semibold text-on-ink transition-colors hover:bg-brand hover:text-white disabled:opacity-50"
             >
-              {submitting ? "جاري تأكيد الطلب..." : `تأكيد الطلب (${formatPrice(finalTotal)})`}
+              {submitting ? t.checkout.submitting : `${t.checkout.submitOrder} (${formatPrice(finalTotal, locale)})`}
             </button>
           </form>
 
           {/* Order Summary */}
           <aside className="lg:col-span-5">
             <div className="sticky top-24 rounded-3xl border border-line bg-card p-6">
-              <h2 className="mb-4 font-display text-lg font-semibold text-ink">ملخص الحقيبة</h2>
+              <h2 className="mb-4 font-display text-lg font-semibold text-ink">{t.checkout.summarySection}</h2>
               <ul className="divide-y divide-line">
                 {bag.lines.map((line) => (
                   <li key={line.key} className="flex items-center justify-between gap-3 py-3 text-[13px]">
                     <div className="min-w-0">
                       <p className="truncate font-medium text-ink">{line.label}</p>
                       <p className="text-[12px] text-muted">
-                        المقاس: {line.size} · الكمية: {line.qty}
+                        {t.bag.sizeLabel} {line.size} · {t.product.quantity} {line.qty}
                       </p>
                     </div>
-                    <span className="shrink-0 font-semibold text-ink">
-                      {formatPrice(line.price * line.qty)}
+                    <span className="nums shrink-0 font-semibold text-ink">
+                      {formatPrice(line.price * line.qty, locale)}
                     </span>
                   </li>
                 ))}
@@ -471,7 +493,7 @@ export default function CheckoutClient() {
                   type="text"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
-                  placeholder="كود الخصم"
+                  placeholder={t.checkout.couponPlaceholder}
                   className="h-10 flex-1 rounded-xl border border-line bg-background px-3 text-[13px] text-ink outline-none focus:border-brand"
                 />
                 <button
@@ -479,25 +501,31 @@ export default function CheckoutClient() {
                   onClick={handleApplyCoupon}
                   className="h-10 rounded-xl bg-stage px-4 text-[13px] font-medium text-ink hover:bg-brand hover:text-white"
                 >
-                  تطبيق
+                  {t.checkout.applyCoupon}
                 </button>
               </div>
               {couponMsg && <p className="mt-2 text-[12px] text-brand">{couponMsg}</p>}
 
               <div className="mt-5 space-y-2 border-t border-line pt-4 text-[14px]">
                 <div className="flex justify-between text-muted">
-                  <span>المجموع الفرعي</span>
-                  <span>{formatPrice(bag.subtotal)}</span>
+                  <span>{t.checkout.subtotal}</span>
+                  <span className="nums">{formatPrice(bag.subtotal, locale)}</span>
                 </div>
-                {couponDiscount > 0 && (
+                {bag.lookDiscount > 0 && (
+                <div className="flex justify-between text-brand">
+                  <span>{t.checkout.lookDiscount}</span>
+                  <span className="nums">-{formatPrice(bag.lookDiscount, locale)}</span>
+                </div>
+              )}
+              {couponDiscount > 0 && (
                   <div className="flex justify-between text-emerald-600">
-                    <span>الخصم</span>
-                    <span>-{formatPrice(couponDiscount)}</span>
+                    <span>{t.checkout.couponDiscount}</span>
+                    <span className="nums">-{formatPrice(couponDiscount, locale)}</span>
                   </div>
                 )}
                 <div className="flex justify-between border-t border-line pt-2 text-base font-bold text-ink">
-                  <span>الإجمالي</span>
-                  <span>{formatPrice(finalTotal)}</span>
+                  <span>{t.checkout.total}</span>
+                  <span className="nums">{formatPrice(finalTotal, locale)}</span>
                 </div>
               </div>
             </div>

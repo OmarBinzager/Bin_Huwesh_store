@@ -12,6 +12,7 @@ import type { ShoesFile } from "@/content/shoes-types";
 import { shoesData } from "@/content/shoes";
 import type { Look } from "@/content/types";
 import type { RailGarment } from "@/components/ui/product-rail-gallery";
+import type { Locale } from "@/lib/i18n/config";
 
 export const API_BASE_URL =
   (process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000").replace(/\/+$/, "");
@@ -41,13 +42,13 @@ type RawBootstrapResponse = {
  * Fetches the unified storefront bootstrap payload from Laravel with ISR caching
  * (`storefront` tag) and resilient per-section fallback to local JSON content.
  */
-export async function fetchStorefrontBootstrap(): Promise<StorefrontBootstrap> {
+export async function fetchStorefrontBootstrap(locale: Locale = "ar"): Promise<StorefrontBootstrap> {
   const fallbackLooks = getPublishedLooks();
 
   try {
-    const res = await fetch(`${API_BASE_URL}/api/v1/storefront/bootstrap`, {
-      next: { tags: ["storefront"], revalidate: 300 },
-      headers: { Accept: "application/json" },
+    const res = await fetch(`${API_BASE_URL}/api/v1/storefront/bootstrap?lang=${locale}`, {
+      next: { tags: ["storefront", `storefront-${locale}`], revalidate: 300 },
+      headers: { Accept: "application/json", "X-localization": locale },
     });
 
     if (!res.ok) {
@@ -107,7 +108,7 @@ export type CatalogProduct = {
   total_stock: number;
   image: string;
   images: string[];
-  color_images: Array<{ color?: string; color_name?: string; image?: string; image_url?: string }>;
+  color_images: Array<{ color?: string; color_code?: string; color_name?: string; image?: string; image_url?: string }>;
   sizes: string[];
   rating: number;
   brand: { id: number; name: string; image: string } | null;
@@ -137,9 +138,11 @@ export async function fetchCategoryCatalog(
     max_price?: string;
     q?: string;
   },
+  locale: Locale = "ar",
 ): Promise<CategoryCatalogResponse | null> {
   try {
     const qs = new URLSearchParams();
+    qs.set("lang", locale);
     if (params) {
       for (const [k, v] of Object.entries(params)) {
         if (v !== undefined && v !== "") qs.set(k, String(v));
@@ -148,7 +151,7 @@ export async function fetchCategoryCatalog(
     const query = qs.toString() ? `?${qs.toString()}` : "";
     const res = await fetch(`${API_BASE_URL}/api/v1/storefront/categories/${encodeURIComponent(slugOrId)}${query}`, {
       next: { revalidate: 60 },
-      headers: { Accept: "application/json" },
+      headers: { Accept: "application/json", "X-localization": locale },
     });
     if (!res.ok) return null;
     return (await res.json()) as CategoryCatalogResponse;
@@ -157,9 +160,21 @@ export async function fetchCategoryCatalog(
   }
 }
 
+export type ProductPatternOption = {
+  name: string;
+  type: string;
+  image: string | null;
+  image_url: string;
+  price: number;
+  stock: number;
+  is_sold: boolean;
+};
+
 export type ProductDetailResponse = {
   product: CatalogProduct & {
     description: string | null;
+    variant_mode?: "standard" | "unique_patterns";
+    patterns?: ProductPatternOption[];
     variations: Array<{ type: string; price: number; stock: number }>;
     choice_options: Array<{ name: string; title: string; options: string[] }>;
     size_chart: {
@@ -180,12 +195,18 @@ export type ProductDetailResponse = {
   related_products: CatalogProduct[];
 };
 
-export async function fetchProductDetail(id: string | number): Promise<ProductDetailResponse | null> {
+export async function fetchProductDetail(
+  id: string | number,
+  locale: Locale = "ar",
+): Promise<ProductDetailResponse | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/v1/storefront/products/${encodeURIComponent(String(id))}`, {
-      next: { revalidate: 60 },
-      headers: { Accept: "application/json" },
-    });
+    const res = await fetch(
+      `${API_BASE_URL}/api/v1/storefront/products/${encodeURIComponent(String(id))}?lang=${locale}`,
+      {
+        next: { revalidate: 60 },
+        headers: { Accept: "application/json", "X-localization": locale },
+      },
+    );
     if (!res.ok) return null;
     return (await res.json()) as ProductDetailResponse;
   } catch {
@@ -203,11 +224,11 @@ export type PoliciesResponse = {
   faq: string;
 };
 
-export async function fetchPolicies(): Promise<PoliciesResponse | null> {
+export async function fetchPolicies(locale: Locale = "ar"): Promise<PoliciesResponse | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/v1/storefront/policies`, {
-      next: { tags: ["storefront"], revalidate: 600 },
-      headers: { Accept: "application/json" },
+    const res = await fetch(`${API_BASE_URL}/api/v1/storefront/policies?lang=${locale}`, {
+      next: { tags: ["storefront", `storefront-${locale}`], revalidate: 600 },
+      headers: { Accept: "application/json", "X-localization": locale },
     });
     if (!res.ok) return null;
     return (await res.json()) as PoliciesResponse;

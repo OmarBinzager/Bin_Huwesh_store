@@ -4,9 +4,11 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useDemoBag } from "@/components/store/DemoBag";
 import { formatYER as formatPrice } from "@/lib/catalog";
+import { useI18n } from "@/lib/i18n/context";
 import type { ProductDetailResponse } from "@/lib/storefront-api";
 
 export default function ProductDetailClient({ data }: { data: ProductDetailResponse }) {
+  const { locale, t } = useI18n();
   const { product, related_products } = data;
   const bag = useDemoBag();
 
@@ -132,23 +134,23 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
   const hasDiscount = product.discount > 0 && activePrice < basePrice;
   const discountLabel = hasDiscount
     ? product.discount_type === "percent"
-      ? `خصم ${Math.round(product.discount)}%`
-      : `وفر ${formatPrice(basePrice - activePrice)}`
+      ? t.catalog.discountPct(Math.round(product.discount))
+      : t.catalog.discountAmt(formatPrice(basePrice - activePrice, locale))
     : null;
 
   return (
     <div className="mx-auto max-w-[1440px] px-4 py-6 sm:px-8 sm:py-10">
-      <nav aria-label="مسار التصفح" className="mb-6 text-[13px] text-muted">
+      <nav aria-label={t.breadcrumbs.ariaLabel} className="mb-6 text-[13px] text-muted">
         <ol className="flex flex-wrap items-center gap-1.5">
           <li>
             <Link href="/" className="hover:text-ink">
-              الرئيسية
+              {t.breadcrumbs.home}
             </Link>
           </li>
           <li aria-hidden>/</li>
           <li>
             <Link href="/#shop-by-category" className="hover:text-ink">
-              الأقسام
+              {t.breadcrumbs.categories}
             </Link>
           </li>
           <li aria-hidden>/</li>
@@ -170,7 +172,7 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-sm text-muted">
-                لا توجد صورة متاحة
+                {t.product.noImageAvailable}
               </div>
             )}
             {hasDiscount && discountLabel && (
@@ -213,11 +215,11 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
           </h1>
 
           <div className="mt-4 flex flex-wrap items-baseline gap-3">
-            <span className="text-2xl font-bold text-ink">{formatPrice(activePrice)}</span>
+            <span className="nums text-2xl font-bold text-ink">{formatPrice(activePrice, locale)}</span>
             {hasDiscount && (
               <>
-                <span className="text-base text-muted line-through">
-                  {formatPrice(basePrice)}
+                <span className="nums text-base text-muted line-through">
+                  {formatPrice(basePrice, locale)}
                 </span>
                 {discountLabel && (
                   <span className="rounded-full bg-brand/12 px-2.5 py-0.5 text-xs font-semibold text-brand">
@@ -227,7 +229,7 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
               </>
             )}
             <span
-              className={`mr-auto rounded-full px-3 py-1 text-xs font-medium ${
+              className={`ms-auto rounded-full px-3 py-1 text-xs font-medium ${
                 outOfStock
                   ? "bg-red-500/10 text-red-500"
                   : isUniquePatterns && activeStock === 1
@@ -236,10 +238,10 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
               }`}
             >
               {outOfStock
-                ? "نفذت الكمية"
+                ? t.product.outOfStock
                 : isUniquePatterns && activeStock === 1
-                  ? "قطعة فريدة — متبقي 1 فقط"
-                  : `متوفر (${activeStock})`}
+                  ? t.product.uniquePieceLeft
+                  : t.product.inStock(activeStock)}
             </span>
           </div>
 
@@ -247,9 +249,9 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
           {isUniquePatterns ? (
             <div className="mt-6">
               <div className="mb-2.5 flex items-center justify-between text-[13px]">
-                <span className="font-medium text-ink">اختر الشكل / النقشة:</span>
+                <span className="font-medium text-ink">{t.product.choosePattern}</span>
                 <span className="font-semibold text-brand">
-                  {activePattern ? activePattern.name : "غير متوفر"}
+                  {activePattern ? activePattern.name : t.product.outOfStock}
                 </span>
               </div>
               {availablePatterns.length > 0 ? (
@@ -280,8 +282,8 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
                         </div>
                         <div className="flex items-center justify-between gap-1 bg-card px-2 py-1.5 text-[11px]">
                           <span className="truncate font-medium text-ink">{p.name}</span>
-                          <span className="shrink-0 rounded-full bg-stage px-1.5 py-0.5 text-[10px] text-muted">
-                            {p.stock === 1 ? "وحيدة" : `${p.stock}`}
+                          <span className="nums shrink-0 rounded-full bg-stage px-1.5 py-0.5 text-[10px] text-muted">
+                            {p.stock === 1 ? (locale === "en" ? "Unique" : "وحيدة") : `${p.stock}`}
                           </span>
                         </div>
                       </button>
@@ -290,7 +292,9 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
                 </div>
               ) : (
                 <div className="rounded-2xl border border-line bg-stage p-4 text-center text-[13px] text-muted">
-                  تم بيع جميع النقشات المتوفرة حالياً لهذا الصنف.
+                  {locale === "en"
+                    ? "All available patterns for this item are currently sold out."
+                    : "تم بيع جميع النقشات المتوفرة حالياً لهذا الصنف."}
                 </div>
               )}
             </div>
@@ -300,12 +304,12 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
             product.color_images.length > 0 && (
               <div className="mt-6">
                 <div className="mb-2 flex items-center justify-between text-[13px]">
-                  <span className="font-medium text-ink">اللون:</span>
+                  <span className="font-medium text-ink">{t.product.chooseColor}</span>
                   <span className="text-muted">{selectedColor}</span>
                 </div>
                 <div className="flex flex-wrap gap-2.5">
                   {product.color_images.map((ci, idx) => {
-                    const name = ci.color_name || ci.color || `لون ${idx + 1}`;
+                    const name = ci.color_name || ci.color || `${locale === "en" ? "Color" : "لون"} ${idx + 1}`;
                     const active = selectedColor === name;
                     const hex = ci.color_code?.startsWith("#")
                       ? ci.color_code
@@ -350,14 +354,14 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
           {availableSizes.length > 0 && (
             <div className="mt-6">
               <div className="mb-2 flex items-center justify-between text-[13px]">
-                <span className="font-medium text-ink">المقاس:</span>
+                <span className="font-medium text-ink">{t.product.chooseSize}</span>
                 {product.size_chart && (
                   <button
                     type="button"
                     onClick={() => setSizeChartOpen(true)}
                     className="text-[12px] font-medium text-brand underline underline-offset-4 hover:opacity-80"
                   >
-                    جدول المقاسات
+                    {t.product.sizeChartBtn}
                   </button>
                 )}
               </div>
@@ -387,16 +391,20 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
           {!isUniquePatterns && product.variations && product.variations.length > 0 && (
             <div className="mt-6">
               <div className="mb-2 flex items-center justify-between text-[13px]">
-                <span className="font-medium text-ink">جدول المتغيرات المتاحة:</span>
-                <span className="text-[11px] text-muted">اختر من الجدول أو من الأعلى</span>
+                <span className="font-medium text-ink">
+                  {locale === "en" ? "Available Variants:" : "جدول المتغيرات المتاحة:"}
+                </span>
+                <span className="text-[11px] text-muted">
+                  {locale === "en" ? "Select from table or above" : "اختر من الجدول أو من الأعلى"}
+                </span>
               </div>
               <div className="no-scrollbar max-h-56 overflow-auto rounded-2xl border border-line bg-card">
-                <table className="w-full border-collapse text-right text-[12px]">
+                <table className="w-full border-collapse text-start text-[12px]">
                   <thead className="sticky top-0 bg-stage text-ink">
                     <tr className="border-b border-line">
-                      <th className="px-3 py-2 font-semibold">المتغير</th>
-                      <th className="px-3 py-2 font-semibold">السعر</th>
-                      <th className="px-3 py-2 font-semibold">المخزون</th>
+                      <th className="px-3 py-2 font-semibold">{locale === "en" ? "Variant" : "المتغير"}</th>
+                      <th className="px-3 py-2 font-semibold">{locale === "en" ? "Price" : "السعر"}</th>
+                      <th className="px-3 py-2 font-semibold">{locale === "en" ? "Stock" : "المخزون"}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -433,12 +441,12 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
                           }`}
                         >
                           <td className="px-3 py-2 text-ink">{mergedLabel}</td>
-                          <td className="px-3 py-2">{formatPrice(varPrice)}</td>
+                          <td className="nums px-3 py-2">{formatPrice(varPrice, locale)}</td>
                           <td className="px-3 py-2">
                             {v.stock > 0 ? (
-                              <span className="text-emerald-600">متوفر ({v.stock})</span>
+                              <span className="text-emerald-600">{t.product.inStock(v.stock)}</span>
                             ) : (
-                              <span className="text-red-500">نفد</span>
+                              <span className="text-red-500">{t.product.outOfStock}</span>
                             )}
                           </td>
                         </tr>
@@ -455,16 +463,16 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
             <div className="flex h-12 items-center rounded-full border border-line bg-card px-2">
               <button
                 type="button"
-                aria-label="إنقاص الكمية"
+                aria-label={t.product.decreaseQty}
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
                 className="flex h-8 w-8 items-center justify-center rounded-full text-lg text-ink hover:bg-stage"
               >
                 -
               </button>
-              <span className="w-8 text-center text-sm font-semibold text-ink">{qty}</span>
+              <span className="nums w-8 text-center text-sm font-semibold text-ink">{qty}</span>
               <button
                 type="button"
-                aria-label="زيادة الكمية"
+                aria-label={t.product.increaseQty}
                 onClick={() => setQty((q) => Math.min(Math.max(1, activeStock), q + 1))}
                 className="flex h-8 w-8 items-center justify-center rounded-full text-lg text-ink hover:bg-stage"
               >
@@ -483,17 +491,17 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
               }`}
             >
               {outOfStock
-                ? "غير متوفر حالياً"
+                ? t.product.outOfStock
                 : addedFeedback
-                  ? "تمت الإضافة إلى الحقيبة ✓"
-                  : "أضف إلى الحقيبة"}
+                  ? t.product.addedToBag
+                  : t.product.addToBag}
             </button>
           </div>
 
           {/* Description */}
           {product.description && (
             <div className="mt-8 border-t border-line pt-6">
-              <h2 className="mb-2 text-[14px] font-semibold text-ink">تفاصيل المنتج</h2>
+              <h2 className="mb-2 text-[14px] font-semibold text-ink">{t.product.descriptionTitle}</h2>
               <div
                 className="prose prose-sm max-w-none text-[14px] leading-relaxed text-muted"
                 dangerouslySetInnerHTML={{ __html: product.description }}
@@ -505,7 +513,7 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
           {product.reviews && product.reviews.length > 0 && (
             <div className="mt-8 border-t border-line pt-6">
               <h2 className="mb-3 text-[14px] font-semibold text-ink">
-                آراء العملاء ({product.reviews.length})
+                {t.product.reviewsTitle} ({product.reviews.length})
               </h2>
               <div className="space-y-3">
                 {product.reviews.map((rev) => (
@@ -530,7 +538,7 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
       {/* Related Products */}
       {related_products && related_products.length > 0 && (
         <section className="mt-16 border-t border-line pt-10">
-          <h2 className="mb-6 font-display text-2xl font-semibold text-ink">منتجات قد تعجبك</h2>
+          <h2 className="mb-6 font-display text-2xl font-semibold text-ink">{t.product.relatedTitle}</h2>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:gap-6">
             {related_products.map((rel) => (
               <Link
@@ -552,8 +560,8 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
                   <h3 className="line-clamp-1 text-[13px] font-semibold text-ink group-hover:text-brand">
                     {rel.name}
                   </h3>
-                  <p className="mt-1 text-[14px] font-bold text-ink">
-                    {formatPrice(rel.final_price)}
+                  <p className="nums mt-1 text-[14px] font-bold text-ink">
+                    {formatPrice(rel.final_price, locale)}
                   </p>
                 </div>
               </Link>
@@ -574,14 +582,14 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
           >
             <div className="mb-4 flex items-center justify-between">
               <h3 className="font-display text-lg font-semibold text-ink">
-                {product.size_chart.name || "جدول المقاسات"}
+                {product.size_chart.name || t.product.sizeChartTitle}
               </h3>
               <button
                 type="button"
                 onClick={() => setSizeChartOpen(false)}
                 className="rounded-full px-3 py-1 text-sm text-muted hover:bg-stage hover:text-ink"
               >
-                إغلاق ✕
+                {t.product.close} ✕
               </button>
             </div>
             <div className="overflow-x-auto">
