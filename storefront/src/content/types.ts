@@ -18,14 +18,12 @@ export type LookItem = {
   /** Garment family, e.g. "جاكيت", "بنطال", "حذاء". */
   category: string;
   hotspot: Hotspot;
-  /**
-   * Real catalogue product id. Keep `null` until the garment in the image has
-   * been checked against that product's own photo — generated preview images
-   * only approximate their references.
-   */
+  /** Real catalogue product id. */
   productId: string | null;
   /** Live price in YER from Laravel catalog when productId is linked. */
   livePrice?: number;
+  /** Product image from catalog if linked. */
+  image?: string;
   /** True when using preview demoPrice instead of live catalog price. */
   isDemo?: boolean;
   /**

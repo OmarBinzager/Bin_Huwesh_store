@@ -33,7 +33,8 @@ class StorefrontController extends Controller
      */
     public function bootstrap(): JsonResponse
     {
-        $payload = Cache::remember(self::CACHE_KEY, 300, function () {
+        $locale = app()->getLocale() ?: 'ar';
+        $payload = Cache::remember(self::CACHE_KEY . '_' . $locale, 300, function () {
             $settingsMap = BusinessSetting::whereIn('key', [
                 'ecommerce_name',
                 'phone',
@@ -79,7 +80,7 @@ class StorefrontController extends Controller
         $allCatIds = array_merge([$category->id], $category->childes()->pluck('id')->toArray());
 
         $query = Product::active()
-            ->with(['brand', 'rating'])
+            ->with(['brand.translations' => fn($q) => $q->where('locale', app()->getLocale()), 'rating'])
             ->where(function ($q) use ($allCatIds) {
                 foreach ($allCatIds as $cid) {
                     $q->orWhereJsonContains('category_ids', ['id' => (string)$cid])
@@ -135,7 +136,12 @@ class StorefrontController extends Controller
     public function getProductDetail(int $id): JsonResponse
     {
         $product = Product::active()
-            ->with(['brand', 'rating', 'active_reviews.customer', 'size_chart'])
+            ->with([
+                'brand.translations' => fn($q) => $q->where('locale', app()->getLocale()),
+                'rating',
+                'active_reviews.customer',
+                'size_chart',
+            ])
             ->find($id);
 
         if (!$product) {
@@ -143,7 +149,7 @@ class StorefrontController extends Controller
         }
 
         $formatted = $this->formatCatalogProduct($product);
-        $formatted['description'] = $product->description;
+        $formatted['description'] = $this->translatedValue($product, 'description', $product->description);
         $formatted['variant_mode'] = $product->variant_mode ?? 'standard';
         $formatted['images'] = $product->identity_image_full_path;
         $formatted['color_images'] = $product->color_images_list;
@@ -181,15 +187,17 @@ class StorefrontController extends Controller
             $formatted['size_chart'] = null;
         }
 
+        $defaultCustomer = app()->getLocale() === 'en' ? 'Bin Huwesh Customer' : 'عميل بن هويش';
         $formatted['reviews'] = $product->active_reviews->take(10)->map(fn(Review $r) => [
             'id'         => $r->id,
             'rating'     => (int)$r->rating,
             'comment'    => $r->comment,
-            'customer'   => $r->customer ? trim($r->customer->f_name . ' ' . $r->customer->l_name) : 'عميل بن هويش',
+            'customer'   => $r->customer ? trim($r->customer->f_name . ' ' . $r->customer->l_name) : $defaultCustomer,
             'created_at' => $r->created_at?->toIso8601String(),
         ])->values();
 
         $related = Product::active()
+            ->with(['brand.translations' => fn($q) => $q->where('locale', app()->getLocale()), 'rating'])
             ->where('id', '!=', $product->id)
             ->when($product->brand_id, fn($q) => $q->where('brand_id', $product->brand_id))
             ->latest()
@@ -268,10 +276,13 @@ class StorefrontController extends Controller
                     $p = $it->product;
                     $livePrice = $p ? $this->finalPrice($p) : (int)$it->fallback_price;
                     $sizes = $p ? $this->extractSizes($p, $it->sizes ?? []) : ($it->sizes ?? []);
+                    $label = $p ? $this->translatedValue($p, 'name', $p->name) : $it->label;
+                    $pImages = $p ? ($p->identity_image_full_path ?? []) : [];
+                    $image = $pImages[0] ?? null;
 
                     return [
                         'id'        => $it->uid,
-                        'label'     => $it->label,
+                        'label'     => $label,
                         'category'  => $it->category,
                         'hotspot'   => ['x' => (float)$it->hotspot_x, 'y' => (float)$it->hotspot_y],
                         'productId' => $it->product_id ? (string)$it->product_id : null,
@@ -279,6 +290,7 @@ class StorefrontController extends Controller
                         'livePrice' => $livePrice,
                         'isDemo'    => $it->product_id === null,
                         'sizes'     => $sizes,
+                        'image'     => $image,
                     ];
                 })->values()->all(),
                 'wholeLookDiscount' => $look->whole_look_discount ?: null,
@@ -687,6 +699,19 @@ class StorefrontController extends Controller
         return $fallback;
     }
 
+    private function translatedValue($model, string $field, $default = null)
+    {
+        if (!$model || !$model->relationLoaded('translations')) {
+            return $default;
+        }
+        foreach ($model->translations as $tr) {
+            if (($tr->key ?? null) === $field && $tr->value !== null && $tr->value !== '') {
+                return $tr->value;
+            }
+        }
+        return $default;
+    }
+
     private function formatCatalogProduct(Product $product): array
     {
         $images = $product->identity_image_full_path;
@@ -695,7 +720,7 @@ class StorefrontController extends Controller
 
         return [
             'id'            => $product->id,
-            'name'          => $product->name,
+            'name'          => $this->translatedValue($product, 'name', $product->name),
             'price'         => (float)$product->price,
             'final_price'   => $discInfo['final_price'],
             'discount'      => (float)$discInfo['discount'],
@@ -708,7 +733,7 @@ class StorefrontController extends Controller
             'rating'        => round((float)$ratingAvg, 1),
             'brand'         => $product->brand ? [
                 'id'    => $product->brand->id,
-                'name'  => $product->brand->name,
+                'name'  => $this->translatedValue($product->brand, 'name', $product->brand->name),
                 'image' => $product->brand->image_full_path,
             ] : null,
         ];

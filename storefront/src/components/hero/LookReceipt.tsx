@@ -49,7 +49,15 @@ export default function LookReceipt({ look, index, selectedItem, onSelectItem }:
       onSelectItem(id);
       return;
     }
-    add([{ lookId: look.id, itemId: id, productId: it.productId, label: it.label, size, price: resolvePrice(it).amount }]);
+    add([{
+      lookId: look.id,
+      itemId: id,
+      productId: it.productId,
+      label: it.label,
+      size,
+      price: resolvePrice(it).amount,
+      image: it.image,
+    }]);
   };
 
   const addAll = () => {
@@ -67,6 +75,7 @@ export default function LookReceipt({ look, index, selectedItem, onSelectItem }:
         label: it.label,
         size: sizes[it.id],
         price: resolvePrice(it).amount,
+        image: it.image,
         lookDiscountPct: look.wholeLookDiscount,
       })),
     );
