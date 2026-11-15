@@ -8,7 +8,7 @@
             @include('admin-views.business-settings.partial.third-party-api-navmenu')
         </div>
         <div class="row g-3">
-            <div class="col-md-4">
+            <div class="{{ \App\CentralLogics\Helpers::is_feature_active('online_payment') ? 'col-md-4' : 'col-md-6' }}">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="text-uppercase mb-3">{{translate('payment')}} {{translate('method')}}</h5>
@@ -41,6 +41,7 @@
                     </div>
                 </div>
             </div>
+            @if (\App\CentralLogics\Helpers::is_feature_active('online_payment'))
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-body">
@@ -74,7 +75,8 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-4">
+            @endif
+            <div class="{{ \App\CentralLogics\Helpers::is_feature_active('online_payment') ? 'col-md-4' : 'col-md-6' }}">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="text-uppercase mb-3">{{translate('payment')}} {{translate('method')}}</h5>
@@ -109,6 +111,7 @@
             </div>
         </div>
 
+        @if (\App\CentralLogics\Helpers::is_feature_active('online_payment'))
         <div class="row">
             @if($published_status == 1)
                 <div class="col-12 mb-3">
@@ -210,6 +213,7 @@
                 </div>
             @endforeach
         </div>
+        @endif
     </div>
 @endsection
 

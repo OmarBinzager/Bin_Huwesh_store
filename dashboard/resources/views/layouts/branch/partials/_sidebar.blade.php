@@ -44,6 +44,7 @@
                             </a>
                         </li>
 
+                        @if (\App\CentralLogics\Helpers::is_feature_active('pos'))
                         <li class="navbar-vertical-aside-has-menu {{ Request::is('branch/pos*') ? 'active' : '' }}">
                             <a class="js-navbar-vertical-aside-menu-link nav-link nav-link-toggle" href="javascript:"
                                 title="{{ translate('POS') }}">
@@ -76,6 +77,7 @@
                                 </li>
                             </ul>
                         </li>
+                        @endif
 
                         <li class="nav-item nav-item_title">
                             <small class="nav-subtitle">{{ translate('order_management') }}</small>

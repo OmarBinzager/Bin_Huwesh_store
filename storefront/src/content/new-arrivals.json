@@ -1,0 +1,153 @@
+{
+  "version": 1,
+  "settings": {
+    "title": "وصل حديثًا",
+    "subtitle": "اكتشف الجديد، واختر ما يناسبك",
+    "watermark": "BIN HUWESH",
+    "room": "/images/new-arrivals/room.webp"
+  },
+  "categories": [
+    {
+      "id": "polos",
+      "name": "بولو"
+    },
+    {
+      "id": "jackets",
+      "name": "جاكيتات"
+    },
+    {
+      "id": "tees",
+      "name": "تيشيرتات"
+    },
+    {
+      "id": "hoodies",
+      "name": "هوديز"
+    },
+    {
+      "id": "sweaters",
+      "name": "كنزات"
+    },
+    {
+      "id": "shirts",
+      "name": "قمصان"
+    }
+  ],
+  "items": [
+    {
+      "id": "olive-polo",
+      "name": "بولو محبوك زيتي",
+      "description": "نسيج محبوك واضح، ياقة مضلّعة وثلاثة أزرار.",
+      "categoryId": "polos",
+      "price": 9500,
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "colors": [
+        {
+          "id": "olive",
+          "name": "زيتي داكن",
+          "swatch": "#3b4429",
+          "garment": "/images/new-arrivals/garment-olive-polo.webp",
+          "model": "/images/new-arrivals/model-olive-polo.webp"
+        }
+      ],
+      "visible": true
+    },
+    {
+      "id": "leather-jacket",
+      "name": "جاكيت جلد بني",
+      "description": "جلد بني داكن بسحّاب وجيبين، يُلبس مفتوحًا فوق تيشيرت أسود.",
+      "categoryId": "jackets",
+      "price": 38000,
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "colors": [
+        {
+          "id": "dark-brown",
+          "name": "بني داكن",
+          "swatch": "#4b3025",
+          "garment": "/images/new-arrivals/garment-leather-jacket.webp",
+          "model": "/images/new-arrivals/model-leather-jacket.webp"
+        }
+      ],
+      "visible": true
+    },
+    {
+      "id": "black-oversized-tee",
+      "name": "تيشيرت أسود واسع",
+      "description": "قصّة واسعة بأكتاف منخفضة وطبعة صغيرة أنيقة على الصدر.",
+      "categoryId": "tees",
+      "price": 7500,
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL",
+        "XXL"
+      ],
+      "colors": [
+        {
+          "id": "black",
+          "name": "أسود",
+          "swatch": "#1a1a1a",
+          "garment": "/images/new-arrivals/garment-black-oversized-tee.webp",
+          "model": "/images/new-arrivals/model-black-oversized-tee.webp"
+        }
+      ],
+      "visible": true
+    },
+    {
+      "id": "petrol-hoodie",
+      "name": "هودي أزرق بترولي",
+      "description": "قطن ناعم بجيب أمامي وأربطة بأطراف معدنية.",
+      "categoryId": "hoodies",
+      "price": 15000,
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "colors": [
+        {
+          "id": "petrol",
+          "name": "أزرق بترولي",
+          "swatch": "#1f4a57",
+          "garment": "/images/new-arrivals/garment-petrol-hoodie.webp",
+          "model": "/images/new-arrivals/model-petrol-hoodie.webp"
+        }
+      ],
+      "visible": true
+    },
+    {
+      "id": "burgundy-knit",
+      "name": "كنزة عنابية محبوكة",
+      "description": "صوف بجدائل بارزة وحواف مضلّعة.",
+      "categoryId": "sweaters",
+      "price": 17000,
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "colors": [
+        {
+          "id": "burgundy",
+          "name": "عنابي",
+          "swatch": "#651a26",
+          "garment": "/images/new-arrivals/garment-burgundy-knit.webp",
+          "model": "/images/new-arrivals/model-burgundy-knit.webp"
+        }
+      ],
+      "visible": true
+    }
+  ]
+}

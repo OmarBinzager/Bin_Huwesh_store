@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\V1\OfferController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\OfflinePaymentMethodController;
 use App\Http\Controllers\Api\V1\ProductController;
+use App\Http\Controllers\Api\V1\StorefrontController;
 use App\Http\Controllers\Api\V1\TimeSlotController;
 use App\Http\Controllers\Api\V1\WishlistController;
 
@@ -58,6 +59,13 @@ Route::group(['middleware'=>'localization'], function () {
     });
 
     Route::get('home-content', [\App\Http\Controllers\Admin\HomeContentController::class, 'getHomeContentApi']);
+
+    Route::group(['prefix' => 'storefront'], function () {
+        Route::get('bootstrap', [StorefrontController::class, 'bootstrap']);
+        Route::get('categories/{slugOrId}', [StorefrontController::class, 'getCategoryCatalog']);
+        Route::get('products/{id}', [StorefrontController::class, 'getProductDetail']);
+        Route::get('policies', [StorefrontController::class, 'getPolicies']);
+    });
 
     Route::group(['prefix' => 'products'], function () {
         Route::get('all', [ProductController::class, 'getAllProducts']);

@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "settings": {
+    "title": "ماركات عالمية",
+    "showTitle": true,
+    "speed": 38,
+    "direction": "left",
+    "logoSize": 34
+  },
+  "brands": [
+    {
+      "id": "tommy-hilfiger",
+      "name": "Tommy Hilfiger",
+      "logo": "/images/brands/tommy-hilfiger.svg",
+      "colorLogo": "/images/brands/tommy-hilfiger-color.svg",
+      "aspect": 13.5344,
+      "mode": "mono",
+      "scale": 1,
+      "visible": true,
+      "source": "https://usa.tommy.com/on/demandware.static/-/Sites-PVHTHUS-Library/default/dw4bd11dac/logo/Logo.svg (official site, header logo)"
+    },
+    {
+      "id": "ralph-lauren",
+      "name": "Ralph Lauren",
+      "logo": "/images/brands/ralph-lauren.svg",
+      "colorLogo": "/images/brands/ralph-lauren-color.svg",
+      "aspect": 2.5951,
+      "mode": "mono",
+      "scale": 1,
+      "visible": true,
+      "source": "https://www.ralphlauren.com/on/demandware.static/-/Library-Sites-RalphLauren_NA_Library/en_US/v1794221898878/img/Brand_Logo_Library/_V2/POLO/2025_offset_polo_logo_white.svg (official brand logo library — Polo Ralph Lauren)"
+    },
+    {
+      "id": "nike",
+      "name": "Nike",
+      "logo": "/images/brands/nike.svg",
+      "colorLogo": "/images/brands/nike-color.svg",
+      "aspect": 2.7646,
+      "mode": "mono",
+      "scale": 1,
+      "visible": true,
+      "source": "https://www.nike.com/ (official site, inline header SVG \"Nike Home Page\")"
+    },
+    {
+      "id": "adidas",
+      "name": "Adidas",
+      "logo": "/images/brands/adidas.svg",
+      "colorLogo": "/images/brands/adidas-color.svg",
+      "aspect": 1.5743,
+      "mode": "mono",
+      "scale": 1,
+      "visible": true,
+      "source": "https://www.adidas.com/us (official site, inline header SVG \"Homepage\")"
+    },
+    {
+      "id": "puma",
+      "name": "Puma",
+      "logo": "/images/brands/puma.svg",
+      "colorLogo": "/images/brands/puma-color.svg",
+      "aspect": 1.2898,
+      "mode": "mono",
+      "scale": 1,
+      "visible": true,
+      "source": "https://us.puma.com/_next/static/assets/icons/puma-logo.svg (official site)"
+    },
+    {
+      "id": "skechers",
+      "name": "Skechers",
+      "logo": "/images/brands/skechers.svg",
+      "colorLogo": "/images/brands/skechers-color.svg",
+      "aspect": 2.574,
+      "mode": "mono",
+      "scale": 1,
+      "visible": true,
+      "source": "https://commons.wikimedia.org/wiki/File:Skechers.svg (official site skechers.com blocked automated access with a Cloudflare check)"
+    },
+    {
+      "id": "lacoste",
+      "name": "Lacoste",
+      "logo": "/images/brands/lacoste.svg",
+      "colorLogo": "/images/brands/lacoste-color.svg",
+      "aspect": 6.1704,
+      "mode": "mono",
+      "scale": 1,
+      "visible": true,
+      "source": "https://www.lacoste.com/on/demandware.static/Sites-FlagShip-Site/-/en_US/v1794212195170/img/svg/critical.svg#icon-lacoste (official site sprite)"
+    },
+    {
+      "id": "calvin-klein",
+      "name": "Calvin Klein",
+      "logo": "/images/brands/calvin-klein.svg",
+      "colorLogo": "/images/brands/calvin-klein-color.svg",
+      "aspect": 5.7495,
+      "mode": "mono",
+      "scale": 1,
+      "visible": true,
+      "source": "https://www.calvinklein.us/on/demandware.static/-/Sites-PVHCKUS-Library/default/dwa0e4bc21/logo/CK-logo-Dark.svg (official site)"
+    },
+    {
+      "id": "levis",
+      "name": "Levi's",
+      "logo": "/images/brands/levis.svg",
+      "colorLogo": "/images/brands/levis-color.svg",
+      "aspect": 2.3733,
+      "mode": "mono",
+      "scale": 1,
+      "visible": true,
+      "source": "https://www.levi.com/US/en_US/ (official site, inline header SVG \"levi Logo graphic link\")"
+    },
+    {
+      "id": "new-balance",
+      "name": "New Balance",
+      "logo": "/images/brands/new-balance.svg",
+      "colorLogo": "/images/brands/new-balance-color.svg",
+      "aspect": 1.7958,
+      "mode": "mono",
+      "scale": 1,
+      "visible": true,
+      "source": "https://commons.wikimedia.org/wiki/File:New_Balance_logo.svg (official site newbalance.com returned 403 to automated access)"
+    }
+  ]
+}

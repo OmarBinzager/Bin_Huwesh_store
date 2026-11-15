@@ -40,6 +40,9 @@
 
                 <div class="check--item-wrapper">
                     @foreach(MANAGEMENT_SECTION as $section)
+                        @if ($section == 'pos_management' && !\App\CentralLogics\Helpers::is_feature_active('pos'))
+                            @continue
+                        @endif
                         <div class="check-item">
                             <div class="form-group form-check form--check">
                                 <input type="checkbox" name="modules[]" value="{{$section}}" class="form-check-input module-permission"

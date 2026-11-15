@@ -1,0 +1,123 @@
+{
+  "version": 1,
+  "testimonials": {
+    "title": "قالوا عن بن هويش",
+    "subtitle": "تجاربكم معنا، نعتز بها",
+    "items": [
+      {
+        "id": "preview-1",
+        "quote": "مثال للمعاينة: هنا يظهر رأي عميل حقيقي عن تجربته في المعرض واختيار إطلالته، بعد الحصول على موافقته.",
+        "name": "اسم العميل (مثال)",
+        "verified": false,
+        "visible": true
+      },
+      {
+        "id": "preview-2",
+        "quote": "مثال للمعاينة: مكان مخصص لرأي يتحدث عن جودة القطع والمقاسات وخدمة فريق المعرض.",
+        "name": "اسم العميل (مثال)",
+        "verified": false,
+        "visible": true
+      },
+      {
+        "id": "preview-3",
+        "quote": "مثال للمعاينة: يُستبدل هذا النص بتقييم موثّق من مصدره، مع اسم العرض الذي يوافق عليه العميل.",
+        "name": "اسم العميل (مثال)",
+        "verified": false,
+        "visible": true
+      }
+    ]
+  },
+  "contact": {
+    "title": "ننتظرك في بن هويش",
+    "subtitle": "اكتشف تشكيلتنا في المعرض، أو تواصل معنا لمساعدتك في اختيار إطلالتك",
+    "company": "شركة بن هويش التجارية",
+    "address": "عدن – المنصورة – خط الحجاز",
+    "phoneDisplay": "780024406",
+    "phoneIntl": "967780024406",
+    "mapUrl": ""
+  },
+  "footer": {
+    "tagline": "اختيارات تشبهك",
+    "groups": [
+      {
+        "id": "departments",
+        "title": "الأقسام",
+        "links": [
+          {
+            "label": "رجالي",
+            "href": "/categories/men"
+          },
+          {
+            "label": "شبابي",
+            "href": "/categories/youth"
+          },
+          {
+            "label": "ولادي",
+            "href": "/categories/kids"
+          },
+          {
+            "label": "جامبو",
+            "href": "/categories/jumbo"
+          },
+          {
+            "label": "بدلات",
+            "href": "/categories/suits"
+          },
+          {
+            "label": "معاوز",
+            "href": "/categories/maawaz"
+          },
+          {
+            "label": "أحذية وصنادل",
+            "href": "/categories/shoes"
+          },
+          {
+            "label": "إكسسوارات",
+            "href": "/categories/accessories"
+          }
+        ]
+      },
+      {
+        "id": "browse",
+        "title": "تصفّح",
+        "links": [
+          {
+            "label": "تسوّق حسب القسم",
+            "href": "/#shop-by-category"
+          },
+          {
+            "label": "وصل حديثًا",
+            "href": "/#new-arrivals"
+          },
+          {
+            "label": "الأحذية",
+            "href": "/#shoes"
+          },
+          {
+            "label": "آراء العملاء",
+            "href": "/#testimonials"
+          }
+        ]
+      },
+      {
+        "id": "help",
+        "title": "المساعدة",
+        "links": [
+          {
+            "label": "تواصل عبر واتساب",
+            "href": "https://wa.me/967780024406"
+          },
+          {
+            "label": "اتصل بنا",
+            "href": "tel:+967780024406"
+          },
+          {
+            "label": "زيارة المعرض",
+            "href": "/#visit"
+          }
+        ]
+      }
+    ],
+    "social": []
+  }
+}

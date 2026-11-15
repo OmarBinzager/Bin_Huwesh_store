@@ -1,0 +1,223 @@
+@import "tailwindcss";
+
+/* `dark:` follows the site's own switch (data-theme), not the OS setting. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+ * Bin Huwesh design tokens — light and dark are two hand-picked palettes
+ * (no global invert filter: model photos and the brand red never change).
+ *
+ * The theme lives on <html data-theme="light|dark">, set before first paint
+ * by the inline script in app/layout.tsx. Any subtree can pin a palette with
+ * its own data-theme (the archived /prototype-v1 page pins "light").
+ *
+ *   ink     main text / inverted surfaces     on-ink  text on an ink surface
+ *   paper   page background                   stage   hero background
+ *   card    panels, header                    line    borders
+ *   muted   secondary text
+ * Brand reds are sampled from brand/logo/logo-transparent.png.
+ */
+:root,
+[data-theme="light"] {
+  --bh-ink: #0e0e0e;
+  --bh-on-ink: #ffffff;
+  --bh-paper: #ffffff;
+  --bh-stage: #f7f6f3;
+  --bh-card: #ffffff;
+  --bh-line: #e4e1dc;
+  --bh-muted: #6c6761;
+  --bh-floor-hi: #ffffff;
+  --bh-floor-top: #ebe7e0;
+  --bh-ground: 20 16 12;
+  --bh-ground-a: 0.34;
+}
+
+[data-theme="dark"] {
+  --bh-ink: #f2f1ee;
+  --bh-on-ink: #0e0e0e;
+  --bh-paper: #0a0a0a;
+  --bh-stage: #0d0d0d;
+  --bh-card: #161616;
+  --bh-line: #2c2b29;
+  --bh-muted: #a29d96;
+  --bh-floor-hi: #232221;
+  --bh-floor-top: #050505;
+  --bh-ground: 0 0 0;
+  --bh-ground-a: 0.8;
+}
+
+@theme inline {
+  --color-ink: var(--bh-ink);
+  --color-on-ink: var(--bh-on-ink);
+  --color-paper: var(--bh-paper);
+  --color-stage: var(--bh-stage);
+  --color-card: var(--bh-card);
+  --color-line: var(--bh-line);
+  --color-muted: var(--bh-muted);
+  --color-brand: #d0101f;
+  --color-brand-deep: #a10c19;
+  /* Over photos (hotspot dots) — identical in both themes. */
+  --color-onyx: #0e0e0e;
+  --color-mist: #d7e2ea;
+
+  /* shadcn-style names used by components/ui (e.g. product-rail-gallery),
+     mapped onto the Bin Huwesh palette so they follow light/dark too. */
+  --color-background: var(--bh-paper);
+  --color-foreground: var(--bh-ink);
+  --color-muted-foreground: var(--bh-muted);
+  --color-card-foreground: var(--bh-ink);
+  --color-border: var(--bh-line);
+  --color-ring: #d0101f;
+
+  --font-sans: var(--font-plex), system-ui, sans-serif;
+  --font-display: var(--font-alexandria), var(--font-plex), sans-serif;
+  --font-proto: var(--font-kanit), sans-serif;
+}
+
+/* Same shadcn names as real CSS variables: some components read them in
+   inline styles (var(--color-foreground)), which `@theme inline` alone does
+   not provide. Declared on every theme root so pinned subtrees recompute. */
+:root,
+[data-theme] {
+  --color-background: var(--bh-paper);
+  --color-foreground: var(--bh-ink);
+  --color-muted-foreground: var(--bh-muted);
+  --color-card: var(--bh-card);
+  --color-card-foreground: var(--bh-ink);
+  --color-border: var(--bh-line);
+  --color-ring: #d0101f;
+}
+
+/* Minimal stand-in for tw-animate-css's `animate-in fade-in` (used by the
+   rail gallery caption) — not installed in this project. */
+@keyframes bh-enter {
+  from {
+    opacity: var(--bh-enter-opacity, 1);
+  }
+}
+.animate-in {
+  animation: bh-enter 0.3s ease both;
+}
+.fade-in {
+  --bh-enter-opacity: 0;
+}
+
+/*
+ * Marquee animation (components/ui/marquee.tsx). The supplied snippet was a
+ * tailwind.config.js `extend` block; Tailwind v4 declares it here instead.
+ * The track holds its content twice, so moving it by -50% loops seamlessly.
+ * `inline` matters: it makes the utility read var(--duration) on the moving
+ * element itself; a plain @theme would resolve it once at :root (30s always).
+ */
+@theme inline {
+  --animate-marquee: marquee var(--duration, 30s) linear infinite;
+  --animate-marquee-reverse: marquee-reverse var(--duration, 30s) linear infinite;
+
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes marquee-reverse {
+    from {
+      transform: translateX(-50%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+}
+
+/* Supplied with the marquee demo; `.dark` maps to this site's data-theme. */
+:root {
+  --sky-400: #38bdf8;
+  --sky-500: #0ea5e9;
+}
+.dark,
+[data-theme="dark"] {
+  --sky-400: #38bdf8;
+  --sky-500: #0ea5e9;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bh-paper);
+  color: var(--bh-ink);
+  font-family: var(--font-plex), system-ui, sans-serif;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* Theme-specific assets (e.g. the logo with black vs white lettering). */
+[data-theme="dark"] .light-only,
+:root:not([data-theme="dark"]) .dark-only {
+  display: none !important;
+}
+
+/* Smooth palette switch, but never on first paint. */
+html.theme-ready body,
+html.theme-ready header,
+html.theme-ready section,
+html.theme-ready aside {
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease,
+    border-color 0.35s ease;
+}
+
+/* Latin digits for prices and counters, as in the app. */
+.nums {
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+/* Receipt panel: torn zig-zag strip under the paper. */
+.zigzag {
+  height: 9px;
+  flex: none;
+  background:
+    linear-gradient(135deg, var(--color-card) 50%, transparent 50%) 0 0 / 14px 14px repeat-x,
+    linear-gradient(-135deg, var(--color-card) 50%, transparent 50%) 0 0 / 14px 14px repeat-x;
+}
+
+/* Gradient display type used by every oversized heading. */
+.hero-heading {
+  background: linear-gradient(180deg, #646973 0%, #bbccd7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/*
+ * Marquee tiles are far off-screen horizontally for most of the page's life and
+ * carry multi-MB GIFs. Skipping their layout/paint work until they approach the
+ * viewport is the single biggest win here; the intrinsic size keeps the row
+ * height stable so nothing shifts.
+ */
+.marquee-tile {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 420px auto 270px;
+}
+
+/* Motion is decorative throughout, so it degrades to static layout cleanly. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

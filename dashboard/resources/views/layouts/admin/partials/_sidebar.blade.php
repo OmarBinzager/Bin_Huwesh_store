@@ -1,4 +1,4 @@
-<div id="sidebarMain" class="d-none">
+﻿<div id="sidebarMain" class="d-none">
     <aside
         class="js-navbar-vertical-aside navbar navbar-vertical-aside navbar-vertical navbar-vertical-fixed navbar-expand-xl navbar-bordered">
         <div class="navbar-vertical-container text-capitalize">
@@ -46,7 +46,7 @@
                             </li>
                         @endif
 
-                        @if (Helpers::module_permission_check(MANAGEMENT_SECTION['pos_management']))
+                        @if (Helpers::module_permission_check(MANAGEMENT_SECTION['pos_management']) && \App\CentralLogics\Helpers::is_feature_active('pos'))
                             <li class="navbar-vertical-aside-has-menu {{ Request::is('admin/pos*') ? 'active' : '' }}">
                                 <a class="js-navbar-vertical-aside-menu-link nav-link nav-link-toggle"
                                     href="javascript:" title="{{ translate('POS') }}">
@@ -335,11 +335,19 @@
                                 </ul>
                             </li>
 
-                                                        <li class="navbar-vertical-aside-has-menu {{ Request::is('admin/home-content*') ? 'active' : '' }}">
+                                                                                    <li class="navbar-vertical-aside-has-menu {{ Request::is('admin/home-content*') ? 'active' : '' }}">
                                 <a class="js-navbar-vertical-aside-menu-link nav-link"
                                     href="{{ route('admin.home-content.index') }}" title="{{ translate('محتوى الرئيسية') }}">
                                     <i class="tio-gallery-outlined nav-icon"></i>
                                     <span class="navbar-vertical-aside-mini-mode-hidden-elements text-truncate">{{ translate('محتوى الرئيسية') }}</span>
+                                </a>
+                            </li>
+
+                            <li class="navbar-vertical-aside-has-menu {{ Request::is('admin/storefront*') ? 'active' : '' }}">
+                                <a class="js-navbar-vertical-aside-menu-link nav-link"
+                                    href="{{ route('admin.storefront.index') }}" title="{{ translate('واجهة المتجر 3D') }}">
+                                    <i class="tio-cube nav-icon"></i>
+                                    <span class="navbar-vertical-aside-mini-mode-hidden-elements text-truncate">{{ translate('واجهة المتجر 3D') }}</span>
                                 </a>
                             </li>
 
@@ -1008,7 +1016,7 @@
                                 </a>
                             </li>
 
-                            @if (count(config('addon_admin_routes')) > 0)
+                            @if (count(config('addon_admin_routes')) > 0 && \App\CentralLogics\Helpers::is_feature_active('online_payment'))
                                 <li
                                     class="navbar-vertical-aside-has-menu {{ Request::is('admin/payment/configuration/*') || Request::is('admin/sms/configuration/*') ? 'active' : '' }} mb-5">
                                     <a class="js-navbar-vertical-aside-menu-link nav-link nav-link-toggle"

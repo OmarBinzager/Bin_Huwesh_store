@@ -1,0 +1,130 @@
+{
+  "version": 1,
+  "settings": {
+    "title": "تسوّق حسب القسم",
+    "subtitle": "اختر قسمك، واكتشف ما يناسبك",
+    "cta": "اكتشف التشكيلة"
+  },
+  "cards": [
+    {
+      "id": "card-men",
+      "categoryId": "men",
+      "name": "رجالي",
+      "caption": "قمصان وبناطيل وإطلالات يومية ورسمية للرجال.",
+      "href": "/categories/men",
+      "image": "/images/categories/men-01.webp",
+      "alt": "رجل بقميص مقلّم وبنطال بيج بقصّة عالية",
+      "focus": {
+        "x": 50,
+        "y": 22
+      },
+      "size": "large",
+      "visible": true
+    },
+    {
+      "id": "card-suits",
+      "categoryId": "suits",
+      "name": "بدلات",
+      "caption": "بدلات رسمية للمناسبات والعمل.",
+      "href": "/categories/suits",
+      "image": "/images/categories/suits-01.webp",
+      "alt": "رجل ببدلة رسمية كحلية وربطة عنق",
+      "focus": {
+        "x": 50,
+        "y": 25
+      },
+      "size": "tall",
+      "visible": true
+    },
+    {
+      "id": "card-youth",
+      "categoryId": "youth",
+      "name": "شبابي",
+      "caption": "قطع عصرية وكاجوال للشباب.",
+      "href": "/categories/youth",
+      "image": "/images/categories/youth-01.webp",
+      "alt": "شاب بقبعة ونظارة شمسية وتيشيرت أسود وجينز فاتح",
+      "focus": {
+        "x": 50,
+        "y": 20
+      },
+      "size": "tall",
+      "visible": true
+    },
+    {
+      "id": "card-kids",
+      "categoryId": "kids",
+      "name": "ولادي",
+      "caption": "ملابس الأولاد للمناسبات والأيام العادية.",
+      "href": "/categories/kids",
+      "image": "/images/categories/kids-01.webp",
+      "alt": "طفل بقميص بولو كريمي مخطّط وشورت بني",
+      "focus": {
+        "x": 50,
+        "y": 40
+      },
+      "size": "wide",
+      "visible": true
+    },
+    {
+      "id": "card-jumbo",
+      "categoryId": "jumbo",
+      "name": "جامبو",
+      "caption": "مقاسات كبيرة بقصّات مريحة.",
+      "href": "/categories/jumbo",
+      "image": "/images/categories/jumbo-01.webp",
+      "alt": "رجل بمقاس كبير بقميص زيتي مقلّم وبنطال كحلي",
+      "focus": {
+        "x": 50,
+        "y": 8
+      },
+      "size": "regular",
+      "visible": true
+    },
+    {
+      "id": "card-shoes",
+      "categoryId": "shoes",
+      "name": "أحذية وصنادل",
+      "caption": "أحذية رسمية وكاجوال وصنادل.",
+      "href": "/categories/shoes",
+      "image": "/images/categories/shoes-01.webp",
+      "alt": "حذاء لوفر بني وحذاء رسمي أسود وصندل أبيض وحذاء رياضي أبيض",
+      "focus": {
+        "x": 50,
+        "y": 55
+      },
+      "size": "regular",
+      "visible": true
+    },
+    {
+      "id": "card-maawaz",
+      "categoryId": "maawaz",
+      "name": "معاوز",
+      "caption": "معاوز يمنية بخامات ونقوش متنوعة.",
+      "href": "/categories/maawaz",
+      "image": "/images/categories/maawaz-01.webp",
+      "alt": "رجل بمعوز يمني مخطّط وقميص أبيض بجانب معاوز مطوية",
+      "focus": {
+        "x": 58,
+        "y": 2
+      },
+      "size": "wide",
+      "visible": true
+    },
+    {
+      "id": "card-accessories",
+      "categoryId": "accessories",
+      "name": "إكسسوارات",
+      "caption": "ساعات وأحزمة ونظارات ولمسات تكمّل الإطلالة.",
+      "href": "/categories/accessories",
+      "image": "/images/categories/accessories-01.webp",
+      "alt": "ساعتان وحزام جلدي ونظارتان شمسيتان ومحفظة وشال منقوش",
+      "focus": {
+        "x": 40,
+        "y": 55
+      },
+      "size": "wide",
+      "visible": true
+    }
+  ]
+}

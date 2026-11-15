@@ -1,0 +1,65 @@
+{
+  "01-suit": {
+    "file": "/images/looks/01-suit.webp",
+    "width": 715,
+    "height": 1400,
+    "kb": 90,
+    "subjectWidthRatio": 0.486
+  },
+  "02-linen": {
+    "file": "/images/looks/02-linen.webp",
+    "width": 719,
+    "height": 1400,
+    "kb": 130,
+    "subjectWidthRatio": 0.485
+  },
+  "03-jacket": {
+    "file": "/images/looks/03-jacket.webp",
+    "width": 755,
+    "height": 1400,
+    "kb": 167,
+    "subjectWidthRatio": 0.505
+  },
+  "03-youth": {
+    "file": "/images/looks/03-youth.webp",
+    "width": 709,
+    "height": 1400,
+    "kb": 92,
+    "subjectWidthRatio": 0.483
+  },
+  "04-polo": {
+    "file": "/images/looks/04-polo.webp",
+    "width": 757,
+    "height": 1400,
+    "kb": 117,
+    "subjectWidthRatio": 0.508
+  },
+  "05-winter": {
+    "file": "/images/looks/05-winter.webp",
+    "width": 720,
+    "height": 1400,
+    "kb": 158,
+    "subjectWidthRatio": 0.485
+  },
+  "06-maawaz": {
+    "file": "/images/looks/06-maawaz.webp",
+    "width": 683,
+    "height": 1400,
+    "kb": 142,
+    "subjectWidthRatio": 0.46
+  },
+  "07-jumbo": {
+    "file": "/images/looks/07-jumbo.webp",
+    "width": 852,
+    "height": 1400,
+    "kb": 156,
+    "subjectWidthRatio": 0.582
+  },
+  "08-kids": {
+    "file": "/images/looks/08-kids.webp",
+    "width": 631,
+    "height": 1400,
+    "kb": 101,
+    "subjectWidthRatio": 0.416
+  }
+}

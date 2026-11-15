@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use App\Http\Controllers\Admin\AIConfigurationController;
 use App\Http\Controllers\Admin\InfoSoftERPController;
@@ -37,6 +37,7 @@ use App\Http\Controllers\Admin\POSController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\SizeChartController;
 use App\Http\Controllers\Admin\HomeContentController;
+use App\Http\Controllers\Admin\Storefront3DController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ReviewsController;
 use App\Http\Controllers\Admin\SMSModuleController;
@@ -55,7 +56,7 @@ Route::group(['as' => 'admin.'], function () {
         Route::get('logout', [LoginController::class, 'logout'])->name('logout');
     });
 
-    Route::group(['middleware' => ['admin', 'employee_active_check']], function () {
+    Route::group(['middleware' => ['admin', 'employee_active_check', 'localization']], function () {
         Route::get('/', [DashboardController::class, 'dashboard'])->name('dashboard');
         Route::post('order-stats', [DashboardController::class, 'orderStats'])->name('order-stats');
         Route::get('settings', [SystemController::class, 'settings'])->name('settings');
@@ -238,6 +239,20 @@ Route::group(['prefix' => 'seller', 'as' => 'seller.', 'middleware' => ['module:
             Route::post('update', [HomeContentController::class, 'update'])->name('update');
         });
 
+        Route::group(['prefix' => 'storefront', 'as' => 'storefront.', 'middleware' => ['module:product_management']], function () {
+            Route::get('/', [Storefront3DController::class, 'index'])->name('index');
+            Route::post('upload-media', [Storefront3DController::class, 'uploadMedia'])->name('upload-media');
+            Route::post('looks', [Storefront3DController::class, 'saveLook'])->name('looks.save');
+            Route::delete('looks/{id}', [Storefront3DController::class, 'deleteLook'])->name('looks.delete');
+            Route::post('virtual-fit', [Storefront3DController::class, 'saveVirtualFit'])->name('virtual-fit.save');
+            Route::delete('virtual-fit/{id}', [Storefront3DController::class, 'deleteVirtualFit'])->name('virtual-fit.delete');
+            Route::post('shoes', [Storefront3DController::class, 'saveShoe'])->name('shoes.save');
+            Route::delete('shoes/{id}', [Storefront3DController::class, 'deleteShoe'])->name('shoes.delete');
+            Route::post('rail', [Storefront3DController::class, 'saveRail'])->name('rail.save');
+            Route::delete('rail/{id}', [Storefront3DController::class, 'deleteRail'])->name('rail.delete');
+            Route::post('categories', [Storefront3DController::class, 'saveCategoryCard'])->name('categories.save');
+            Route::delete('categories/{id}', [Storefront3DController::class, 'deleteCategoryCard'])->name('categories.delete');
+        });
         Route::group(['prefix' => 'size-chart', 'as' => 'size-chart.', 'middleware' => ['module:product_management']], function () {
             Route::get('/', [SizeChartController::class, 'index'])->name('index');
             Route::get('create', [SizeChartController::class, 'create'])->name('create');

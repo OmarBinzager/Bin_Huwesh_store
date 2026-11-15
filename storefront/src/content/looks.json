@@ -1,0 +1,676 @@
+{
+  "version": 1,
+  "looks": [
+    {
+      "id": "formal-navy",
+      "order": 1,
+      "published": true,
+      "title": "حضور رسمي",
+      "subtitle": "بدلة كحلية بقصّة ضيقة",
+      "image": {
+        "src": "/images/looks/01-suit.webp",
+        "width": 715,
+        "height": 1400,
+        "alt": "رجل يرتدي بدلة كحلية وقميصًا أبيض وربطة عنق كحلية وحذاء أوكسفورد أسود",
+        "scale": 1,
+        "offsetX": 0,
+        "offsetY": 0,
+        "isPreview": true
+      },
+      "items": [
+        {
+          "id": "jacket",
+          "label": "جاكيت بدلة كحلي",
+          "category": "بدلات",
+          "hotspot": {
+            "x": 25,
+            "y": 45
+          },
+          "productId": null,
+          "demoPrice": 38000,
+          "sizes": [
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL"
+          ]
+        },
+        {
+          "id": "trousers",
+          "label": "بنطال بدلة كحلي",
+          "category": "بدلات",
+          "hotspot": {
+            "x": 52,
+            "y": 72
+          },
+          "productId": null,
+          "demoPrice": 16000,
+          "sizes": [
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL"
+          ]
+        },
+        {
+          "id": "shirt",
+          "label": "قميص رسمي أبيض",
+          "category": "قمصان",
+          "hotspot": {
+            "x": 35,
+            "y": 38
+          },
+          "productId": null,
+          "demoPrice": 9000,
+          "sizes": [
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL"
+          ]
+        },
+        {
+          "id": "shoes",
+          "label": "حذاء أوكسفورد جلد",
+          "category": "أحذية",
+          "hotspot": {
+            "x": 27,
+            "y": 89
+          },
+          "productId": null,
+          "demoPrice": 24000,
+          "sizes": [
+            "40",
+            "41",
+            "42",
+            "43",
+            "44"
+          ]
+        }
+      ],
+      "wholeLookDiscount": 10
+    },
+    {
+      "id": "aden-linen",
+      "order": 2,
+      "published": true,
+      "title": "أناقة يومية",
+      "subtitle": "كتان خفيف لصيف عدن",
+      "image": {
+        "src": "/images/looks/02-linen.webp",
+        "width": 719,
+        "height": 1400,
+        "alt": "رجل بقميص كتان مقلّم وبنطال كتان بيج بكسرات وحذاء لوفر شامواه بني",
+        "scale": 1,
+        "offsetX": 0,
+        "offsetY": 0,
+        "isPreview": true
+      },
+      "items": [
+        {
+          "id": "shirt",
+          "label": "قميص كتان مقلّم",
+          "category": "قمصان",
+          "hotspot": {
+            "x": 55,
+            "y": 33
+          },
+          "productId": null,
+          "demoPrice": 11000,
+          "sizes": [
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL"
+          ]
+        },
+        {
+          "id": "trousers",
+          "label": "بنطال كتان بكسرات",
+          "category": "بناطيل",
+          "hotspot": {
+            "x": 40,
+            "y": 68
+          },
+          "productId": null,
+          "demoPrice": 14000,
+          "sizes": [
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL"
+          ]
+        },
+        {
+          "id": "loafers",
+          "label": "لوفر شامواه بني",
+          "category": "أحذية",
+          "hotspot": {
+            "x": 29,
+            "y": 85
+          },
+          "productId": null,
+          "demoPrice": 22000,
+          "sizes": [
+            "40",
+            "41",
+            "42",
+            "43",
+            "44"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "youth-check",
+      "order": 3,
+      "published": true,
+      "title": "طاقة شبابية",
+      "subtitle": "ستريت ستايل بكاب ونظارة",
+      "image": {
+        "src": "/images/looks/03-youth.webp",
+        "width": 709,
+        "height": 1400,
+        "alt": "شاب بكاب أسود معكوس ونظارة شمسية وتيشيرت أسود مطبوع بطبقتين وجينز كوردروي فاتح وحذاء رياضي أسود",
+        "scale": 1,
+        "offsetX": 0,
+        "offsetY": 0,
+        "isPreview": true
+      },
+      "items": [
+        {
+          "id": "cap",
+          "label": "كاب أسود بإبزيم ذهبي",
+          "category": "إكسسوارات",
+          "hotspot": {
+            "x": 45,
+            "y": 6
+          },
+          "productId": null,
+          "demoPrice": 4500,
+          "sizes": [
+            "مقاس واحد"
+          ]
+        },
+        {
+          "id": "sunglasses",
+          "label": "نظارة شمسية رياضية",
+          "category": "إكسسوارات",
+          "hotspot": {
+            "x": 61,
+            "y": 17
+          },
+          "productId": null,
+          "demoPrice": 6000,
+          "sizes": [
+            "مقاس واحد"
+          ]
+        },
+        {
+          "id": "tee",
+          "label": "تيشيرت أوفرسايز مطبوع",
+          "category": "تيشيرتات",
+          "hotspot": {
+            "x": 36,
+            "y": 44
+          },
+          "productId": null,
+          "demoPrice": 7500,
+          "sizes": [
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL"
+          ]
+        },
+        {
+          "id": "longsleeve",
+          "label": "بلوزة سوداء بأكمام طويلة",
+          "category": "تيشيرتات",
+          "hotspot": {
+            "x": 11,
+            "y": 55
+          },
+          "productId": null,
+          "demoPrice": 5000,
+          "sizes": [
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL"
+          ]
+        },
+        {
+          "id": "jeans",
+          "label": "جينز كوردروي فاتح",
+          "category": "جينز",
+          "hotspot": {
+            "x": 42,
+            "y": 78
+          },
+          "productId": null,
+          "demoPrice": 13000,
+          "sizes": [
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL"
+          ]
+        },
+        {
+          "id": "sneakers",
+          "label": "حذاء رياضي أسود",
+          "category": "أحذية",
+          "hotspot": {
+            "x": 27,
+            "y": 93
+          },
+          "productId": null,
+          "demoPrice": 16000,
+          "sizes": [
+            "40",
+            "41",
+            "42",
+            "43",
+            "44"
+          ]
+        }
+      ],
+      "wholeLookDiscount": 10
+    },
+    {
+      "id": "evening-polo",
+      "order": 4,
+      "published": true,
+      "title": "بولو المساء",
+      "subtitle": "تريكو كحلي وبنطال كريمي",
+      "image": {
+        "src": "/images/looks/04-polo.webp",
+        "width": 757,
+        "height": 1400,
+        "alt": "رجل ببولو تريكو كحلي وبنطال كريمي بكسرات وحذاء لوفر بني",
+        "scale": 1,
+        "offsetX": 0,
+        "offsetY": 0,
+        "isPreview": true
+      },
+      "items": [
+        {
+          "id": "polo",
+          "label": "بولو تريكو كحلي",
+          "category": "بولو",
+          "hotspot": {
+            "x": 56,
+            "y": 32
+          },
+          "productId": null,
+          "demoPrice": 9500,
+          "sizes": [
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL"
+          ]
+        },
+        {
+          "id": "trousers",
+          "label": "بنطال كريمي بكسرات",
+          "category": "بناطيل",
+          "hotspot": {
+            "x": 45,
+            "y": 70
+          },
+          "productId": null,
+          "demoPrice": 13000,
+          "sizes": [
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL"
+          ]
+        },
+        {
+          "id": "loafers",
+          "label": "لوفر جلد بني",
+          "category": "أحذية",
+          "hotspot": {
+            "x": 35,
+            "y": 87
+          },
+          "productId": null,
+          "demoPrice": 21000,
+          "sizes": [
+            "40",
+            "41",
+            "42",
+            "43",
+            "44"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "winter-knit",
+      "order": 5,
+      "published": true,
+      "title": "دفء الشتاء",
+      "subtitle": "كنزة تريكو بسحّاب قصير",
+      "image": {
+        "src": "/images/looks/05-winter.webp",
+        "width": 720,
+        "height": 1400,
+        "alt": "رجل بكنزة تريكو بيج بسحاب قصير وبنطال داكن وحذاء جلد بني",
+        "scale": 1,
+        "offsetX": 0,
+        "offsetY": 0,
+        "isPreview": true
+      },
+      "items": [
+        {
+          "id": "sweater",
+          "label": "كنزة تريكو بسحّاب",
+          "category": "شتوي",
+          "hotspot": {
+            "x": 70,
+            "y": 40
+          },
+          "productId": null,
+          "demoPrice": 15000,
+          "sizes": [
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL"
+          ]
+        },
+        {
+          "id": "scarf",
+          "label": "شال صوف رمادي",
+          "category": "شتوي",
+          "hotspot": {
+            "x": 33,
+            "y": 38
+          },
+          "productId": null,
+          "demoPrice": 6000,
+          "sizes": [
+            "مقاس واحد"
+          ]
+        },
+        {
+          "id": "trousers",
+          "label": "بنطال قماش داكن",
+          "category": "بناطيل",
+          "hotspot": {
+            "x": 45,
+            "y": 72
+          },
+          "productId": null,
+          "demoPrice": 12000,
+          "sizes": [
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL"
+          ]
+        },
+        {
+          "id": "shoes",
+          "label": "حذاء جلد بني",
+          "category": "أحذية",
+          "hotspot": {
+            "x": 33,
+            "y": 88
+          },
+          "productId": null,
+          "demoPrice": 23000,
+          "sizes": [
+            "40",
+            "41",
+            "42",
+            "43",
+            "44"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "yemeni-maawaz",
+      "order": 6,
+      "published": true,
+      "title": "أصالة يمنية",
+      "subtitle": "معوز وشال بتنسيق يمني",
+      "image": {
+        "src": "/images/looks/06-maawaz.webp",
+        "width": 683,
+        "height": 1400,
+        "alt": "رجل يمني بقميص أبيض وشال مربعات ومعوز مقلّم وصندل أبيض",
+        "scale": 1,
+        "offsetX": 0,
+        "offsetY": 0,
+        "isPreview": true
+      },
+      "items": [
+        {
+          "id": "maawaz",
+          "label": "معوز مقلّم",
+          "category": "معاوز",
+          "hotspot": {
+            "x": 50,
+            "y": 72
+          },
+          "productId": null,
+          "demoPrice": 14000,
+          "sizes": [
+            "مقاس واحد"
+          ]
+        },
+        {
+          "id": "shawl",
+          "label": "شال مربعات",
+          "category": "شالات",
+          "hotspot": {
+            "x": 26,
+            "y": 44
+          },
+          "productId": null,
+          "demoPrice": 7500,
+          "sizes": [
+            "مقاس واحد"
+          ]
+        },
+        {
+          "id": "shirt",
+          "label": "قميص أبيض طويل",
+          "category": "قمصان",
+          "hotspot": {
+            "x": 66,
+            "y": 35
+          },
+          "productId": null,
+          "demoPrice": 8000,
+          "sizes": [
+            "S",
+            "M",
+            "L",
+            "XL",
+            "2XL"
+          ]
+        },
+        {
+          "id": "sandals",
+          "label": "صندل أبيض",
+          "category": "صنادل",
+          "hotspot": {
+            "x": 26,
+            "y": 90
+          },
+          "productId": null,
+          "demoPrice": 9000,
+          "sizes": [
+            "40",
+            "41",
+            "42",
+            "43",
+            "44"
+          ]
+        }
+      ],
+      "wholeLookDiscount": 10
+    },
+    {
+      "id": "jumbo-stripe",
+      "order": 7,
+      "published": true,
+      "title": "مقاسات جامبو",
+      "subtitle": "قميص مقلّم بمقاس مريح",
+      "image": {
+        "src": "/images/looks/07-jumbo.webp",
+        "width": 852,
+        "height": 1400,
+        "alt": "رجل بمقاس كبير بقميص زيتي مقلّم وبنطال كحلي وحذاء جلد",
+        "scale": 1,
+        "offsetX": 0,
+        "offsetY": 0,
+        "isPreview": true
+      },
+      "items": [
+        {
+          "id": "shirt",
+          "label": "قميص مقلّم جامبو",
+          "category": "جامبو",
+          "hotspot": {
+            "x": 50,
+            "y": 35
+          },
+          "productId": null,
+          "demoPrice": 12000,
+          "sizes": [
+            "3XL",
+            "4XL",
+            "5XL",
+            "6XL"
+          ]
+        },
+        {
+          "id": "trousers",
+          "label": "بنطال كحلي جامبو",
+          "category": "جامبو",
+          "hotspot": {
+            "x": 42,
+            "y": 75
+          },
+          "productId": null,
+          "demoPrice": 14000,
+          "sizes": [
+            "3XL",
+            "4XL",
+            "5XL",
+            "6XL"
+          ]
+        },
+        {
+          "id": "shoes",
+          "label": "حذاء جلد داكن",
+          "category": "أحذية",
+          "hotspot": {
+            "x": 30,
+            "y": 90
+          },
+          "productId": null,
+          "demoPrice": 22000,
+          "sizes": [
+            "40",
+            "41",
+            "42",
+            "43",
+            "44"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "kids-summer",
+      "order": 8,
+      "published": true,
+      "title": "أناقة صغيرة",
+      "subtitle": "طقم ولادي صيفي",
+      "image": {
+        "src": "/images/looks/08-kids.webp",
+        "width": 631,
+        "height": 1400,
+        "alt": "طفل ببولو تريكو كريمي مخطط وشورت بيج وحذاء رياضي أبيض",
+        "scale": 0.74,
+        "offsetX": 0,
+        "offsetY": 0,
+        "isPreview": true
+      },
+      "items": [
+        {
+          "id": "polo",
+          "label": "بولو تريكو بسحّاب",
+          "category": "ولادي",
+          "hotspot": {
+            "x": 56,
+            "y": 47
+          },
+          "productId": null,
+          "demoPrice": 6500,
+          "sizes": [
+            "4 سنوات",
+            "6 سنوات",
+            "8 سنوات",
+            "10 سنوات"
+          ]
+        },
+        {
+          "id": "shorts",
+          "label": "شورت قطن بيج",
+          "category": "ولادي",
+          "hotspot": {
+            "x": 40,
+            "y": 66
+          },
+          "productId": null,
+          "demoPrice": 5000,
+          "sizes": [
+            "4 سنوات",
+            "6 سنوات",
+            "8 سنوات",
+            "10 سنوات"
+          ]
+        },
+        {
+          "id": "sneakers",
+          "label": "حذاء رياضي أبيض",
+          "category": "أحذية أطفال",
+          "hotspot": {
+            "x": 22,
+            "y": 87
+          },
+          "productId": null,
+          "demoPrice": 9000,
+          "sizes": [
+            "28",
+            "29",
+            "30",
+            "31",
+            "32"
+          ]
+        }
+      ]
+    }
+  ]
+}

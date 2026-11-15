@@ -1,0 +1,21 @@
+# Review deployment: upload only what the public site needs (allowlist).
+# Everything else stays on this machine: brand/ originals, assets/ (references,
+# generated originals, review captures), .claude/, .mcp.json, backups, git.
+/*
+!/src
+!/public
+!/package.json
+!/package-lock.json
+!/next.config.ts
+!/tsconfig.json
+!/postcss.config.mjs
+
+# Local-only admin pages and the routes that write data.
+/src/app/admin
+/src/app/api/admin
+
+# Archived phase-1 prototype and the images only it uses.
+/src/app/prototype-v1
+/public/images/collection
+/public/images/cosmos
+/public/images/hero

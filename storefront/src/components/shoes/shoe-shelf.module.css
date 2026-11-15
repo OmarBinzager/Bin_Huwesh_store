@@ -1,0 +1,759 @@
+/*
+ * «أحذية تكمل إطلالتك» — lit shoe shelves. Everything is scoped to .stage.
+ * Layers (bottom → top): room · dusk · arc light · floor glow · world
+ * (spotlight + shoes, the layer the camera zooms) · hint · panel.
+ * Decorative layers never take pointer events.
+ *
+ * The site is RTL: the detail panel sits on the left (inline end) and the
+ * curved light in the top-left corner.
+ */
+
+.stage {
+  /* light theme: pale warm wall, soft shadows */
+  --sh-wall-a: #f4f2ee;
+  --sh-wall-b: #e3ded6;
+  --sh-light: 255 250 240;
+  --sh-arc: rgb(205 160 112 / 0.55);
+  --sh-arc-glow: rgb(255 214 170 / 0.55);
+  --sh-dusk: #1a1714;
+  --sh-dusk-a: 0.62;
+  --sh-shelf: rgb(255 255 255 / 0.5);
+  --sh-shelf-edge: rgb(255 255 255 / 0.95);
+  --sh-shelf-shadow: rgb(70 52 34 / 0.2);
+  --sh-contact: rgb(40 30 22 / 0.34);
+  --sh-dim: brightness(0.86) saturate(0.92);
+  --sh-dim-open: brightness(0.8) saturate(0.9);
+  --sh-ink: #171512;
+  --sh-muted: #6c6761;
+  --sh-line: rgb(23 21 18 / 0.12);
+  --sh-panel: rgb(255 255 255 / 0.9);
+  --sh-chip: rgb(23 21 18 / 0.05);
+  --sh-btn-idle: rgb(23 21 18 / 0.08);
+  --sh-red: #d0101f;
+  --sh-red-deep: #a10c19;
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 28px;
+  color: var(--sh-ink);
+  background: var(--sh-wall-b);
+  /* vertical page scroll stays native; horizontal swipes are ours only when open */
+  touch-action: pan-y;
+}
+
+:global([data-theme="dark"]) .stage {
+  --sh-wall-a: #221d19;
+  --sh-wall-b: #0c0b0a;
+  --sh-light: 255 214 170;
+  --sh-arc: rgb(255 196 140 / 0.7);
+  --sh-arc-glow: rgb(255 170 100 / 0.55);
+  --sh-dusk: #040303;
+  --sh-dusk-a: 0.95;
+  --sh-shelf: rgb(255 255 255 / 0.07);
+  --sh-shelf-edge: rgb(255 255 255 / 0.3);
+  --sh-shelf-shadow: rgb(0 0 0 / 0.65);
+  --sh-contact: rgb(0 0 0 / 0.6);
+  --sh-dim: brightness(0.62);
+  --sh-dim-open: brightness(0.55);
+  --sh-ink: #f2f1ee;
+  --sh-muted: #a29d96;
+  --sh-line: rgb(255 255 255 / 0.12);
+  --sh-panel: rgb(16 14 12 / 0.88);
+  --sh-chip: rgb(255 255 255 / 0.05);
+  --sh-btn-idle: rgb(255 255 255 / 0.08);
+}
+
+/* ── room ───────────────────────────────────────────────────────────────── */
+.room,
+.dusk,
+.arc,
+.floorGlow {
+  position: absolute;
+  pointer-events: none;
+}
+.room {
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(70% 60% at 22% 4%, rgb(var(--sh-light) / 0.16), transparent 70%),
+    radial-gradient(130% 95% at 55% 0%, var(--sh-wall-a), var(--sh-wall-b));
+}
+.dusk {
+  inset: 0;
+  z-index: 1;
+  background: var(--sh-dusk);
+  opacity: 0;
+}
+/* Curved light along the top-left corner of the wall. */
+.arc {
+  z-index: 2;
+  top: 3.5%;
+  left: 2%;
+  width: 32%;
+  height: 74%;
+  border-top: 1.5px solid var(--sh-arc);
+  border-left: 1.5px solid var(--sh-arc);
+  border-top-left-radius: 100% 100%;
+  filter: drop-shadow(0 0 7px var(--sh-arc-glow));
+  -webkit-mask-image: radial-gradient(130% 130% at 0% 0%, #000 38%, transparent 78%);
+  mask-image: radial-gradient(130% 130% at 0% 0%, #000 38%, transparent 78%);
+}
+.floorGlow {
+  z-index: 2;
+  left: 8%;
+  right: 8%;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgb(var(--sh-light) / 0.75), transparent);
+  box-shadow: 0 0 26px 6px rgb(var(--sh-light) / 0.22);
+}
+
+/* ── world (zoomed by the camera) ───────────────────────────────────────── */
+.world {
+  position: relative;
+  z-index: 3;
+  transform-origin: 0 0;
+}
+/* Tall enough for the side panel at every desktop width; the shelves stay centred. */
+@media (min-width: 768px) {
+  .world {
+    min-height: 530px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+.grid {
+  list-style: none;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  column-gap: clamp(14px, 2.6vw, 42px);
+  row-gap: clamp(14px, 1.8vw, 28px);
+  padding: clamp(36px, 4.4vw, 64px) clamp(20px, 4.2vw, 64px) clamp(52px, 5.6vw, 78px);
+}
+.item {
+  --d: var(--dl);
+}
+.cell {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.cell:focus-visible {
+  outline: none;
+}
+.cell:focus-visible .shelf {
+  box-shadow:
+    0 0 0 2px var(--sh-red),
+    0 12px 18px -8px var(--sh-shelf-shadow);
+}
+.pic {
+  position: relative;
+  display: block;
+  aspect-ratio: 1400 / 800;
+}
+.pic img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  transform-origin: 50% 95%;
+  transition:
+    transform 0.5s cubic-bezier(0.22, 0.8, 0.24, 1),
+    filter 0.5s ease;
+}
+/* contact shadow under the sole */
+.contact {
+  position: absolute;
+  z-index: 0;
+  left: 13%;
+  right: 13%;
+  bottom: 3.2%;
+  height: 6%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--sh-contact), transparent);
+  filter: blur(2px);
+}
+/* small clear acrylic ledge */
+.shelf {
+  position: relative;
+  display: block;
+  height: clamp(6px, 0.72vw, 11px);
+  margin: -3.1% 2% 0;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--sh-shelf-edge) 0 1px, var(--sh-shelf) 1px 70%, rgb(var(--sh-light) / 0.08));
+  box-shadow:
+    inset 0 -1px 0 rgb(255 255 255 / 0.18),
+    0 12px 18px -8px var(--sh-shelf-shadow);
+  transition: box-shadow 0.3s ease;
+}
+.label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  min-height: 2.6em;
+  margin-top: 10px;
+  line-height: 1.35;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease;
+}
+.labelName {
+  font-size: 13px;
+  font-weight: 600;
+}
+.labelPrice {
+  font-size: 12px;
+  color: var(--sh-muted);
+}
+
+/* the single gliding spotlight (lives in the world, so it zooms too) */
+.spot {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    transform 0.55s cubic-bezier(0.22, 0.8, 0.24, 1),
+    opacity 0.45s ease;
+}
+.spot[data-on] {
+  opacity: 1;
+}
+.cone {
+  position: absolute;
+  left: -22%;
+  right: -22%;
+  top: -70%;
+  bottom: 2.6em;
+  background: linear-gradient(180deg, rgb(var(--sh-light) / 0) 0%, rgb(var(--sh-light) / 0.26) 60%, rgb(var(--sh-light) / 0.04) 100%);
+  clip-path: polygon(43% 0, 57% 0, 94% 100%, 6% 100%);
+  filter: blur(9px);
+  transition: opacity 0.6s ease;
+}
+/* in the close-up the cone becomes a soft wash instead of a beam */
+.stage[data-open] .cone {
+  opacity: 0.5;
+}
+.pool {
+  position: absolute;
+  left: -14%;
+  right: -14%;
+  top: -14%;
+  bottom: 1.6em;
+  background: radial-gradient(50% 48% at 50% 58%, rgb(var(--sh-light) / 0.5), transparent 72%);
+}
+
+/* intro flash: each shoe's light switching on */
+.flash {
+  position: absolute;
+  z-index: 0;
+  left: -18%;
+  right: -18%;
+  top: -40%;
+  bottom: 1.6em;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(48% 52% at 50% 52%, rgb(var(--sh-light) / 0.55), transparent 72%);
+}
+
+/* ── hover / focus (mouse only; touch opens directly) ──────────────────── */
+@media (hover: hover) and (pointer: fine) {
+  .stage:not([data-open]) .cell:hover .label,
+  .stage:not([data-open]) .cell:focus-visible .label {
+    opacity: 1;
+    transform: none;
+  }
+  .stage:not([data-open]) .cell:hover img,
+  .stage:not([data-open]) .cell:focus-visible img {
+    transform: translateY(-1.6%) scale(1.035);
+  }
+  .stage:not([data-open]) .grid:has(.cell:hover) .cell:not(:hover) img {
+    filter: var(--sh-dim);
+  }
+}
+@media (hover: none) {
+  .label {
+    opacity: 1;
+    transform: none;
+  }
+}
+.stage[data-open] .label,
+.stage:not([data-settled]) .label {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.stage[data-open] .cell:not([data-current]) img {
+  filter: var(--sh-dim-open);
+}
+
+/* ── lights-on intro (JS sets data-intro only when motion is allowed) ─── */
+.stage[data-intro="wait"] .dusk {
+  opacity: var(--sh-dusk-a);
+}
+.stage[data-intro="wait"] .pic img {
+  filter: brightness(0.04);
+}
+.stage[data-intro="wait"] .shelf,
+.stage[data-intro="wait"] .contact {
+  opacity: 0.15;
+}
+.stage[data-intro="wait"] .label,
+.stage[data-intro="wait"] .hint,
+.stage[data-intro="wait"] .floorGlow {
+  opacity: 0;
+}
+.stage[data-intro="run"] .dusk {
+  opacity: 0;
+  transition: opacity 1.9s cubic-bezier(0.4, 0, 0.2, 1) 0.1s;
+}
+.stage[data-intro="run"] .pic img {
+  filter: brightness(1);
+  transition: filter 0.75s ease var(--d);
+}
+.stage[data-intro="run"] .shelf,
+.stage[data-intro="run"] .contact {
+  transition: opacity 0.6s ease var(--d);
+}
+.stage[data-intro="run"] .flash {
+  animation: bh-shoe-flash 1.15s ease var(--d) both;
+}
+.stage[data-intro="run"] .floorGlow {
+  transition: opacity 1.2s ease 0.3s;
+}
+.stage[data-intro="run"] .hint {
+  transition: opacity 0.6s ease 1.6s;
+}
+@keyframes bh-shoe-flash {
+  0% {
+    opacity: 0;
+  }
+  28% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ── hint ───────────────────────────────────────────────────────────────── */
+.hint {
+  position: absolute;
+  z-index: 4;
+  bottom: clamp(14px, 1.6vw, 22px);
+  right: clamp(20px, 4.2vw, 64px);
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--sh-muted);
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+.stage[data-open] .hint {
+  opacity: 0;
+}
+.hintTouch {
+  display: none;
+}
+@media (hover: none) {
+  .hintHover {
+    display: none;
+  }
+  .hintTouch {
+    display: inline;
+  }
+}
+
+/* ── detail panel ───────────────────────────────────────────────────────── */
+.panel {
+  position: absolute;
+  z-index: 5;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: clamp(300px, 29%, 380px);
+  display: flex;
+  flex-direction: column;
+  padding: 18px 24px 14px;
+  background: var(--sh-panel);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border-right: 1px solid var(--sh-line);
+  transform: translateX(-104%);
+  visibility: hidden;
+  transition:
+    transform 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    visibility 0s linear 0.6s;
+}
+.stage[data-open] .panel {
+  transform: none;
+  visibility: visible;
+  transition:
+    transform 0.8s cubic-bezier(0.16, 0.84, 0.24, 1) 0.1s,
+    visibility 0s;
+}
+.panelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.count {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--sh-muted);
+}
+.close {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid var(--sh-line);
+  background: var(--sh-chip);
+  color: var(--sh-ink);
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+.close:hover {
+  border-color: var(--sh-red);
+}
+.panelBody {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  animation: bh-shoe-body 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes bh-shoe-body {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.name {
+  margin: 0;
+  font-family: var(--font-display), var(--font-plex), sans-serif;
+  font-size: clamp(20px, 1.9vw, 26px);
+  font-weight: 600;
+  line-height: 1.3;
+  outline: none;
+}
+.desc {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--sh-muted);
+}
+.price {
+  margin: 8px 0 0;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: right;
+}
+.block {
+  margin-top: 12px;
+}
+.blockLabel {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--sh-muted);
+}
+.block .blockLabel {
+  margin: 0 0 8px;
+}
+.blockLabel > span:not(.warn) {
+  color: var(--sh-ink);
+}
+.warn {
+  color: var(--sh-red);
+}
+.swatches {
+  display: flex;
+  gap: 10px;
+}
+.swatch {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--sh-panel);
+  background: var(--sw);
+  box-shadow: 0 0 0 1px var(--sh-line);
+  cursor: pointer;
+}
+.swatch[aria-checked="true"] {
+  box-shadow: 0 0 0 2px var(--sh-red);
+}
+.sizes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.sizes[data-warn] {
+  animation: bh-shoe-nudge 0.38s ease;
+}
+@keyframes bh-shoe-nudge {
+  25% {
+    transform: translateX(-5px);
+  }
+  60% {
+    transform: translateX(4px);
+  }
+}
+.size {
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--sh-line);
+  background: var(--sh-chip);
+  color: var(--sh-ink);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+.size:hover {
+  border-color: var(--sh-ink);
+}
+.size[aria-checked="true"] {
+  background: var(--sh-red);
+  border-color: var(--sh-red);
+  color: #fff;
+}
+.sizes[data-warn] .size {
+  border-color: var(--sh-red);
+}
+.size:focus-visible,
+.add:focus-visible,
+.navBtn:focus-visible,
+.close:focus-visible,
+.swatch:focus-visible {
+  outline: 2px solid var(--sh-red);
+  outline-offset: 2px;
+}
+.add {
+  width: 100%;
+  height: 48px;
+  margin-top: 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--sh-btn-idle);
+  color: var(--sh-muted);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    transform 0.15s ease;
+}
+.add[data-ready] {
+  background: var(--sh-red);
+  color: #fff;
+}
+.add[data-ready]:hover {
+  background: var(--sh-red-deep);
+}
+.add[data-done] {
+  background: var(--sh-red-deep);
+  color: #fff;
+}
+.add:active {
+  transform: scale(0.985);
+}
+.added {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  animation: bh-shoe-body 0.4s ease both;
+}
+.added img {
+  flex: none;
+  width: 56px;
+  height: 32px;
+  object-fit: contain;
+}
+.note {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--sh-muted);
+}
+.panelNav {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--sh-line);
+}
+.navBtn {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--sh-line);
+  background: var(--sh-chip);
+  color: var(--sh-ink);
+  font: inherit;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+.navBtn:hover {
+  border-color: var(--sh-ink);
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── phone: two shoes per row, panel as a sheet under the big shoe ─────── */
+@media (max-width: 767px) {
+  .stage {
+    border-radius: 22px;
+  }
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 14px;
+    row-gap: 18px;
+    padding: 28px 16px 52px;
+  }
+  .item {
+    --d: var(--ds);
+  }
+  .shelf {
+    height: 6px;
+  }
+  .labelName {
+    font-size: 12.5px;
+  }
+  .arc {
+    width: 30%;
+    height: 16%;
+  }
+  .hint {
+    right: 16px;
+    bottom: 16px;
+  }
+  .panel {
+    top: 244px;
+    bottom: auto;
+    left: 10px;
+    right: 10px;
+    width: auto;
+    padding: 12px 14px 10px;
+    border: 1px solid var(--sh-line);
+    border-radius: 22px;
+    transform: translateY(28px);
+    opacity: 0;
+    transition:
+      transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.35s ease,
+      visibility 0s linear 0.5s;
+  }
+  .stage[data-open] .panel {
+    transform: none;
+    opacity: 1;
+    transition:
+      transform 0.7s cubic-bezier(0.16, 0.84, 0.24, 1) 0.12s,
+      opacity 0.5s ease 0.12s,
+      visibility 0s;
+  }
+  .panelHead {
+    margin-bottom: 4px;
+  }
+  .close {
+    width: 40px;
+    height: 40px;
+  }
+  .desc {
+    margin-top: 4px;
+    font-size: 12.5px;
+    line-height: 1.6;
+  }
+  .price {
+    margin-top: 6px;
+    font-size: 17px;
+  }
+  .blockLabel {
+    margin-top: 6px;
+  }
+  .block {
+    margin-top: 10px;
+  }
+  .block .blockLabel {
+    margin-bottom: 6px;
+  }
+  .sizes {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .size {
+    height: 42px;
+  }
+  .add {
+    height: 46px;
+    margin-top: 10px;
+  }
+  .added {
+    margin-top: 6px;
+  }
+  .note {
+    margin-top: 6px;
+  }
+  .panelNav {
+    padding-top: 10px;
+    margin-top: 8px;
+  }
+  .navBtn {
+    height: 42px;
+  }
+}
+
+/* ── reduced motion: same states, no travel ─────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .panel,
+  .stage[data-open] .panel,
+  .spot,
+  .pic img,
+  .label {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+  }
+  .panelBody,
+  .added,
+  .sizes[data-warn] {
+    animation: none;
+  }
+  .stage:not([data-open]) .cell:hover img,
+  .stage:not([data-open]) .cell:focus-visible img {
+    transform: none;
+  }
+}

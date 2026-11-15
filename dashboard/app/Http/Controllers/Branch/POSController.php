@@ -55,7 +55,14 @@ class POSController extends Controller
         private Product $product,
         private User $user,
         private DeliveryMan $deliveryman
-    ) {}
+    ) {
+        $this->middleware(function ($request, $next) {
+            if (!\App\CentralLogics\Helpers::is_feature_active('pos')) {
+                abort(404);
+            }
+            return $next($request);
+        });
+    }
 
     /**
      * @param Request $request

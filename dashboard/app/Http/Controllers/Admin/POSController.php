@@ -57,7 +57,14 @@ class POSController extends Controller
         private OrderDetail $order_detail,
         private Product $product,
         private User $user
-    ) {}
+    ) {
+        $this->middleware(function ($request, $next) {
+            if (!Helpers::is_feature_active('pos')) {
+                abort(404);
+            }
+            return $next($request);
+        });
+    }
 
     /**
      * @param Request $request

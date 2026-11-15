@@ -21,4 +21,6 @@ return [
     'multi_vendor'    => env('FEATURE_MULTI_VENDOR', false),
     'flash_sales'     => env('FEATURE_FLASH_SALES', false),
     'system_addons'   => env('FEATURE_SYSTEM_ADDONS', false),
+    'online_payment'  => env('FEATURE_ONLINE_PAYMENT', false),
+    'pos'             => env('FEATURE_POS', false),
 ];

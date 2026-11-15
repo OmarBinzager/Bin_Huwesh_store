@@ -320,6 +320,10 @@ class Helpers
 
     public static function get_business_settings($name)
     {
+        if ($name === 'digital_payment' && !self::is_feature_active('online_payment')) {
+            return ['status' => 0];
+        }
+
         $config = null;
         $settings = Cache::remember(CACHE_BUSINESS_SETTINGS_TABLE, 120, function () {
             return BusinessSetting::all();
