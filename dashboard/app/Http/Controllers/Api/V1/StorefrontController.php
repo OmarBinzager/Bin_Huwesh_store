@@ -144,21 +144,42 @@ class StorefrontController extends Controller
 
         $formatted = $this->formatCatalogProduct($product);
         $formatted['description'] = $product->description;
+        $formatted['variant_mode'] = $product->variant_mode ?? 'standard';
         $formatted['images'] = $product->identity_image_full_path;
         $formatted['color_images'] = $product->color_images_list;
+        $formatted['patterns'] = $product->isUniquePatterns() ? $product->patterns_list : [];
         $formatted['variations'] = $this->parseVariations($product);
-        $formatted['choice_options'] = is_string($product->choice_options)
+        $rawChoices = is_string($product->choice_options)
             ? (json_decode($product->choice_options, true) ?? [])
             : ($product->choice_options ?? []);
+        $formatted['choice_options'] = is_array($rawChoices)
+            ? array_values(array_filter($rawChoices, fn($ch) => ($ch['name'] ?? '') !== 'choice_color'))
+            : [];
 
         $sizeChart = $product->active_size_chart;
-        $formatted['size_chart'] = $sizeChart ? [
-            'id'      => $sizeChart->id,
-            'name'    => $sizeChart->name,
-            'columns' => $sizeChart->columns ?? [],
-            'rows'    => $sizeChart->rows ?? [],
-            'note'    => $sizeChart->note ?? null,
-        ] : null;
+        if ($sizeChart) {
+            $columns = is_array($sizeChart->columns) ? array_values($sizeChart->columns) : [];
+            $rawRows = is_array($sizeChart->rows) ? $sizeChart->rows : [];
+            $normalizedRows = array_map(function ($row) use ($columns) {
+                if (!is_array($row)) {
+                    return [];
+                }
+                if (array_is_list($row)) {
+                    return array_values(array_map('strval', $row));
+                }
+                return array_map(fn($col) => (string)($row[$col] ?? ''), $columns);
+            }, $rawRows);
+
+            $formatted['size_chart'] = [
+                'id'      => $sizeChart->id,
+                'name'    => $sizeChart->name,
+                'columns' => $columns,
+                'rows'    => array_values($normalizedRows),
+                'note'    => $sizeChart->note ?? $sizeChart->instructions ?? null,
+            ];
+        } else {
+            $formatted['size_chart'] = null;
+        }
 
         $formatted['reviews'] = $product->active_reviews->take(10)->map(fn(Review $r) => [
             'id'         => $r->id,
@@ -400,18 +421,45 @@ class StorefrontController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+        $settings = [
+            'title'    => $cfg['title'] ?? 'تسوّق حسب القسم',
+            'subtitle' => $cfg['subtitle'] ?? 'استكشف أقسام بن هويش المتنوعة',
+            'cta'      => $cfg['cta'] ?? 'تصفّح القسم',
+        ];
+
         if ($cards->isEmpty()) {
-            return null;
+            $systemCategories = Category::active()
+                ->where('parent_id', 0)
+                ->orderBy('priority')
+                ->orderBy('id')
+                ->get();
+
+            if ($systemCategories->isEmpty()) {
+                return null;
+            }
+
+            return [
+                'version'  => 1,
+                'settings' => $settings,
+                'cards'    => $systemCategories->map(fn(Category $cat) => [
+                    'id'         => 'cat-' . $cat->id,
+                    'categoryId' => (string)$cat->id,
+                    'name'       => $cat->name,
+                    'caption'    => '',
+                    'href'       => '/categories/' . $cat->id,
+                    'image'      => $cat->image_full_path,
+                    'alt'        => $cat->name,
+                    'focus'      => ['x' => 50, 'y' => 50],
+                    'size'       => 'regular',
+                    'visible'    => true,
+                ])->values()->all(),
+            ];
         }
 
         return [
             'version'  => 1,
-            'settings' => [
-                'title'    => $cfg['title'] ?? 'تسوّق حسب القسم',
-                'subtitle' => $cfg['subtitle'] ?? 'استكشف أقسام بن هويش المتنوعة',
-                'cta'      => $cfg['cta'] ?? 'تصفّح القسم',
-            ],
-            'cards' => $cards->map(fn(StorefrontCategoryCard $c) => [
+            'settings' => $settings,
+            'cards'    => $cards->map(fn(StorefrontCategoryCard $c) => [
                 'id'         => $c->uid,
                 'categoryId' => $c->category_id ? (string)$c->category_id : $c->slug,
                 'name'       => $c->name ?: ($c->category->name ?? ''),
@@ -510,10 +558,12 @@ class StorefrontController extends Controller
         $slugMap = [
             'men'         => 'رجالي',
             'youth'       => 'شبابي',
-            'kids'        => 'أطفال',
+            'kids'        => 'ولادي',
+            'jumbo'       => 'جامبو',
+            'suits'       => 'بدلات',
+            'maawaz'      => 'معاوز',
             'shoes'       => 'أحذية',
             'accessories' => 'إكسسوارات',
-            'suits'       => 'بدل',
             'sportswear'  => 'رياضي',
             'formal'      => 'رسمي',
         ];
@@ -526,20 +576,66 @@ class StorefrontController extends Controller
             ->first();
     }
 
-    private function finalPrice(Product $product): int
+    private function effectiveDiscount(Product $product, float $basePrice): array
     {
-        $price = (float)$product->price;
-        $discount = (float)($product->discount ?? 0);
+        $bestDiscountAmount = 0.0;
+        $bestDiscountValue = 0.0;
+        $bestDiscountType = $product->discount_type ?: 'percent';
 
-        if ($discount > 0) {
-            if ($product->discount_type === 'percent') {
-                $price -= ($price * $discount) / 100;
-            } else {
-                $price -= $discount;
+        // 1. Product-level discount
+        $prodDisc = (float)($product->discount ?? 0);
+        if ($prodDisc > 0) {
+            $amt = $bestDiscountType === 'percent' ? ($basePrice * $prodDisc) / 100 : $prodDisc;
+            if ($amt > $bestDiscountAmount) {
+                $bestDiscountAmount = $amt;
+                $bestDiscountValue = $prodDisc;
             }
         }
 
-        return max(0, (int)round($price));
+        // 2. Category-level discount
+        $catIds = is_string($product->category_ids) ? json_decode($product->category_ids, true) : $product->category_ids;
+        $mainCatId = is_array($catIds) ? ($catIds[0]['id'] ?? null) : null;
+        if ($mainCatId) {
+            $catAmt = (float)Helpers::category_discount_calculate($mainCatId, $basePrice);
+            if ($catAmt > $bestDiscountAmount) {
+                $bestDiscountAmount = $catAmt;
+                $bestDiscountValue = $catAmt;
+                $bestDiscountType = 'amount';
+            }
+        }
+
+        // 3. Active Flash Deal discount
+        $today = now()->toDateString();
+        $flashItem = \App\Model\FlashDealProduct::query()
+            ->join('flash_deals', 'flash_deals.id', '=', 'flash_deal_products.flash_deal_id')
+            ->where('flash_deal_products.product_id', $product->id)
+            ->where('flash_deals.status', 1)
+            ->whereDate('flash_deals.start_date', '<=', $today)
+            ->whereDate('flash_deals.end_date', '>=', $today)
+            ->select('flash_deal_products.discount', 'flash_deal_products.discount_type')
+            ->first();
+        if ($flashItem && (float)$flashItem->discount > 0) {
+            $fType = $flashItem->discount_type ?: 'percent';
+            $fVal = (float)$flashItem->discount;
+            $fAmt = $fType === 'percent' ? ($basePrice * $fVal) / 100 : $fVal;
+            if ($fAmt > $bestDiscountAmount) {
+                $bestDiscountAmount = $fAmt;
+                $bestDiscountValue = $fVal;
+                $bestDiscountType = $fType;
+            }
+        }
+
+        $final = max(0, (int)round($basePrice - $bestDiscountAmount));
+        return [
+            'final_price'   => $final,
+            'discount'      => $bestDiscountValue,
+            'discount_type' => $bestDiscountType,
+        ];
+    }
+
+    private function finalPrice(Product $product): int
+    {
+        return $this->effectiveDiscount($product, (float)$product->price)['final_price'];
     }
 
     private function parseVariations(Product $product): array
@@ -563,6 +659,9 @@ class StorefrontController extends Controller
 
         if (is_array($choices) && count($choices) > 0) {
             foreach ($choices as $ch) {
+                if (($ch['name'] ?? '') === 'choice_color') {
+                    continue;
+                }
                 $opts = $ch['options'] ?? [];
                 if (!empty($opts)) {
                     // Filter out sizes that have 0 stock in variations if variations exist
@@ -591,16 +690,16 @@ class StorefrontController extends Controller
     private function formatCatalogProduct(Product $product): array
     {
         $images = $product->identity_image_full_path;
-        $finalPrice = $this->finalPrice($product);
+        $discInfo = $this->effectiveDiscount($product, (float)$product->price);
         $ratingAvg = $product->rating->first()->average ?? 0;
 
         return [
             'id'            => $product->id,
             'name'          => $product->name,
             'price'         => (float)$product->price,
-            'final_price'   => $finalPrice,
-            'discount'      => (float)($product->discount ?? 0),
-            'discount_type' => $product->discount_type,
+            'final_price'   => $discInfo['final_price'],
+            'discount'      => (float)$discInfo['discount'],
+            'discount_type' => $discInfo['discount_type'],
             'total_stock'   => (int)$product->total_stock,
             'image'         => $images[0] ?? asset('public/assets/admin/img/160x160/2.png'),
             'images'        => $images,
