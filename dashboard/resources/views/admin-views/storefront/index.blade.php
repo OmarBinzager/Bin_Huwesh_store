@@ -596,8 +596,13 @@ async function uploadBlob(blob, folder, filename) {
     fd.append('_token', CSRF);
     fd.append('folder', folder);
     fd.append('file', blob, filename);
-    const res = await fetch(UPLOAD_URL, { method: 'POST', body: fd });
-    const data = await res.json();
+    const res = await fetch(UPLOAD_URL, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: fd
+    });
+    const rawText = (await res.text()).replace(/^\uFEFF/, '').trim();
+    const data = JSON.parse(rawText);
     if (!res.ok || !data.ok) throw new Error(data.message || 'فشل رفع الصورة');
     return data;
 }

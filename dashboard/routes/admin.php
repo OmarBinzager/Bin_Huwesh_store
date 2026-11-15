@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 use App\Http\Controllers\Admin\AIConfigurationController;
 use App\Http\Controllers\Admin\InfoSoftERPController;
