@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import type { Testimonial } from "@/content/closing-types";
 import { ArrowIcon } from "@/components/store/icons";
+import { useI18n } from "@/lib/i18n/context";
 import { QuoteMark, StarIcon } from "./icons";
 import s from "./closing.module.css";
 
@@ -93,19 +94,22 @@ export default function Testimonials({ items }: { items: Testimonial[] }) {
     return () => io.disconnect();
   }, []);
 
+  const { locale } = useI18n();
+  const isEn = locale === "en";
+
   return (
     <div ref={rootRef} className={s.tWrap} data-overflow={overflow ? "" : undefined}>
       <ul
         ref={trackRef}
         className={s.track}
         role="region"
-        aria-roledescription="شريط آراء"
-        aria-label="آراء العملاء"
+        aria-roledescription={isEn ? "testimonials carousel" : "شريط آراء"}
+        aria-label={isEn ? "Customer reviews" : "آراء العملاء"}
         tabIndex={overflow ? 0 : -1}
         onKeyDown={onKey}
       >
         {items.map((t, i) => (
-          <li key={t.id} className={s.card} style={{ "--i": i } as CSSProperties} aria-roledescription="رأي" aria-label={`${i + 1} من ${n}`}>
+          <li key={t.id} className={s.card} style={{ "--i": i } as CSSProperties} aria-roledescription={isEn ? "review" : "رأي"} aria-label={isEn ? `${i + 1} of ${n}` : `${i + 1} من ${n}`}>
             <QuoteMark className={s.quoteMark} />
             <blockquote className={s.quote}>
               <p>{t.quote}</p>
@@ -115,7 +119,7 @@ export default function Testimonials({ items }: { items: Testimonial[] }) {
               {t.verified ? (
                 <span className={s.meta}>
                   {t.rating ? (
-                    <span className={s.stars} role="img" aria-label={`${t.rating} من 5`}>
+                    <span className={s.stars} role="img" aria-label={isEn ? `${t.rating} out of 5` : `${t.rating} من 5`}>
                       {[1, 2, 3, 4, 5].map((k) => (
                         <StarIcon key={k} width={14} height={14} filled={k <= (t.rating ?? 0)} />
                       ))}
@@ -123,16 +127,14 @@ export default function Testimonials({ items }: { items: Testimonial[] }) {
                   ) : null}
                   {t.source && <span>{t.source}</span>}
                 </span>
-              ) : (
-                <span className={s.previewTag}>مثال للمعاينة</span>
-              )}
+              ) : null}
             </footer>
           </li>
         ))}
       </ul>
 
       <div className={s.tControls}>
-        <button type="button" className={s.roundBtn} onClick={() => goTo(active - 1)} disabled={atStart} aria-label="الرأي السابق">
+        <button type="button" className={s.roundBtn} onClick={() => goTo(active - 1)} disabled={atStart} aria-label={isEn ? "Previous review" : "الرأي السابق"}>
           <ArrowIcon width={18} height={18} style={{ transform: "scaleX(-1)" }} />
         </button>
         <div className={s.dots}>
@@ -141,13 +143,13 @@ export default function Testimonials({ items }: { items: Testimonial[] }) {
               key={t.id}
               type="button"
               className={s.dot}
-              aria-label={`الرأي ${i + 1} من ${n}`}
+              aria-label={isEn ? `Review ${i + 1} of ${n}` : `الرأي ${i + 1} من ${n}`}
               aria-current={i === active ? "true" : undefined}
               onClick={() => goTo(i)}
             />
           ))}
         </div>
-        <button type="button" className={s.roundBtn} onClick={() => goTo(active + 1)} disabled={atEnd} aria-label="الرأي التالي">
+        <button type="button" className={s.roundBtn} onClick={() => goTo(active + 1)} disabled={atEnd} aria-label={isEn ? "Next review" : "الرأي التالي"}>
           <ArrowIcon width={18} height={18} />
         </button>
       </div>

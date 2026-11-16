@@ -1,5 +1,8 @@
+"use client";
+
 import { verifiedRating, visibleTestimonials } from "@/content/closing";
 import type { ClosingFile } from "@/content/closing-types";
+import { useI18n } from "@/lib/i18n/context";
 import { StarIcon } from "./icons";
 import Testimonials from "./Testimonials";
 import s from "./closing.module.css";
@@ -10,8 +13,10 @@ import s from "./closing.module.css";
  * a notice appears while any card is still a preview example.
  */
 export default function TestimonialsSection({ data }: { data: ClosingFile }) {
+  const { locale } = useI18n();
   const items = visibleTestimonials(data);
   if (items.length === 0) return null;
+  const isEn = locale === "en";
   const { title, subtitle } = data.testimonials;
   const rating = verifiedRating(items);
   const previews = items.some((t) => !t.verified);
@@ -29,18 +34,22 @@ export default function TestimonialsSection({ data }: { data: ClosingFile }) {
             <p className={s.ratingSummary}>
               <StarIcon width={16} height={16} filled className="text-brand" />
               <span>
-                <b dir="ltr">{rating.average.toFixed(1)}</b> من 5 · من <span dir="ltr">{rating.count}</span>{" "}
-                {rating.count === 1 ? "رأي موثّق" : "آراء موثّقة"}
+                {isEn ? (
+                  <>
+                    <b dir="ltr">{rating.average.toFixed(1)}</b> out of 5 · <span dir="ltr">{rating.count}</span>{" "}
+                    {rating.count === 1 ? "verified review" : "verified reviews"}
+                  </>
+                ) : (
+                  <>
+                    <b dir="ltr">{rating.average.toFixed(1)}</b> من 5 · من <span dir="ltr">{rating.count}</span>{" "}
+                    {rating.count === 1 ? "رأي موثّق" : "آراء موثّقة"}
+                  </>
+                )}
               </span>
             </p>
           )}
         </header>
         <Testimonials items={items} />
-        {previews && (
-          <p className="mt-4 text-[12px] text-muted">
-            البطاقات المعلَّمة «مثال للمعاينة» نصوص تجريبية، وتُستبدل بآراء العملاء الموثّقة قبل الإطلاق.
-          </p>
-        )}
       </div>
     </section>
   );

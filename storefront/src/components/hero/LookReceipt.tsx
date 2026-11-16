@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Look } from "@/content/types";
-import { formatYER, resolvePrice } from "@/lib/catalog";
+import { resolvePrice } from "@/lib/catalog";
+import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n/context";
 import BrandLogo from "@/components/store/BrandLogo";
 import { useDemoBag } from "@/components/store/DemoBag";
@@ -22,6 +23,7 @@ type Props = {
 export default function LookReceipt({ look, index, selectedItem, onSelectItem }: Props) {
   const { add } = useDemoBag();
   const { locale } = useI18n();
+  const { formatMoney } = useCurrency();
   const isEn = locale === "en";
   const [sizes, setSizes] = useState<Record<string, string>>({});
   const [missing, setMissing] = useState<string[]>([]);
@@ -94,9 +96,6 @@ export default function LookReceipt({ look, index, selectedItem, onSelectItem }:
           <p className="nums mt-1 text-[12px] font-medium">
             {isEn ? "Look" : "إطلالة"} {String(index + 1).padStart(2, "0")} — {look.title}
           </p>
-          <p className="mt-3 inline-flex rounded-full bg-brand/8 px-3 py-1 text-[11px] font-medium text-brand-deep dark:bg-brand/20 dark:text-[#ff7a80]">
-            {isEn ? "Preview: prices are sample estimates" : "معاينة: الأسعار تجريبية وغير نهائية"}
-          </p>
         </header>
 
         <ol className="divide-y divide-dashed divide-ink/15">
@@ -121,7 +120,7 @@ export default function LookReceipt({ look, index, selectedItem, onSelectItem }:
                     <span className="block text-[13.5px] font-medium leading-snug">{it.label}</span>
                     <span className="block text-[11px] text-muted">{it.category}</span>
                   </span>
-                  <span className="nums text-[13px] font-medium">{formatYER(prices[n].amount, locale)}</span>
+                  <span className="nums text-[13px] font-medium">{formatMoney(prices[n].amount)}</span>
                 </button>
 
                 <div className="mt-2 flex items-center gap-2 ps-6">
@@ -171,7 +170,7 @@ export default function LookReceipt({ look, index, selectedItem, onSelectItem }:
         <div className="mt-1 space-y-1.5 border-t border-dashed border-ink/25 pt-3 text-[12.5px]">
           <div className="flex justify-between">
             <span className="text-muted">{isEn ? "Subtotal" : "المجموع"}</span>
-            <span className="nums">{formatYER(subtotal, locale)}</span>
+            <span className="nums">{formatMoney(subtotal)}</span>
           </div>
           {discount > 0 && (
             <div className="flex justify-between">
@@ -180,12 +179,12 @@ export default function LookReceipt({ look, index, selectedItem, onSelectItem }:
                   ? `Full look discount ${look.wholeLookDiscount}%`
                   : `خصم الإطلالة كاملة ${look.wholeLookDiscount}%`}
               </span>
-              <span className="nums text-brand">−{formatYER(discount, locale)}</span>
+              <span className="nums text-brand">−{formatMoney(discount)}</span>
             </div>
           )}
           <div className="flex items-baseline justify-between pt-2">
             <span className="font-display text-xl font-semibold">{isEn ? "Total" : "الإجمالي"}</span>
-            <span className="nums font-display text-2xl font-semibold">{formatYER(total, locale)}</span>
+            <span className="nums font-display text-2xl font-semibold">{formatMoney(total)}</span>
           </div>
         </div>
 

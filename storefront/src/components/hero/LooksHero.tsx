@@ -11,7 +11,8 @@ import {
 } from "framer-motion";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { Look } from "@/content/types";
-import { formatYER, resolvePrice } from "@/lib/catalog";
+import { resolvePrice } from "@/lib/catalog";
+import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n/context";
 import { ArrowIcon, CloseIcon, PauseIcon, PlayIcon, PlusIcon } from "@/components/store/icons";
 import LookFigure, { type Focus } from "./LookFigure";
@@ -37,6 +38,7 @@ export default function LooksHero({
   className?: string;
 }) {
   const { locale } = useI18n();
+  const { formatMoney } = useCurrency();
   const isEn = locale === "en";
   const n = looks.length;
   const reducedRaw = useReducedMotion();
@@ -278,7 +280,11 @@ export default function LooksHero({
       <div
         ref={stageRef}
         tabIndex={0}
-        aria-label="اسحب لتصفح الإطلالات، أو استخدم الأسهم"
+        aria-label={
+          isEn
+            ? "Drag to browse looks, or use arrow keys"
+            : "اسحب لتصفح الإطلالات، أو استخدم الأسهم"
+        }
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
@@ -366,9 +372,6 @@ export default function LooksHero({
             </motion.p>
           )}
         </AnimatePresence>
-        <p className="hidden rounded-full border border-ink/10 bg-card/70 px-3 py-1 text-[11px] text-muted backdrop-blur sm:block">
-          {isEn ? "Preview — generated visuals & sample prices" : "نموذج معاينة — الصور مولّدة والأسعار تجريبية"}
-        </p>
       </div>
 
       {/* ── ring / grid toggle ─────────────────────────────────── */}
@@ -461,7 +464,7 @@ export default function LooksHero({
                           <span>
                             <span className="block text-[12px] leading-tight font-medium">{it.label}</span>
                             <span className="nums block text-[11px] text-muted">
-                              {formatYER(resolvePrice(it).amount, locale)}
+                              {formatMoney(resolvePrice(it).amount)}
                             </span>
                           </span>
                         </button>
@@ -561,14 +564,16 @@ function ModeToggle({
   onChange: (m: Mode) => void;
   vertical: boolean;
 }) {
+  const { locale } = useI18n();
+  const isEn = locale === "en";
   const opts: { key: Mode; label: string }[] = [
-    { key: "ring", label: "دائري" },
-    { key: "grid", label: "شبكة" },
+    { key: "ring", label: isEn ? "Ring" : "دائري" },
+    { key: "grid", label: isEn ? "Grid" : "شبكة" },
   ];
   return (
     <div
       role="radiogroup"
-      aria-label="طريقة العرض"
+      aria-label={isEn ? "View mode" : "طريقة العرض"}
       className={`flex rounded-full border border-dashed border-ink/30 bg-card/80 p-1 backdrop-blur ${
         vertical ? "flex-col" : ""
       }`}
@@ -638,9 +643,14 @@ function DragCursor({
     >
       <span className="flex items-center gap-1">
         <ArrowIcon width={12} height={12} className="rotate-180" />
-        اسحب
+        <DragCursorLabel />
         <ArrowIcon width={12} height={12} />
       </span>
     </motion.div>
   );
+}
+
+function DragCursorLabel() {
+  const { locale } = useI18n();
+  return <>{locale === "en" ? "Drag" : "اسحب"}</>;
 }
