@@ -32,14 +32,15 @@ export function FooterGroup({ group }: { group: Group }) {
 /** Internal pages through next/link, anchors / tel / external as plain links. */
 export function FooterLink({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) {
   const cls = className ?? s.fLink;
-  if (href === "/" || href.startsWith("/categories/")) {
+  const isInternal = href.startsWith("/") && !href.startsWith("/#");
+  if (isInternal) {
     return (
       <Link href={href} className={cls}>
         {children}
       </Link>
     );
   }
-  const external = href.startsWith("https://");
+  const external = href.startsWith("https://") || href.startsWith("http://");
   return (
     <a href={href} className={cls} {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}>
       {children}

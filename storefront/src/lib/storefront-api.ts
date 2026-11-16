@@ -230,6 +230,7 @@ function localizeBootstrap(data: StorefrontBootstrap, locale: Locale): Storefron
             "/categories/maawaz": "Maawaz",
             "/categories/shoes": "Shoes & Sandals",
             "/categories/accessories": "Accessories",
+            "/products": "All Products",
             "/#shop-by-category": "Shop by Category",
             "/#new-arrivals": "New Arrivals",
             "/#shoes": "Shoes",

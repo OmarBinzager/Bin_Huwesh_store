@@ -82,6 +82,10 @@
         "title": "تصفّح",
         "links": [
           {
+            "label": "جميع المنتجات",
+            "href": "/products"
+          },
+          {
             "label": "تسوّق حسب القسم",
             "href": "/#shop-by-category"
           },
