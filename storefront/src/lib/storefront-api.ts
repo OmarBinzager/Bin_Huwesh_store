@@ -458,7 +458,7 @@ export type PoliciesResponse = {
 export async function fetchPolicies(locale: Locale = "ar"): Promise<PoliciesResponse | null> {
   try {
     const res = await fetch(`${API_BASE_URL}/api/v1/storefront/policies?lang=${locale}`, {
-      next: { tags: ["storefront", `storefront-${locale}`], revalidate: 600 },
+      cache: "no-store",
       headers: { Accept: "application/json", "X-localization": locale },
     });
     if (!res.ok) return null;

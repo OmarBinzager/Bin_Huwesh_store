@@ -18,6 +18,8 @@ const POLICY_KEYS: Record<string, keyof PoliciesResponse> = {
   faq: "faq",
 };
 
+export const dynamic = "force-dynamic";
+
 export function generateStaticParams() {
   return Object.keys(POLICY_KEYS).map((slug) => ({ slug }));
 }

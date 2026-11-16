@@ -104,7 +104,7 @@ export default function HtmlPolicyViewer({
                     {isEn ? "Legal & Policies" : "اللوائح والسياسات"}
                   </h2>
                   <p className="text-[11px] text-muted">
-                    {isEn ? "Bin Huwesh Official Guidelines" : "وثائق وإرشادات متجر بن حويش الرسمية"}
+                    {isEn ? "Bin Huwesh Official Guidelines" : "وثائق وإرشادات متجر بن هويش الرسمية"}
                   </p>
                 </div>
               </div>
@@ -144,7 +144,7 @@ export default function HtmlPolicyViewer({
               <p className="mt-1 text-[11px] leading-relaxed text-muted">
                 {isEn
                   ? "Our customer care team in Aden is here to assist with any policy questions."
-                  : "فريق خدمة عملاء بن حويش في عدن متواجد للرد على أسئلتكم ومساعدتكم."}
+                  : "فريق خدمة عملاء بن هويش في عدن متواجد للرد على أسئلتكم ومساعدتكم."}
               </p>
               <a
                 href={`https://wa.me/967780024406?text=${encodeURIComponent(
@@ -212,7 +212,7 @@ export default function HtmlPolicyViewer({
               <p className="mt-2 text-xs text-muted">
                 {isEn
                   ? "Bin Huwesh Fashion & Footwear — Aden, Yemen"
-                  : "شركة بن حويش التجارية للأزياء والأحذية — عدن، اليمن"}
+                  : "شركة بن هويش التجارية للأزياء والأحذية — عدن، اليمن"}
               </p>
             </header>
 
@@ -239,7 +239,7 @@ export default function HtmlPolicyViewer({
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
                   <span className="font-semibold text-ink">
-                    {isEn ? "Bin Huwesh Store Guidelines" : "معايير متجر بن حويش للأزياء"}
+                    {isEn ? "Bin Huwesh Store Guidelines" : "معايير متجر بن هويش للأزياء"}
                   </span>
                   <p className="mt-0.5 text-[11px]">
                     {isEn
@@ -253,7 +253,7 @@ export default function HtmlPolicyViewer({
                   rel="noopener noreferrer"
                   className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-ink px-4 py-2 text-xs font-semibold text-on-ink transition-opacity hover:opacity-90"
                 >
-                  <span>واتساب بن حويش</span>
+                  <span>واتساب بن هويش</span>
                 </a>
               </div>
             </footer>
