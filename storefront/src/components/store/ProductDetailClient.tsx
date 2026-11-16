@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useDemoBag } from "@/components/store/DemoBag";
-import { formatYER as formatPrice } from "@/lib/catalog";
+import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n/context";
 import type { ProductDetailResponse } from "@/lib/storefront-api";
 
 export default function ProductDetailClient({ data }: { data: ProductDetailResponse }) {
   const { locale, t } = useI18n();
+  const { formatMoney: formatPrice } = useCurrency();
   const { product, related_products } = data;
   const bag = useDemoBag();
 
@@ -135,7 +136,7 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
   const discountLabel = hasDiscount
     ? product.discount_type === "percent"
       ? t.catalog.discountPct(Math.round(product.discount))
-      : t.catalog.discountAmt(formatPrice(basePrice - activePrice, locale))
+      : t.catalog.discountAmt(formatPrice(basePrice - activePrice))
     : null;
 
   return (
@@ -160,15 +161,15 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
         </ol>
       </nav>
 
-      <div className="grid gap-8 lg:grid-cols-12 lg:gap-12">
-        {/* Gallery */}
-        <div className="lg:col-span-7">
-          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-3xl border border-line bg-stage">
+      <div className="grid gap-8 lg:grid-cols-12 lg:gap-12 lg:items-start">
+        {/* Gallery - sticky & fitted to viewport taking header into account */}
+        <div className="lg:col-span-7 lg:sticky lg:top-28 lg:flex lg:flex-col lg:h-[calc(100vh-8.5rem)]">
+          <div className="relative min-h-0 flex-1 w-full overflow-hidden rounded-3xl border border-line bg-stage">
             {selectedImage ? (
               <img
                 src={selectedImage}
                 alt={product.name}
-                className="h-full w-full object-cover"
+                className="h-full w-full object-contain p-2"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-sm text-muted">
@@ -183,7 +184,7 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
           </div>
 
           {galleryImages.length > 1 && (
-            <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
+            <div className="mt-3 flex shrink-0 gap-3 overflow-x-auto pb-1">
               {galleryImages.map((img) => {
                 const active = img === selectedImage;
                 return (
@@ -191,11 +192,11 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
                     key={img}
                     type="button"
                     onClick={() => setSelectedImage(img)}
-                    className={`relative h-20 w-16 shrink-0 overflow-hidden rounded-xl border transition-all ${
+                    className={`relative h-18 w-14 shrink-0 overflow-hidden rounded-xl border bg-stage transition-all sm:h-20 sm:w-16 ${
                       active ? "border-brand ring-2 ring-brand/30" : "border-line opacity-75 hover:opacity-100"
                     }`}
                   >
-                    <img src={img} alt="" className="h-full w-full object-cover" />
+                    <img src={img} alt="" className="h-full w-full object-contain p-1" />
                   </button>
                 );
               })}
@@ -215,11 +216,11 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
           </h1>
 
           <div className="mt-4 flex flex-wrap items-baseline gap-3">
-            <span className="nums text-2xl font-bold text-ink">{formatPrice(activePrice, locale)}</span>
+            <span className="nums text-2xl font-bold text-ink">{formatPrice(activePrice)}</span>
             {hasDiscount && (
               <>
                 <span className="nums text-base text-muted line-through">
-                  {formatPrice(basePrice, locale)}
+                  {formatPrice(basePrice)}
                 </span>
                 {discountLabel && (
                   <span className="rounded-full bg-brand/12 px-2.5 py-0.5 text-xs font-semibold text-brand">
@@ -441,7 +442,7 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
                           }`}
                         >
                           <td className="px-3 py-2 text-ink">{mergedLabel}</td>
-                          <td className="nums px-3 py-2">{formatPrice(varPrice, locale)}</td>
+                          <td className="nums px-3 py-2">{formatPrice(varPrice)}</td>
                           <td className="px-3 py-2">
                             {v.stock > 0 ? (
                               <span className="text-emerald-600">{t.product.inStock(v.stock)}</span>
@@ -561,7 +562,7 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
                     {rel.name}
                   </h3>
                   <p className="nums mt-1 text-[14px] font-bold text-ink">
-                    {formatPrice(rel.final_price, locale)}
+                    {formatPrice(rel.final_price)}
                   </p>
                 </div>
               </Link>
