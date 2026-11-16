@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import SiteFooter from "@/components/closing/SiteFooter";
 import CheckoutClient from "@/components/store/CheckoutClient";
 import { DemoBagProvider } from "@/components/store/DemoBag";
 import StoreHeader from "@/components/store/StoreHeader";
@@ -21,6 +22,7 @@ export default function CheckoutPage() {
       <main className="min-h-screen bg-background">
         <CheckoutClient />
       </main>
+      <SiteFooter />
     </DemoBagProvider>
   );
 }

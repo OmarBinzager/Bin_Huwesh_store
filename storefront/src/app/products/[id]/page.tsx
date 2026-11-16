@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import SiteFooter from "@/components/closing/SiteFooter";
 import { DemoBagProvider } from "@/components/store/DemoBag";
 import ProductDetailClient from "@/components/store/ProductDetailClient";
 import StoreHeader from "@/components/store/StoreHeader";
@@ -20,8 +21,12 @@ export async function generateMetadata({
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://binhuwesh.com";
   const desc = data.product.brand?.name
-    ? `${data.product.name} — ${data.product.brand.name}. تسوق الآن من متجر بن هويش التجاري في اليمن.`
-    : `${data.product.name}. تسوق الآن من متجر بن هويش التجاري في اليمن.`;
+    ? locale === "en"
+      ? `${data.product.name} — ${data.product.brand.name}. Shop now at Bin Huwesh Trading Co. in Yemen.`
+      : `${data.product.name} — ${data.product.brand.name}. تسوق الآن من متجر بن هويش التجاري في اليمن.`
+    : locale === "en"
+      ? `${data.product.name}. Shop now at Bin Huwesh Trading Co. in Yemen.`
+      : `${data.product.name}. تسوق الآن من متجر بن هويش التجاري في اليمن.`;
   const productImages = [
     ...(data.product.image ? [data.product.image] : []),
     ...(data.product.images ?? []),
@@ -104,6 +109,7 @@ export default async function ProductDetailPage({
       <main className="min-h-screen bg-background">
         <ProductDetailClient data={data} />
       </main>
+      <SiteFooter />
     </DemoBagProvider>
   );
 }

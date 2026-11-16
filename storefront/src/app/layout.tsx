@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Alexandria, IBM_Plex_Sans_Arabic, Kanit } from "next/font/google";
+import Script from "next/script";
+import { CurrencyProvider } from "@/lib/currency";
 import { getDirection } from "@/lib/i18n/config";
 import { I18nProvider } from "@/lib/i18n/context";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -166,19 +168,23 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${plex.variable} ${alexandria.variable} ${kanit.variable}`}
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeBootstrap }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
       </head>
       <body className="bg-paper text-ink antialiased">
+        <Script id="theme-bootstrap" strategy="afterInteractive">
+          {themeBootstrap}
+        </Script>
         {isReviewBuild && (
           <p role="note" className="bg-ink px-4 py-1.5 text-center text-[12px] leading-snug text-on-ink">
             {t.meta.reviewNote}
           </p>
         )}
-        <I18nProvider initialLocale={locale}>{children}</I18nProvider>
+        <I18nProvider initialLocale={locale}>
+          <CurrencyProvider>{children}</CurrencyProvider>
+        </I18nProvider>
       </body>
     </html>
   );

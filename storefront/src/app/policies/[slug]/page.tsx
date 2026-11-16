@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import SiteFooter from "@/components/closing/SiteFooter";
 import { DemoBagProvider } from "@/components/store/DemoBag";
 import StoreHeader from "@/components/store/StoreHeader";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -91,6 +92,7 @@ export default async function PolicyPage({
           </div>
         </div>
       </main>
+      <SiteFooter />
     </DemoBagProvider>
   );
 }

@@ -2,11 +2,13 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import SiteFooter from "@/components/closing/SiteFooter";
+import CatalogProductGrid from "@/components/store/CatalogProductGrid";
+import CatalogSidebarFilters from "@/components/store/CatalogSidebarFilters";
 import { DemoBagProvider } from "@/components/store/DemoBag";
 import StoreHeader from "@/components/store/StoreHeader";
 import { STORE_CATEGORIES, categoryHref, getStoreCategory } from "@/content/categories";
 import { shopCategoriesData } from "@/content/shop-categories";
-import { formatYER as formatPrice } from "@/lib/catalog";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getServerLocale } from "@/lib/i18n/server";
 import { fetchCategoryCatalog } from "@/lib/storefront-api";
@@ -22,6 +24,11 @@ type CategorySearchParams = {
   brand_id?: string;
   min_price?: string;
   max_price?: string;
+  color?: string;
+  attrs?: string;
+  in_stock?: string;
+  on_sale?: string;
+  sub_category_id?: string;
 };
 
 export async function generateMetadata({
@@ -46,7 +53,10 @@ export async function generateMetadata({
     const catalog = await fetchCategoryCatalog(slug, { limit: 1 }, locale);
     if (catalog) {
       title = `${catalog.category.name} — ${t.meta.brandSuffix}`;
-      description = `تصفح أحدث وأفضل منتجات ${catalog.category.name} في متجر بن هويش للأزياء باليمن.`;
+      description =
+        locale === "en"
+          ? `Browse the latest ${catalog.category.name} products at Bin Huwesh Store in Yemen.`
+          : `تصفح أحدث وأفضل منتجات ${catalog.category.name} في متجر بن هويش للأزياء باليمن.`;
     }
   }
 
@@ -83,7 +93,7 @@ export default async function CategoryCatalogPage({
   const locale = await getServerLocale();
   const t = getDictionary(locale);
   const sortBy = sp.sort_by || "newest";
-  const offset = Math.max(0, Number(sp.offset || 0) || 0);
+  const page = Math.max(1, Number(sp.offset || 1) || 1);
   const limit = 24;
 
   const SORT_OPTIONS = [
@@ -99,12 +109,17 @@ export default async function CategoryCatalogPage({
     slug,
     {
       limit,
-      offset,
+      offset: page,
       sort_by: sortBy,
       q: sp.q,
       brand_id: sp.brand_id,
       min_price: sp.min_price,
       max_price: sp.max_price,
+      color: sp.color,
+      attrs: sp.attrs,
+      in_stock: sp.in_stock,
+      on_sale: sp.on_sale,
+      sub_category_id: sp.sub_category_id,
     },
     locale,
   );
@@ -129,11 +144,16 @@ export default async function CategoryCatalogPage({
       brand_id: sp.brand_id,
       min_price: sp.min_price,
       max_price: sp.max_price,
-      offset,
+      color: sp.color,
+      attrs: sp.attrs,
+      in_stock: sp.in_stock,
+      on_sale: sp.on_sale,
+      sub_category_id: sp.sub_category_id,
+      offset: page,
       ...overrides,
     };
     for (const [k, v] of Object.entries(merged)) {
-      if (v !== undefined && v !== "" && !(k === "offset" && Number(v) === 0)) {
+      if (v !== undefined && v !== "" && !(k === "offset" && Number(v) <= 1)) {
         qs.set(k, String(v));
       }
     }
@@ -238,7 +258,7 @@ export default async function CategoryCatalogPage({
               </button>
               {sp.q && (
                 <Link
-                  href={buildUrl({ q: undefined, offset: 0 })}
+                  href={buildUrl({ q: undefined, offset: 1 })}
                   className="text-[12px] text-muted underline hover:text-ink"
                 >
                   {t.catalog.clearBtn}
@@ -253,7 +273,7 @@ export default async function CategoryCatalogPage({
                 return (
                   <Link
                     key={opt.id}
-                    href={buildUrl({ sort_by: opt.id, offset: 0 })}
+                    href={buildUrl({ sort_by: opt.id, offset: 1 })}
                     className={`rounded-full px-3.5 py-1.5 text-[12px] font-medium transition-colors ${
                       active
                         ? "bg-ink text-on-ink"
@@ -267,135 +287,43 @@ export default async function CategoryCatalogPage({
             </div>
           </div>
 
-          {/* Product Grid */}
-          {catalog === null ? (
-            <div className="mt-8 rounded-2xl border border-line bg-card p-6 sm:p-8">
-              <h2 className="font-display text-lg font-semibold text-ink">
-                {t.catalog.offlineTitle}
-              </h2>
-              <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-muted">
-                {t.catalog.offlineBody}
-              </p>
-              <Link
-                href="/#shop-by-category"
-                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-ink px-5 py-2.5 text-[13px] font-medium text-on-ink transition-colors hover:bg-brand hover:text-white"
-              >
-                {t.catalog.backToCategories}
-              </Link>
-            </div>
-          ) : products.length === 0 ? (
-            <div className="mt-8 rounded-2xl border border-line bg-card p-8 text-center">
-              <p className="font-display text-lg font-semibold text-ink">
-                {t.catalog.emptyTitle}
-              </p>
-              <p className="mt-2 text-[14px] text-muted">
-                {t.catalog.emptyBody}
-              </p>
-            </div>
-          ) : (
-            <>
-              <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:gap-6">
-                {products.map((product) => {
-                  const hasDiscount = product.discount > 0 && product.final_price < product.price;
-                  const outOfStock = product.total_stock <= 0;
-                  return (
-                    <Link
-                      key={product.id}
-                      href={`/products/${product.id}`}
-                      className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-card transition-all hover:border-brand/50 hover:shadow-md"
-                    >
-                      <div className="relative aspect-[3/4] w-full overflow-hidden bg-stage">
-                        {product.image ? (
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            loading="lazy"
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-xs text-muted">
-                            {t.catalog.noImage}
-                          </div>
-                        )}
-                        {hasDiscount && (
-                          <span className="absolute top-3 right-3 rounded-full bg-brand px-2.5 py-1 text-[11px] font-semibold text-white">
-                            {product.discount_type === "percent"
-                              ? t.catalog.discountPct(Math.round(product.discount))
-                              : t.catalog.discountAmt(formatPrice(product.price - product.final_price, locale))}
-                          </span>
-                        )}
-                        {outOfStock && (
-                          <span className="absolute inset-x-3 bottom-3 rounded-full bg-black/75 py-1 text-center text-[11px] font-medium text-white">
-                            {t.catalog.outOfStock}
-                          </span>
-                        )}
-                      </div>
+          {/* Sidebar Filters + Product Grid */}
+          <div className="mt-8 flex flex-col gap-8 lg:flex-row lg:items-start">
+            <CatalogSidebarFilters
+              basePath={`/categories/${encodeURIComponent(slug)}`}
+              facets={catalog?.facets}
+              subCategories={catalog?.category.children}
+            />
 
-                      <div className="flex flex-1 flex-col justify-between p-3.5 sm:p-4">
-                        <div>
-                          {product.brand?.name && (
-                            <p className="text-[11px] font-medium text-muted">
-                              {product.brand.name}
-                            </p>
-                          )}
-                          <h2 className="mt-1 line-clamp-2 text-[14px] font-semibold text-ink group-hover:text-brand">
-                            {product.name}
-                          </h2>
-                        </div>
-
-                        <div className="mt-3 flex items-baseline justify-between gap-2">
-                          <div className="flex items-baseline gap-2">
-                            <span className="nums text-[15px] font-bold text-ink">
-                              {formatPrice(product.final_price, locale)}
-                            </span>
-                            {hasDiscount && (
-                              <span className="nums text-[12px] text-muted line-through">
-                                {formatPrice(product.price, locale)}
-                              </span>
-                            )}
-                          </div>
-                          {product.sizes.length > 0 && (
-                            <span className="text-[11px] text-muted">
-                              {product.sizes.slice(0, 3).join(" · ")}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </Link>
-                  );
-                })}
-              </div>
-
-              {/* Pagination */}
-              {totalSize > limit && (
-                <div className="mt-10 flex items-center justify-center gap-3">
-                  {offset > 0 && (
-                    <Link
-                      href={buildUrl({ offset: Math.max(0, offset - limit) })}
-                      className="rounded-full border border-line bg-card px-5 py-2 text-[13px] font-medium text-ink hover:border-brand hover:text-brand"
-                    >
-                      {t.catalog.prev}
-                    </Link>
-                  )}
-                  <span className="nums text-[13px] text-muted">
-                    {t.catalog.showingRange(
-                      offset + 1,
-                      Math.min(offset + products.length, totalSize),
-                      totalSize,
-                    )}
-                  </span>
-                  {offset + products.length < totalSize && (
-                    <Link
-                      href={buildUrl({ offset: offset + limit })}
-                      className="rounded-full border border-line bg-card px-5 py-2 text-[13px] font-medium text-ink hover:border-brand hover:text-brand"
-                    >
-                      {t.catalog.next}
-                    </Link>
-                  )}
+            <div className="min-w-0 flex-1">
+              {catalog === null ? (
+                <div className="rounded-2xl border border-line bg-card p-6 sm:p-8">
+                  <h2 className="font-display text-lg font-semibold text-ink">
+                    {t.catalog.offlineTitle}
+                  </h2>
+                  <p className="mt-2 max-w-2xl text-[14px] leading-relaxed text-muted">
+                    {t.catalog.offlineBody}
+                  </p>
+                  <Link
+                    href="/#shop-by-category"
+                    className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-ink px-5 py-2.5 text-[13px] font-medium text-on-ink transition-colors hover:bg-brand hover:text-white"
+                  >
+                    {t.catalog.backToCategories}
+                  </Link>
                 </div>
+              ) : (
+                <CatalogProductGrid
+                  products={products}
+                  totalSize={totalSize}
+                  limit={limit}
+                  page={page}
+                  t={t}
+                  buildUrl={buildUrl}
+                  emptyBackHref={`/categories/${encodeURIComponent(slug)}`}
+                />
               )}
-            </>
-          )}
+            </div>
+          </div>
 
           <section aria-labelledby="other-cats" className="mt-12 sm:mt-16">
             <h2 id="other-cats" className="mb-4 font-display text-xl font-semibold text-ink">
@@ -416,6 +344,7 @@ export default async function CategoryCatalogPage({
           </section>
         </div>
       </main>
+      <SiteFooter />
     </DemoBagProvider>
   );
 }
