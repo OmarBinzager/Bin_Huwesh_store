@@ -47,7 +47,7 @@ export async function fetchStorefrontBootstrap(locale: Locale = "ar"): Promise<S
 
   try {
     const res = await fetch(`${API_BASE_URL}/api/v1/storefront/bootstrap?lang=${locale}`, {
-      next: { tags: ["storefront", `storefront-${locale}`], revalidate: 300 },
+      next: { tags: ["storefront", `storefront-${locale}`], revalidate: 10 },
       headers: { Accept: "application/json", "X-localization": locale },
     });
 
@@ -74,28 +74,199 @@ export async function fetchStorefrontBootstrap(locale: Locale = "ar"): Promise<S
         }
       : closingData;
 
-    return {
-      looks: raw.looks?.length ? raw.looks : fallbackLooks,
-      virtualFit: raw.virtualFit?.items?.length ? raw.virtualFit : newArrivalsData,
-      shoes: raw.shoes?.shoes?.length ? raw.shoes : shoesData,
-      rail: raw.rail?.length ? raw.rail : RAIL_ITEMS,
-      categories: raw.categories?.cards?.length ? raw.categories : shopCategoriesData,
-      brands: raw.brands?.brands?.length ? raw.brands : brandsData,
-      closing: mergedClosing,
-      source: "api",
-    };
+    return localizeBootstrap(
+      {
+        looks: raw.looks?.length ? raw.looks : fallbackLooks,
+        virtualFit: raw.virtualFit?.items?.length ? raw.virtualFit : newArrivalsData,
+        shoes: raw.shoes?.shoes?.length ? raw.shoes : shoesData,
+        rail: raw.rail?.length ? raw.rail : RAIL_ITEMS,
+        categories: raw.categories?.cards?.length ? raw.categories : shopCategoriesData,
+        brands: raw.brands?.brands?.length ? raw.brands : brandsData,
+        closing: mergedClosing,
+        source: "api",
+      },
+      locale,
+    );
   } catch {
-    return {
-      looks: fallbackLooks,
-      virtualFit: newArrivalsData,
-      shoes: shoesData,
-      rail: RAIL_ITEMS,
-      categories: shopCategoriesData,
-      brands: brandsData,
-      closing: closingData,
-      source: "fallback",
-    };
+    return localizeBootstrap(
+      {
+        looks: fallbackLooks,
+        virtualFit: newArrivalsData,
+        shoes: shoesData,
+        rail: RAIL_ITEMS,
+        categories: shopCategoriesData,
+        brands: brandsData,
+        closing: closingData,
+        source: "fallback",
+      },
+      locale,
+    );
   }
+}
+
+const HAS_ARABIC_RE = /[\u0600-\u06FF]/;
+
+const EN_CATEGORY_NAMES: Record<string, string> = {
+  men: "Men",
+  youth: "Youth",
+  kids: "Kids",
+  jumbo: "Jumbo Sizes",
+  suits: "Suits",
+  maawaz: "Maawaz",
+  shoes: "Shoes & Sandals",
+  accessories: "Accessories",
+  sportswear: "Sportswear",
+  formal: "Formal",
+  casual: "Casual",
+  "رجالي": "Men",
+  "شبابي": "Youth",
+  "ولادي": "Kids",
+  "جامبو": "Jumbo Sizes",
+  "بدلات": "Suits",
+  "معاوز": "Maawaz",
+  "أحذية": "Shoes",
+  "أحذية وصنادل": "Shoes & Sandals",
+  "إكسسوارات": "Accessories",
+  "اكسسوارات": "Accessories",
+  "الكل": "All",
+};
+
+function translateTextIfArabic(value: string | undefined, enFallback: string): string {
+  if (!value || HAS_ARABIC_RE.test(value)) return enFallback;
+  return value;
+}
+
+function translateCatLabel(name: string, slugOrId?: string): string {
+  if (slugOrId) {
+    const key = slugOrId.toLowerCase().trim();
+    if (EN_CATEGORY_NAMES[key]) return EN_CATEGORY_NAMES[key];
+  }
+  const trimmed = name.trim();
+  if (EN_CATEGORY_NAMES[trimmed]) return EN_CATEGORY_NAMES[trimmed];
+  return trimmed;
+}
+
+function localizeBootstrap(data: StorefrontBootstrap, locale: Locale): StorefrontBootstrap {
+  if (locale !== "en") return data;
+
+  return {
+    ...data,
+    categories: {
+      ...data.categories,
+      settings: {
+        ...data.categories.settings,
+        title: translateTextIfArabic(data.categories.settings.title, "Shop by Category"),
+        subtitle: translateTextIfArabic(data.categories.settings.subtitle, "Explore Bin Huwesh collections by category"),
+        cta: translateTextIfArabic(data.categories.settings.cta, "Browse Category"),
+      },
+      cards: data.categories.cards.map((c) => {
+        const slug = c.href?.split("/").filter(Boolean).pop();
+        const translatedName = HAS_ARABIC_RE.test(c.name)
+          ? translateCatLabel(c.name, slug || c.categoryId)
+          : c.name;
+        return {
+          ...c,
+          name: translatedName,
+          caption: c.caption && HAS_ARABIC_RE.test(c.caption) ? "" : c.caption,
+          alt: c.alt && HAS_ARABIC_RE.test(c.alt) ? translatedName : c.alt,
+        };
+      }),
+    },
+    virtualFit: {
+      ...data.virtualFit,
+      settings: {
+        ...data.virtualFit.settings,
+        title: translateTextIfArabic(data.virtualFit.settings.title, "New Arrivals"),
+        subtitle: translateTextIfArabic(
+          data.virtualFit.settings.subtitle,
+          "Try the piece on the model and pick your preferred size and color",
+        ),
+      },
+      categories: data.virtualFit.categories.map((cat) => ({
+        ...cat,
+        name: HAS_ARABIC_RE.test(cat.name) ? translateCatLabel(cat.name, cat.id) : cat.name,
+      })),
+    },
+    shoes: {
+      ...data.shoes,
+      settings: {
+        ...data.shoes.settings,
+        title: translateTextIfArabic(data.shoes.settings.title, "Shoes to Complete Your Look"),
+        subtitle: translateTextIfArabic(
+          data.shoes.settings.subtitle,
+          "A curated selection of classic and casual footwear",
+        ),
+      },
+    },
+    brands: {
+      ...data.brands,
+      settings: {
+        ...data.brands.settings,
+        title: translateTextIfArabic(data.brands.settings.title, "Trusted Global Brands"),
+      },
+    },
+    rail: data.rail.map((item) => ({
+      ...item,
+      tag: item.tag ? item.tag.replace("ر.ي", "YER") : item.tag,
+    })),
+    closing: {
+      ...data.closing,
+      footer: {
+        ...data.closing.footer,
+        tagline: translateTextIfArabic(data.closing.footer.tagline, "Choices that reflect you"),
+        groups: data.closing.footer.groups.map((g) => {
+          const groupTitleMap: Record<string, string> = {
+            departments: "Departments",
+            browse: "Browse",
+            policies: "Policies & Terms",
+            help: "Help & Support",
+          };
+          const linkLabelMap: Record<string, string> = {
+            "/categories/men": "Men",
+            "/categories/youth": "Youth",
+            "/categories/kids": "Kids",
+            "/categories/jumbo": "Jumbo Sizes",
+            "/categories/suits": "Suits",
+            "/categories/maawaz": "Maawaz",
+            "/categories/shoes": "Shoes & Sandals",
+            "/categories/accessories": "Accessories",
+            "/#shop-by-category": "Shop by Category",
+            "/#new-arrivals": "New Arrivals",
+            "/#shoes": "Shoes",
+            "/#testimonials": "Customer Reviews",
+            "/#visit": "Visit Showroom",
+            "/policies/terms": "Terms & Conditions",
+            "/policies/privacy": "Privacy Policy",
+            "/policies/return": "Return Policy",
+            "/policies/refund": "Refund Policy",
+            "/policies/cancellation": "Cancellation Policy",
+            "/policies/about": "About Us",
+            "/policies/faq": "FAQ",
+          };
+          return {
+            ...g,
+            title: groupTitleMap[g.id] || translateTextIfArabic(g.title, g.title),
+            links: g.links.map((l) => ({
+              ...l,
+              label: linkLabelMap[l.href] || translateTextIfArabic(l.label, l.label),
+            })),
+          };
+        }),
+      },
+      testimonials: {
+        ...data.closing.testimonials,
+        title: translateTextIfArabic(data.closing.testimonials.title, "What They Say About Bin Huwesh"),
+        subtitle: translateTextIfArabic(data.closing.testimonials.subtitle, "Verified customer reviews"),
+      },
+      contact: {
+        ...data.closing.contact,
+        title: translateTextIfArabic(data.closing.contact.title, "Visit Us at Bin Huwesh"),
+        subtitle: translateTextIfArabic(data.closing.contact.subtitle, "Visit our showroom or reach out directly"),
+        company: translateTextIfArabic(data.closing.contact.company, "Bin Huwesh Trading Co."),
+        address: translateTextIfArabic(data.closing.contact.address, "Aden, Yemen"),
+      },
+    },
+  };
 }
 
 export type CatalogProduct = {
@@ -114,6 +285,35 @@ export type CatalogProduct = {
   brand: { id: number; name: string; image: string } | null;
 };
 
+export type CatalogFacets = {
+  categories: Array<{ id: number; name: string; slug: string; count: number }>;
+  brands: Array<{ id: number; name: string; count: number }>;
+  colors: Array<{ name: string; code: string | null; count: number }>;
+  attributes: Array<{
+    title: string;
+    options: Array<{ value: string; count: number }>;
+  }>;
+  price_range: { min: number; max: number };
+  in_stock_count: number;
+  on_sale_count: number;
+};
+
+export type CatalogFilterParams = {
+  limit?: number;
+  offset?: number;
+  sort_by?: string;
+  brand_id?: string;
+  min_price?: string;
+  max_price?: string;
+  q?: string;
+  color?: string;
+  attrs?: string;
+  in_stock?: string;
+  on_sale?: string;
+  sub_category_id?: string;
+  category?: string;
+};
+
 export type CategoryCatalogResponse = {
   category: {
     id: number;
@@ -125,19 +325,44 @@ export type CategoryCatalogResponse = {
   limit: number;
   offset: number;
   products: CatalogProduct[];
+  facets?: CatalogFacets;
 };
+
+export type ProductsCatalogResponse = {
+  total_size: number;
+  limit: number;
+  offset: number;
+  products: CatalogProduct[];
+  facets: CatalogFacets;
+};
+
+export async function fetchProductsCatalog(
+  params?: CatalogFilterParams,
+  locale: Locale = "ar",
+): Promise<ProductsCatalogResponse | null> {
+  try {
+    const qs = new URLSearchParams();
+    qs.set("lang", locale);
+    if (params) {
+      for (const [k, v] of Object.entries(params)) {
+        if (v !== undefined && v !== "") qs.set(k, String(v));
+      }
+    }
+    const query = qs.toString() ? `?${qs.toString()}` : "";
+    const res = await fetch(`${API_BASE_URL}/api/v1/storefront/products${query}`, {
+      cache: "no-store",
+      headers: { Accept: "application/json", "X-localization": locale },
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as ProductsCatalogResponse;
+  } catch {
+    return null;
+  }
+}
 
 export async function fetchCategoryCatalog(
   slugOrId: string,
-  params?: {
-    limit?: number;
-    offset?: number;
-    sort_by?: string;
-    brand_id?: string;
-    min_price?: string;
-    max_price?: string;
-    q?: string;
-  },
+  params?: CatalogFilterParams,
   locale: Locale = "ar",
 ): Promise<CategoryCatalogResponse | null> {
   try {
@@ -149,10 +374,13 @@ export async function fetchCategoryCatalog(
       }
     }
     const query = qs.toString() ? `?${qs.toString()}` : "";
-    const res = await fetch(`${API_BASE_URL}/api/v1/storefront/categories/${encodeURIComponent(slugOrId)}${query}`, {
-      next: { revalidate: 60 },
-      headers: { Accept: "application/json", "X-localization": locale },
-    });
+    const res = await fetch(
+      `${API_BASE_URL}/api/v1/storefront/categories/${encodeURIComponent(slugOrId)}${query}`,
+      {
+        cache: "no-store",
+        headers: { Accept: "application/json", "X-localization": locale },
+      },
+    );
     if (!res.ok) return null;
     return (await res.json()) as CategoryCatalogResponse;
   } catch {
@@ -177,6 +405,7 @@ export type ProductDetailResponse = {
     patterns?: ProductPatternOption[];
     variations: Array<{ type: string; price: number; stock: number }>;
     choice_options: Array<{ name: string; title: string; options: string[] }>;
+    specifications?: Array<{ label: string; value: string }>;
     size_chart: {
       id: number;
       name: string;
@@ -192,6 +421,7 @@ export type ProductDetailResponse = {
       created_at: string | null;
     }>;
   };
+  complete_the_look?: CatalogProduct[];
   related_products: CatalogProduct[];
 };
 

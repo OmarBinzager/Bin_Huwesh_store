@@ -100,6 +100,40 @@
         ]
       },
       {
+        "id": "policies",
+        "title": "السياسات والشروط",
+        "links": [
+          {
+            "label": "الشروط والأحكام",
+            "href": "/policies/terms"
+          },
+          {
+            "label": "سياسة الخصوصية",
+            "href": "/policies/privacy"
+          },
+          {
+            "label": "سياسة الاستبدال والاسترجاع",
+            "href": "/policies/return"
+          },
+          {
+            "label": "سياسة الاسترداد المالي",
+            "href": "/policies/refund"
+          },
+          {
+            "label": "سياسة الإلغاء",
+            "href": "/policies/cancellation"
+          },
+          {
+            "label": "من نحن",
+            "href": "/policies/about"
+          },
+          {
+            "label": "الأسئلة الشائعة",
+            "href": "/policies/faq"
+          }
+        ]
+      },
+      {
         "id": "help",
         "title": "المساعدة",
         "links": [
