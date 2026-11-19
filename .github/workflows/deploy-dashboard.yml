@@ -30,16 +30,13 @@ jobs:
 
       - name: Sync dashboard files to VPS
         run: |
-          rsync -az --delete \
+          rsync -rz --delete --no-perms --no-owner --no-group \
             --exclude='.env' \
             --exclude='.git' \
             --exclude='vendor/' \
             --exclude='node_modules/' \
-            --exclude='storage/app/public/' \
-            --exclude='storage/framework/cache/*' \
-            --exclude='storage/framework/sessions/*' \
-            --exclude='storage/framework/views/*' \
-            --exclude='storage/logs/*' \
+            --exclude='storage/' \
+            --exclude='bootstrap/cache/' \
             --exclude='public/storage' \
             -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
             ./dashboard/ "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/bin-huwesh/dashboard/"
