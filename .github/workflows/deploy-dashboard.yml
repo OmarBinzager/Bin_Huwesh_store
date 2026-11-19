@@ -46,6 +46,8 @@ jobs:
           ssh -p "${{ secrets.VPS_PORT || 22 }}" "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" << 'EOF'
             set -e
             cd /var/www/bin-huwesh/dashboard
+            echo "${{ secrets.VPS_SUDO_PASS }}" | sudo -S chown -R hasan:www-data storage bootstrap/cache
+            echo "${{ secrets.VPS_SUDO_PASS }}" | sudo -S chmod -R 775 storage bootstrap/cache
             composer install --no-dev --optimize-autoloader --no-interaction
             php artisan migrate --force
             php artisan storage:link || true
