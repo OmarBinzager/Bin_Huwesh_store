@@ -150,7 +150,7 @@
                                             onclick='editLook(@json($l->load("items")))'>{{ translate('تعديل') }}</button>
                                         <form action="{{ route('admin.storefront.looks.delete', $l->id) }}" method="POST" class="d-inline" onsubmit="return confirm('حذف الإطلالة؟')">
                                             @csrf @method('DELETE')
-                                            <button class="btn btn-sm btn-outline-danger"><i class="tio-delete"></i></button>
+                                            <button class="btn btn-sm btn-outline-danger"><i class="tio-delete-outlined"></i></button>
                                         </form>
                                     </td>
                                 </tr>
@@ -299,7 +299,7 @@
                                     <button type="button" class="btn btn-sm btn-outline-primary" onclick='editVirtualFit(@json($vfEditPayload))'>{{ translate('تعديل') }}</button>
                                     <form action="{{ route('admin.storefront.virtual-fit.delete', $vf->id) }}" method="POST" class="d-inline" onsubmit="return confirm('حذف؟')">
                                         @csrf @method('DELETE')
-                                        <button class="btn btn-sm btn-outline-danger"><i class="tio-delete"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger"><i class="tio-delete-outlined"></i></button>
                                     </form>
                                 </td>
                             </tr>
@@ -452,7 +452,7 @@
                                     <button type="button" class="btn btn-sm btn-outline-primary" onclick='editShoe(@json($shEditPayload))'>{{ translate('تعديل') }}</button>
                                     <form action="{{ route('admin.storefront.shoes.delete', $sh->id) }}" method="POST" class="d-inline" onsubmit="return confirm('حذف؟')">
                                         @csrf @method('DELETE')
-                                        <button class="btn btn-sm btn-outline-danger"><i class="tio-delete"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger"><i class="tio-delete-outlined"></i></button>
                                     </form>
                                 </td>
                             </tr>
@@ -551,11 +551,15 @@
                             <tr>
                                 <td><strong>{{ $r->name }}</strong></td>
                                 <td>{{ $r->product ? '#'.$r->product_id : 'تجريبي' }}</td>
-                                <td>
-                                    <form action="{{ route('admin.storefront.rail.delete', $r->id) }}" method="POST" onsubmit="return confirm('حذف؟')">
-                                        @csrf @method('DELETE')
-                                        <button class="btn btn-sm btn-outline-danger"><i class="tio-delete"></i></button>
-                                    </form>
+                                <td class="text-nowrap">
+                                    <div class="d-flex gap-1 justify-content-end">
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                            onclick='editRail(@json($r))'>{{ translate('تعديل') }}</button>
+                                        <form action="{{ route('admin.storefront.rail.delete', $r->id) }}" method="POST" onsubmit="return confirm('حذف؟')">
+                                            @csrf @method('DELETE')
+                                            <button class="btn btn-sm btn-outline-danger" title="{{ translate('حذف') }}"><i class="tio-delete-outlined"></i></button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -568,17 +572,21 @@
         </div>
         <div class="col-lg-7">
             <div class="card">
-                <div class="card-header"><h5 class="card-title mb-0">{{ translate('إضافة قطعة لعلاقة الملابس (3 زوايا WebP)') }}</h5></div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">{{ translate('إضافة / تعديل قطعة لعلاقة الملابس (3 زوايا WebP)') }}</h5>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetRailForm()">{{ translate('جديد') }}</button>
+                </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.storefront.rail.save') }}" method="POST">
+                    <form action="{{ route('admin.storefront.rail.save') }}" method="POST" id="railForm">
                         @csrf
+                        <input type="hidden" name="id" id="rail_id">
                         <input type="hidden" name="front_image_path" id="rail_front_path" required>
                         <input type="hidden" name="back_image_path" id="rail_back_path" required>
                         <input type="hidden" name="side_image_path" id="rail_side_path" required>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="input-label">{{ translate('المنتج المرتبط') }}</label>
-                                <select name="product_id" class="form-control js-select2-custom">
+                                <select name="product_id" id="rail_product_id" class="form-control js-select2-custom">
                                     <option value="">-- {{ translate('اختياري') }} --</option>
                                     @foreach($products as $p)
                                         <option value="{{ $p->id }}">#{{ $p->id }} — {{ $p->name }}</option>
@@ -587,11 +595,29 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="input-label">{{ translate('اسم القطعة') }} *</label>
-                                <input type="text" name="name" class="form-control" required placeholder="قميص أوكسفورد سماوي">
+                                <input type="text" name="name" id="rail_name" class="form-control" required placeholder="قميص أوكسفورد سماوي">
                             </div>
-                            <div class="col-md-4"><label class="input-label">أمامي (Front)</label><input type="file" accept="image/png,image/webp" class="form-control" onchange="uploadSimple(this, 'rail', 'rail_front_path')"></div>
-                            <div class="col-md-4"><label class="input-label">خلفي (Back)</label><input type="file" accept="image/png,image/webp" class="form-control" onchange="uploadSimple(this, 'rail', 'rail_back_path')"></div>
-                            <div class="col-md-4"><label class="input-label">جانبي (Side)</label><input type="file" accept="image/png,image/webp" class="form-control" onchange="uploadSimple(this, 'rail', 'rail_side_path')"></div>
+                            <div class="col-md-4">
+                                <label class="input-label">أمامي (Front)</label>
+                                <input type="file" id="rail_front_file" accept="image/png,image/webp" class="form-control" onchange="uploadSimple(this, 'rail', 'rail_front_path', 'rail_front_preview')">
+                                <div class="mt-2 sf-checker rounded p-1 text-center d-none" id="rail_front_preview_wrap" style="height:82px;display:flex;align-items:center;justify-content:center;">
+                                    <img id="rail_front_preview" src="" alt="أمامي" style="max-height:74px;max-width:100%;object-fit:contain;cursor:pointer;" onclick="openExampleModal(this.src, 'الصورة الأمامية', '')">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="input-label">خلفي (Back)</label>
+                                <input type="file" id="rail_back_file" accept="image/png,image/webp" class="form-control" onchange="uploadSimple(this, 'rail', 'rail_back_path', 'rail_back_preview')">
+                                <div class="mt-2 sf-checker rounded p-1 text-center d-none" id="rail_back_preview_wrap" style="height:82px;display:flex;align-items:center;justify-content:center;">
+                                    <img id="rail_back_preview" src="" alt="خلفي" style="max-height:74px;max-width:100%;object-fit:contain;cursor:pointer;" onclick="openExampleModal(this.src, 'الصورة الخلفية', '')">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="input-label">جانبي (Side)</label>
+                                <input type="file" id="rail_side_file" accept="image/png,image/webp" class="form-control" onchange="uploadSimple(this, 'rail', 'rail_side_path', 'rail_side_preview')">
+                                <div class="mt-2 sf-checker rounded p-1 text-center d-none" id="rail_side_preview_wrap" style="height:82px;display:flex;align-items:center;justify-content:center;">
+                                    <img id="rail_side_preview" src="" alt="جانبي" style="max-height:74px;max-width:100%;object-fit:contain;cursor:pointer;" onclick="openExampleModal(this.src, 'الصورة الجانبية', '')">
+                                </div>
+                            </div>
                             <div class="col-12">
                                 <div class="sf-example-box d-flex flex-wrap align-items-center gap-3">
                                     <div class="d-flex gap-2">
@@ -605,8 +631,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-8"><label class="input-label">{{ translate('الوصف') }}</label><input type="text" name="description" class="form-control"></div>
-                            <div class="col-md-4"><label class="input-label">{{ translate('التفاصيل (مفصولة بفاصلة)') }}</label><input type="text" name="details" class="form-control" placeholder="قطن 100%,قصة مريحة"></div>
+                            <div class="col-md-8"><label class="input-label">{{ translate('الوصف') }}</label><input type="text" name="description" id="rail_description" class="form-control"></div>
+                            <div class="col-md-4"><label class="input-label">{{ translate('التفاصيل (مفصولة بفاصلة)') }}</label><input type="text" name="details" id="rail_details" class="form-control" placeholder="قطن 100%,قصة مريحة"></div>
                         </div>
                         <div class="mt-3 text-end"><button type="submit" class="btn btn-primary">{{ translate('حفظ على العلّاقة') }}</button></div>
                     </form>
@@ -630,11 +656,15 @@
                             <tr>
                                 <td><strong>{{ $cc->name }}</strong></td>
                                 <td><code>{{ $cc->slug }}</code></td>
-                                <td>
-                                    <form action="{{ route('admin.storefront.categories.delete', $cc->id) }}" method="POST" onsubmit="return confirm('حذف؟')">
-                                        @csrf @method('DELETE')
-                                        <button class="btn btn-sm btn-outline-danger"><i class="tio-delete"></i></button>
-                                    </form>
+                                <td class="text-nowrap">
+                                    <div class="d-flex gap-1 justify-content-end">
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                            onclick='editCategoryCard(@json($cc))'>{{ translate('تعديل') }}</button>
+                                        <form action="{{ route('admin.storefront.categories.delete', $cc->id) }}" method="POST" onsubmit="return confirm('حذف؟')">
+                                            @csrf @method('DELETE')
+                                            <button class="btn btn-sm btn-outline-danger" title="{{ translate('حذف') }}"><i class="tio-delete-outlined"></i></button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -647,28 +677,35 @@
         </div>
         <div class="col-lg-7">
             <div class="card">
-                <div class="card-header"><h5 class="card-title mb-0">{{ translate('إضافة بطاقة قسم') }}</h5></div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">{{ translate('إضافة / تعديل بطاقة قسم') }}</h5>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="resetCategoryForm()">{{ translate('جديد') }}</button>
+                </div>
                 <div class="card-body">
-                    <form action="{{ route('admin.storefront.categories.save') }}" method="POST">
+                    <form action="{{ route('admin.storefront.categories.save') }}" method="POST" id="catForm">
                         @csrf
+                        <input type="hidden" name="id" id="cat_id">
                         <input type="hidden" name="image_path" id="cat_image_path" required>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="input-label">{{ translate('القسم في النظام') }}</label>
-                                <select name="category_id" class="form-control">
+                                <select name="category_id" id="cat_category_id" class="form-control">
                                     <option value="">-- {{ translate('اختياري') }} --</option>
                                     @foreach($categories as $c)
                                         <option value="{{ $c->id }}">#{{ $c->id }} — {{ $c->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-6"><label class="input-label">{{ translate('الاسم المعروض') }} *</label><input type="text" name="name" class="form-control" required></div>
-                            <div class="col-md-4"><label class="input-label">Slug *</label><input type="text" name="slug" class="form-control" required placeholder="men / shoes"></div>
-                            <div class="col-md-4"><label class="input-label">{{ translate('تركيز X (%)') }}</label><input type="number" name="focus_x" class="form-control" value="50" min="0" max="100"></div>
-                            <div class="col-md-4"><label class="input-label">{{ translate('تركيز Y (%)') }}</label><input type="number" name="focus_y" class="form-control" value="50" min="0" max="100"></div>
+                            <div class="col-md-6"><label class="input-label">{{ translate('الاسم المعروض') }} *</label><input type="text" name="name" id="cat_name" class="form-control" required></div>
+                            <div class="col-md-4"><label class="input-label">Slug *</label><input type="text" name="slug" id="cat_slug" class="form-control" required placeholder="men / shoes"></div>
+                            <div class="col-md-4"><label class="input-label">{{ translate('تركيز X (%)') }}</label><input type="number" name="focus_x" id="cat_focus_x" class="form-control" value="50" min="0" max="100"></div>
+                            <div class="col-md-4"><label class="input-label">{{ translate('تركيز Y (%)') }}</label><input type="number" name="focus_y" id="cat_focus_y" class="form-control" value="50" min="0" max="100"></div>
                             <div class="col-12">
                                 <label class="input-label">{{ translate('صورة البطاقة (4:5)') }}</label>
-                                <input type="file" accept="image/*" class="form-control" onchange="uploadSimple(this, 'categories', 'cat_image_path')">
+                                <input type="file" id="cat_image_file" accept="image/*" class="form-control" onchange="uploadSimple(this, 'categories', 'cat_image_path', 'cat_image_preview')">
+                                <div class="mt-2 sf-checker rounded p-1 text-center d-none" id="cat_image_preview_wrap" style="height:110px;display:flex;align-items:center;justify-content:center;">
+                                    <img id="cat_image_preview" src="" alt="صورة البطاقة" style="max-height:100px;max-width:100%;object-fit:contain;cursor:pointer;" onclick="openExampleModal(this.src, 'صورة بطاقة القسم', '')">
+                                </div>
                                 <div class="sf-example-box d-flex align-items-center gap-3 mt-2">
                                     <img src="{{ asset('public/assets/admin/img/storefront-examples/category-example.webp') }}"
                                          alt="مثال بطاقة القسم"
@@ -751,7 +788,7 @@
                                         <button type="button" class="btn btn-sm btn-outline-primary" onclick='editTestimonial(@json($tm))'>{{ translate('تعديل') }}</button>
                                         <form action="{{ route('admin.storefront.testimonials.delete', $tm['id']) }}" method="POST" class="d-inline" onsubmit="return confirm('حذف هذا الرأي؟')">
                                             @csrf @method('DELETE')
-                                            <button class="btn btn-sm btn-outline-danger"><i class="tio-delete"></i></button>
+                                            <button class="btn btn-sm btn-outline-danger"><i class="tio-delete-outlined"></i></button>
                                         </form>
                                     </td>
                                 </tr>
@@ -845,12 +882,33 @@ async function uploadBlob(blob, folder, filename) {
     return data;
 }
 
-async function uploadSimple(input, folder, targetId) {
+const SF_MEDIA_BASE = "{{ rtrim(asset('storage/app/public/storefront'), '/') }}";
+function sfMediaUrl(folder, path) {
+    if (!path) return '';
+    if (/^(https?:)?\/\//.test(path) || path.startsWith('/')) return path;
+    return `${SF_MEDIA_BASE}/${folder}/${String(path).replace(/^\/+/, '')}`;
+}
+function setImgPreview(imgId, url) {
+    const img = document.getElementById(imgId);
+    const wrap = document.getElementById(imgId + '_wrap');
+    if (!img) return;
+    if (url) {
+        img.src = url;
+        img.classList.remove('d-none');
+        if (wrap) wrap.classList.remove('d-none');
+    } else {
+        img.src = '';
+        if (wrap) wrap.classList.add('d-none');
+    }
+}
+
+async function uploadSimple(input, folder, targetId, previewId = null) {
     const file = input.files?.[0];
     if (!file) return;
     try {
         const res = await uploadBlob(file, folder, file.name);
         document.getElementById(targetId).value = res.path;
+        if (previewId) setImgPreview(previewId, res.url || sfMediaUrl(folder, res.path));
         toastr.success('تم رفع الصورة بنجاح');
     } catch (e) {
         toastr.error(e.message);
@@ -952,7 +1010,8 @@ function editLook(l) {
     document.getElementById('look_discount').value = l.whole_look_discount || '';
     document.getElementById('look_order').value = l.sort_order || 1;
     document.getElementById('look_published').checked = Boolean(l.published);
-    if (l.image_url) document.getElementById('lookPreviewImg').src = l.image_url;
+    const lookImgUrl = l.image_url || sfMediaUrl('looks', l.image_path);
+    if (lookImgUrl) document.getElementById('lookPreviewImg').src = lookImgUrl;
     lookItems = (l.items || []).map(it => ({
         uid: it.uid, label: it.label, category: it.category,
         hotspot_x: it.hotspot_x, hotspot_y: it.hotspot_y,
@@ -985,8 +1044,8 @@ function editVirtualFit(vf) {
         swatch: c.swatch || '#111111',
         garment_path: c.garment_path || '',
         model_path: c.model_path || '',
-        garment_url: c.garment_url || '',
-        model_url: c.model_url || ''
+        garment_url: c.garment_url || sfMediaUrl('virtual-fit', c.garment_path),
+        model_url: c.model_url || sfMediaUrl('virtual-fit', c.model_path)
     })) : [];
     renderVfColorsList();
     document.getElementById('vfForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1155,10 +1214,61 @@ function editShoe(sh) {
         name: c.name || '',
         swatch: c.swatch || '#222222',
         image_path: c.image_path || '',
-        image_url: c.image_url || ''
+        image_url: c.image_url || sfMediaUrl('shoes', c.image_path)
     })) : [];
     renderShColorsList();
     document.getElementById('shForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function editRail(r) {
+    document.getElementById('rail_id').value = r.id || '';
+    const $prodSelect = $('#rail_product_id');
+    if ($prodSelect.length) {
+        $prodSelect.val(r.product_id ? String(r.product_id) : '').trigger('change');
+    }
+    document.getElementById('rail_name').value = r.name || '';
+    document.getElementById('rail_description').value = r.description || '';
+    const details = Array.isArray(r.details) ? r.details.join(',') : (r.details || '');
+    document.getElementById('rail_details').value = details;
+    document.getElementById('rail_front_path').value = r.front_image_path || '';
+    document.getElementById('rail_back_path').value = r.back_image_path || '';
+    document.getElementById('rail_side_path').value = r.side_image_path || '';
+    setImgPreview('rail_front_preview', r.front_image_url || sfMediaUrl('rail', r.front_image_path));
+    setImgPreview('rail_back_preview', r.back_image_url || sfMediaUrl('rail', r.back_image_path));
+    setImgPreview('rail_side_preview', r.side_image_url || sfMediaUrl('rail', r.side_image_path));
+    document.getElementById('railForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function resetRailForm() {
+    document.getElementById('railForm')?.reset();
+    document.getElementById('rail_id').value = '';
+    document.getElementById('rail_front_path').value = '';
+    document.getElementById('rail_back_path').value = '';
+    document.getElementById('rail_side_path').value = '';
+    const $prodSelect = $('#rail_product_id');
+    if ($prodSelect.length) {
+        $prodSelect.val('').trigger('change');
+    }
+    setImgPreview('rail_front_preview', '');
+    setImgPreview('rail_back_preview', '');
+    setImgPreview('rail_side_preview', '');
+}
+
+function editCategoryCard(cc) {
+    document.getElementById('cat_id').value = cc.id || '';
+    document.getElementById('cat_category_id').value = cc.category_id ? String(cc.category_id) : '';
+    document.getElementById('cat_name').value = cc.name || '';
+    document.getElementById('cat_slug').value = cc.slug || '';
+    document.getElementById('cat_focus_x').value = cc.focus_x ?? 50;
+    document.getElementById('cat_focus_y').value = cc.focus_y ?? 50;
+    document.getElementById('cat_image_path').value = cc.image_path || '';
+    setImgPreview('cat_image_preview', cc.image_url || sfMediaUrl('categories', cc.image_path));
+    document.getElementById('catForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function resetCategoryForm() {
+    document.getElementById('catForm')?.reset();
+    document.getElementById('cat_id').value = '';
+    document.getElementById('cat_image_path').value = '';
+    setImgPreview('cat_image_preview', '');
 }
 function resetShoeForm() {
     document.getElementById('shForm')?.reset();

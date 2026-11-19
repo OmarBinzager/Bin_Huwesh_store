@@ -133,6 +133,7 @@ class ConfigController extends Controller
         return response()->json([
             'ecommerce_name'              => Helpers::get_business_settings('restaurant_name'),
             'ecommerce_logo'              => Helpers::get_business_settings('logo'),
+            'fav_icon'                    => Helpers::get_business_settings('fav_icon'),
             'ecommerce_address'           => Helpers::get_business_settings('address'),
             'ecommerce_phone'             => Helpers::get_business_settings('phone'),
             'ecommerce_email'             => Helpers::get_business_settings('email_address'),

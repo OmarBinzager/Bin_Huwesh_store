@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Alexandria, IBM_Plex_Sans_Arabic, Kanit } from "next/font/google";
 import Script from "next/script";
+import { BrandConfigProvider } from "@/components/store/BrandConfigContext";
 import { CurrencyProvider } from "@/lib/currency";
 import { getDirection } from "@/lib/i18n/config";
 import { I18nProvider } from "@/lib/i18n/context";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getServerLocale } from "@/lib/i18n/server";
+import { fetchStoreBrandingConfig } from "@/lib/storefront-api";
 import "./globals.css";
 
 /* Store UI + body copy. */
@@ -37,12 +39,24 @@ const kanit = Kanit({
 const isReviewBuild = process.env.SITE_REVIEW === "1";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const locale = await getServerLocale();
+  const [locale, branding] = await Promise.all([
+    getServerLocale(),
+    fetchStoreBrandingConfig(),
+  ]);
   const t = getDictionary(locale);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://binhuwesh.com";
 
   return {
     metadataBase: new URL(siteUrl),
+    ...(branding.favIconUrl
+      ? {
+          icons: {
+            icon: branding.favIconUrl,
+            shortcut: branding.favIconUrl,
+            apple: branding.favIconUrl,
+          },
+        }
+      : {}),
     title: {
       default: t.meta.siteTitle,
       template: `%s — ${t.meta.brandSuffix}`,
@@ -135,7 +149,10 @@ export const viewport: Viewport = {
 const themeBootstrap = `(function(){var d=document.documentElement,t;try{t=localStorage.getItem("bh-theme")}catch(e){}if(t!=="light"&&t!=="dark"){t=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}d.dataset.theme=t;d.style.colorScheme=t})();`;
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const locale = await getServerLocale();
+  const [locale, branding] = await Promise.all([
+    getServerLocale(),
+    fetchStoreBrandingConfig(),
+  ]);
   const dir = getDirection(locale);
   const t = getDictionary(locale);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://binhuwesh.com";
@@ -182,9 +199,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             {t.meta.reviewNote}
           </p>
         )}
-        <I18nProvider initialLocale={locale}>
-          <CurrencyProvider>{children}</CurrencyProvider>
-        </I18nProvider>
+        <BrandConfigProvider logoUrl={branding.logoUrl}>
+          <I18nProvider initialLocale={locale}>
+            <CurrencyProvider>{children}</CurrencyProvider>
+          </I18nProvider>
+        </BrandConfigProvider>
       </body>
     </html>
   );

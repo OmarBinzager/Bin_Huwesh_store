@@ -467,3 +467,53 @@ export async function fetchPolicies(locale: Locale = "ar"): Promise<PoliciesResp
     return null;
   }
 }
+
+export type StoreBrandingConfig = {
+  logoUrl: string | null;
+  favIconUrl: string | null;
+};
+
+async function isReachableAsset(url: string): Promise<boolean> {
+  try {
+    const res = await fetch(url, {
+      method: "HEAD",
+      next: { revalidate: 300 },
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function fetchStoreBrandingConfig(): Promise<StoreBrandingConfig> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/config`, {
+      next: { revalidate: 300 },
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) return { logoUrl: null, favIconUrl: null };
+    const cfg = (await res.json()) as {
+      ecommerce_logo?: string | null;
+      fav_icon?: string | null;
+      base_urls?: { ecommerce_image_url?: string | null } | null;
+    };
+
+    const baseUrl = cfg.base_urls?.ecommerce_image_url?.replace(/\/+$/, "");
+    if (!baseUrl) return { logoUrl: null, favIconUrl: null };
+
+    const rawLogo = cfg.ecommerce_logo ? `${baseUrl}/${cfg.ecommerce_logo.replace(/^\/+/, "")}` : null;
+    const rawFav = cfg.fav_icon ? `${baseUrl}/${cfg.fav_icon.replace(/^\/+/, "")}` : null;
+
+    const [logoOk, favOk] = await Promise.all([
+      rawLogo ? isReachableAsset(rawLogo) : Promise.resolve(false),
+      rawFav ? isReachableAsset(rawFav) : Promise.resolve(false),
+    ]);
+
+    return {
+      logoUrl: logoOk ? rawLogo : null,
+      favIconUrl: favOk ? rawFav : null,
+    };
+  } catch {
+    return { logoUrl: null, favIconUrl: null };
+  }
+}

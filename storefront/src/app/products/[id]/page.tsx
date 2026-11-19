@@ -83,7 +83,7 @@ export default async function ProductDetailPage({
     currentParam = id;
   }
   if (currentParam !== expectedParam) {
-    permanentRedirect(canonicalPath);
+    permanentRedirect(encodeURI(canonicalPath));
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://binhuwesh.com";
