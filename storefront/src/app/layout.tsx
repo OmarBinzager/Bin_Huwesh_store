@@ -48,15 +48,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     metadataBase: new URL(siteUrl),
-    ...(branding.favIconUrl
-      ? {
-          icons: {
-            icon: branding.favIconUrl,
-            shortcut: branding.favIconUrl,
-            apple: branding.favIconUrl,
-          },
-        }
-      : {}),
+    icons: {
+      icon: branding.favIconUrl || "/default-favicon.ico",
+      shortcut: branding.favIconUrl || "/default-favicon.ico",
+      apple: branding.favIconUrl || "/default-favicon.ico",
+    },
     title: {
       default: t.meta.siteTitle,
       template: `%s — ${t.meta.brandSuffix}`,

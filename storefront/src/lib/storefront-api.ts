@@ -477,7 +477,7 @@ async function isReachableAsset(url: string): Promise<boolean> {
   try {
     const res = await fetch(url, {
       method: "HEAD",
-      next: { revalidate: 300 },
+      cache: "no-store",
     });
     return res.ok;
   } catch {
@@ -488,7 +488,7 @@ async function isReachableAsset(url: string): Promise<boolean> {
 export async function fetchStoreBrandingConfig(): Promise<StoreBrandingConfig> {
   try {
     const res = await fetch(`${API_BASE_URL}/api/v1/config`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 60 },
       headers: { Accept: "application/json" },
     });
     if (!res.ok) return { logoUrl: null, favIconUrl: null };
