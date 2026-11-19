@@ -9,6 +9,10 @@ on:
       - '.github/workflows/deploy-storefront.yml'
   workflow_dispatch:
 
+concurrency:
+  group: deploy-storefront
+  cancel-in-progress: false
+
 jobs:
   deploy:
     name: Deploy Next.js Storefront
