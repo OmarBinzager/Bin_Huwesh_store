@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import type { Look } from "@/content/types";
 import { resolvePrice } from "@/lib/catalog";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n/context";
+import { productHref } from "@/lib/product-url";
 import BrandLogo from "@/components/store/BrandLogo";
 import { useDemoBag } from "@/components/store/DemoBag";
 
@@ -110,18 +112,35 @@ export default function LookReceipt({ look, index, selectedItem, onSelectItem }:
                 }}
                 className={`-mx-2 rounded-lg px-2 py-3 transition-colors ${active ? "bg-ink/5" : ""}`}
               >
-                <button
-                  type="button"
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => onSelectItem(it.id)}
-                  className="flex w-full items-start gap-3 text-start"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onSelectItem(it.id);
+                    }
+                  }}
+                  className="flex w-full cursor-pointer items-start gap-3 text-start"
                 >
                   <span className="nums mt-0.5 text-[11px] text-muted">{String(n + 1).padStart(2, "0")}</span>
                   <span className="flex-1">
-                    <span className="block text-[13.5px] font-medium leading-snug">{it.label}</span>
+                    {it.productId ? (
+                      <Link
+                        href={productHref(it.productId, it.label)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-block text-[13.5px] font-medium leading-snug underline-offset-4 transition-colors hover:text-brand hover:underline"
+                      >
+                        {it.label}
+                      </Link>
+                    ) : (
+                      <span className="block text-[13.5px] font-medium leading-snug">{it.label}</span>
+                    )}
                     <span className="block text-[11px] text-muted">{it.category}</span>
                   </span>
                   <span className="nums text-[13px] font-medium">{formatMoney(prices[n].amount)}</span>
-                </button>
+                </div>
 
                 <div className="mt-2 flex items-center gap-2 ps-6">
                   <div className="flex flex-1 flex-wrap gap-1.5" role="radiogroup" aria-label={`${isEn ? "Size" : "مقاس"} ${it.label}`}>

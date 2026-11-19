@@ -3,12 +3,15 @@
 /* eslint-disable @next/next/no-img-element -- supplied component: garment photos are drawn as masked <img> layers on purpose */
 
 import * as React from "react";
+import Link from "next/link";
 import { createPortal } from "react-dom";
+import { productHref } from "@/lib/product-url";
 
 export type GarmentKind = "tee" | "knit" | "hoodie" | "shirt" | "jacket" | "coat";
 
 export interface RailGarment {
   id: string;
+  productId?: string | number | null;
   /** Accessible name, caption and detail title. */
   name: string;
   description?: string;
@@ -1218,7 +1221,15 @@ function Detail({ uid, item, index, total, hanger, labels, reduced, source, onLi
         {stage}
         <div className={`flex flex-col gap-4 text-center transition-[opacity,transform] delay-150 duration-500 motion-reduce:transition-none md:text-left ${shown ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"}`}>
           <p className="font-mono text-[11px] tracking-[0.2em] text-muted-foreground">{String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}</p>
-          <h3 id={titleId} className="text-2xl font-medium tracking-tight sm:text-3xl">{item.name}</h3>
+          <h3 id={titleId} className="text-2xl font-medium tracking-tight sm:text-3xl">
+            {item.productId ? (
+              <Link href={productHref(item.productId, item.name)} className="hover:underline underline-offset-4">
+                {item.name}
+              </Link>
+            ) : (
+              item.name
+            )}
+          </h3>
           {item.description && <p className="text-sm leading-relaxed text-muted-foreground">{item.description}</p>}
           {item.details && item.details.length > 0 && (
             <ul className="flex flex-wrap justify-center gap-2 md:justify-start">

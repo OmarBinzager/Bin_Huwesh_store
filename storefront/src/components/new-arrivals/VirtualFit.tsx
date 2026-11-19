@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useDemoBag } from "@/components/store/DemoBag";
 import { categoriesInUse, visibleItems } from "@/content/new-arrivals";
 import type { NaItem, NewArrivalsFile } from "@/content/new-arrivals-types";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n/context";
+import { productHref } from "@/lib/product-url";
 import { approach, cardWidth, isNarrow, mod, offset, pose, slotPlan, xsTable } from "./arc";
 import s from "./virtual-fit.module.css";
 
@@ -591,7 +593,16 @@ export default function VirtualFit({ data }: { data: NewArrivalsFile }) {
           <img key={color.garment} src={color.garment} alt={`${item.name} — ${color.name}`} />
         </div>
         <div className={s.info}>
-          <Roll text={item.name} className={s.pName} />
+          {(item as { productId?: string | number | null }).productId ? (
+            <Link
+              href={productHref((item as { productId?: string | number | null }).productId!, item.name)}
+              className="hover:underline underline-offset-4"
+            >
+              <Roll text={item.name} className={s.pName} />
+            </Link>
+          ) : (
+            <Roll text={item.name} className={s.pName} />
+          )}
           {item.description && <Roll text={item.description} className={s.pDesc} />}
           <Roll text={formatMoney(item.price)} className={s.pPrice} />
           <span className={s.demo}>{isEn ? "Sample price" : "سعر تجريبي"}</span>

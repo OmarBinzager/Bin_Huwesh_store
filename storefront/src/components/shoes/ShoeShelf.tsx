@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
+import Link from "next/link";
 import { useDemoBag } from "@/components/store/DemoBag";
 import type { Shoe } from "@/content/shoes-types";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n/context";
+import { productHref } from "@/lib/product-url";
 import { Camera } from "./camera";
 import s from "./shoe-shelf.module.css";
 
@@ -469,7 +471,16 @@ export default function ShoeShelf({ shoes }: Props) {
         </p>
         <div key={shoe.id} className={s.panelBody}>
           <h3 ref={headingRef} tabIndex={-1} className={s.name}>
-            {shoe.name}
+            {(shoe as { productId?: string | number | null }).productId ? (
+              <Link
+                href={productHref((shoe as { productId?: string | number | null }).productId!, shoe.name)}
+                className="hover:underline underline-offset-4"
+              >
+                {shoe.name}
+              </Link>
+            ) : (
+              shoe.name
+            )}
           </h3>
           {shoe.description && <p className={s.desc}>{shoe.description}</p>}
           <p className={s.price} dir="ltr">
