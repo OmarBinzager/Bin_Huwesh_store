@@ -44,6 +44,7 @@ jobs:
             --exclude='Modules/' \
             --exclude='public/storage' \
             --exclude='public/Modules' \
+            --exclude='public/assets/admin/vendor/' \
             -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
             ./dashboard/ "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/bin-huwesh/dashboard/"
 
