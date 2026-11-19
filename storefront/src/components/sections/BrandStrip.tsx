@@ -100,7 +100,7 @@ export default function BrandStrip({ data }: { data: BrandsFile }) {
             className="mt-0 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-brand/50 sm:mt-0 [--logo-base:calc(var(--logo-base-lg)*0.78)] sm:[--logo-base:var(--logo-base-lg)]"
             viewportClassName="max-w-none py-[14px] sm:py-5 [mask-image:linear-gradient(to_right,transparent,#000_7%,#000_93%,transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,#000_7%,#000_93%,transparent)] motion-reduce:overflow-x-auto"
           >
-            <ul aria-hidden className="flex items-center">
+            <ul aria-hidden className="flex shrink-0 items-center gap-10 px-5 sm:gap-16 sm:px-8">
               {Array.from({ length: copies }, (_, k) => set(k))}
             </ul>
           </Marquee>
@@ -117,18 +117,17 @@ function Logo({ brand }: { brand: Brand }) {
     height: `calc(var(--logo-base) * ${box.h.toFixed(4)})`,
   };
   return (
-    <li className="flex shrink-0 items-center px-[clamp(18px,3.4vw,46px)]" title={brand.name}>
+    <li className="flex shrink-0 items-center justify-center" title={brand.name}>
       {brand.mode === "color" && brand.colorLogo ? (
         <img
           src={brand.colorLogo}
           alt=""
           draggable={false}
-          className="object-contain transition-[filter] duration-300 dark:invert"
-          style={size}
+          className="h-7 w-auto max-w-[140px] shrink-0 object-contain transition-[filter] duration-300 sm:h-9 dark:invert"
         />
       ) : (
         <span
-          className="block bg-current text-ink/70 transition-colors duration-300 hover:text-ink"
+          className="block shrink-0 bg-current text-ink/70 transition-colors duration-300 hover:text-ink"
           style={{
             ...size,
             WebkitMaskImage: `url("${brand.logo}")`,
