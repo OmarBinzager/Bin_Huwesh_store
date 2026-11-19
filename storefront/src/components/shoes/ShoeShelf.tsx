@@ -127,7 +127,7 @@ export default function ShoeShelf({ shoes }: Props) {
       maxW = freeW * 0.68;
       maxH = H * 0.66;
     } else {
-      const freeH = panel.offsetTop;
+      const freeH = panel.offsetTop || 200;
       cx = W / 2;
       cy = freeH * 0.52;
       maxW = W * 0.9;
@@ -245,10 +245,15 @@ export default function ShoeShelf({ shoes }: Props) {
 
   useEffect(() => {
     const want = focusNext.current;
-    if (!want) return;
-    focusNext.current = null;
-    if (want === "title" && open) headingRef.current?.focus({ preventScroll: true });
-    if (want === "cell" && !open) cellRefs.current[currentRef.current]?.focus({ preventScroll: true });
+    if (want) {
+      focusNext.current = null;
+      if (want === "title" && open) headingRef.current?.focus({ preventScroll: true });
+      if (want === "cell" && !open) cellRefs.current[currentRef.current]?.focus({ preventScroll: true });
+    }
+    if (open) {
+      const raf = requestAnimationFrame(() => frameStage());
+      return () => cancelAnimationFrame(raf);
+    }
   }, [open, current]);
 
   // Resize while open: re-aim instantly (no drifting animation on rotate).
@@ -554,11 +559,7 @@ export default function ShoeShelf({ shoes }: Props) {
               </p>
             )}
           </div>
-          {!justAdded && (
-            <p className={s.note}>
-              {isEn ? "Sample price & sizes — no purchase order is sent." : "سعر ومقاسات تجريبية — لا يُرسل أي طلب شراء."}
-            </p>
-          )}
+
         </div>
 
         <div className={s.panelNav}>

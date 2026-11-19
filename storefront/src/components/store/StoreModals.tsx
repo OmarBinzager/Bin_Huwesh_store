@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { STORE_CATEGORIES, categoryHref } from "@/content/categories";
 import {
@@ -20,6 +21,7 @@ import LanguageToggle from "./LanguageToggle";
 import ThemeToggle from "./ThemeToggle";
 
 export function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const router = useRouter();
   const { locale, dir, t } = useI18n();
   const { formatMoney } = useCurrency();
   const [query, setQuery] = useState("");
@@ -30,14 +32,13 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
     if (!open) return;
     const trimmed = query.trim();
     if (trimmed.length < 2) {
-      setResults([]);
       return;
     }
     const timer = setTimeout(async () => {
       setLoading(true);
       try {
         const res = await fetch(
-          `${API_BASE_URL}/api/v1/products/search?name=${encodeURIComponent(trimmed)}&limit=8&offset=1`,
+          `${API_BASE_URL}/api/v1/storefront/products?q=${encodeURIComponent(trimmed)}&limit=8&lang=${locale}`,
           { headers: { Accept: "application/json", "X-localization": locale } },
         );
         if (res.ok) {
@@ -55,6 +56,14 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
 
   if (!open) return null;
 
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    onClose();
+    router.push(`/products?q=${encodeURIComponent(trimmed)}`);
+  };
+
   return (
     <div className="fixed inset-0 z-[1100] flex items-start justify-center bg-black/50 p-4 pt-20 backdrop-blur-xs" onClick={onClose}>
       <div
@@ -62,19 +71,30 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
         onClick={(e) => e.stopPropagation()}
         className="w-full max-w-xl overflow-hidden rounded-3xl border border-line bg-card text-ink shadow-2xl"
       >
-        <div className="flex items-center gap-3 border-b border-line px-5 py-4">
+        <form onSubmit={handleSearchSubmit} className="flex items-center gap-3 border-b border-line px-5 py-4">
           <input
             type="search"
+            enterKeyHint="search"
             autoFocus
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              const val = e.target.value;
+              setQuery(val);
+              if (val.trim().length < 2) setResults([]);
+            }}
             placeholder={t.modals.searchPlaceholder}
             className="w-full bg-transparent text-[15px] outline-none placeholder:text-muted"
           />
-          <button type="button" onClick={onClose} className="text-[13px] text-muted hover:text-ink">
+          <button
+            type="submit"
+            className="shrink-0 rounded-full bg-ink px-4 py-1.5 text-[12px] font-medium text-on-ink transition hover:bg-brand"
+          >
+            {t.catalog.searchBtn}
+          </button>
+          <button type="button" onClick={onClose} className="shrink-0 text-[13px] text-muted hover:text-ink">
             {t.modals.close}
           </button>
-        </div>
+        </form>
         <div className="max-h-[60vh] overflow-y-auto p-4">
           {loading ? (
             <p className="py-8 text-center text-[13px] text-muted">{t.modals.searching}</p>

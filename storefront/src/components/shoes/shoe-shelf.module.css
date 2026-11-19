@@ -638,6 +638,11 @@
 @media (max-width: 767px) {
   .stage {
     border-radius: 22px;
+    min-height: 400px;
+    transition: min-height 0.35s ease;
+  }
+  .stage[data-open] {
+    min-height: clamp(660px, 88svh, 740px);
   }
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -663,14 +668,17 @@
     bottom: 16px;
   }
   .panel {
-    top: 244px;
-    bottom: auto;
-    left: 10px;
-    right: 10px;
+    top: 200px;
+    bottom: 10px;
+    left: 8px;
+    right: 8px;
     width: auto;
     padding: 12px 14px 10px;
     border: 1px solid var(--sh-line);
     border-radius: 22px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     transform: translateY(28px);
     opacity: 0;
     transition:
@@ -687,53 +695,71 @@
       visibility 0s;
   }
   .panelHead {
-    margin-bottom: 4px;
+    flex-shrink: 0;
+    margin-bottom: 2px;
   }
   .close {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
+  }
+  .panelBody {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding-bottom: 6px;
+  }
+  .name {
+    font-size: clamp(17px, 4.4vw, 20px);
+    line-height: 1.25;
   }
   .desc {
-    margin-top: 4px;
-    font-size: 12.5px;
-    line-height: 1.6;
+    margin-top: 3px;
+    font-size: 12px;
+    line-height: 1.45;
   }
   .price {
-    margin-top: 6px;
-    font-size: 17px;
+    margin-top: 5px;
+    font-size: 16.5px;
   }
   .blockLabel {
-    margin-top: 6px;
+    margin-top: 4px;
+    font-size: 12px;
   }
   .block {
-    margin-top: 10px;
+    margin-top: 6px;
   }
   .block .blockLabel {
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
   .sizes {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(42px, 1fr));
     gap: 6px;
   }
   .size {
-    height: 42px;
+    height: 38px;
+    font-size: 13.5px;
   }
   .add {
-    height: 46px;
-    margin-top: 10px;
+    height: 44px;
+    margin-top: 8px;
+    font-size: 14.5px;
   }
   .added {
     margin-top: 6px;
   }
   .note {
-    margin-top: 6px;
+    display: none;
   }
   .panelNav {
-    padding-top: 10px;
-    margin-top: 8px;
+    flex-shrink: 0;
+    padding-top: 8px;
+    margin-top: 6px;
   }
   .navBtn {
-    height: 42px;
+    height: 38px;
+    font-size: 13px;
   }
 }
 
