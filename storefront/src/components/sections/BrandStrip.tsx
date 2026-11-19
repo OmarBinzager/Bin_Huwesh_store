@@ -123,7 +123,7 @@ function Logo({ brand }: { brand: Brand }) {
           src={brand.colorLogo}
           alt=""
           draggable={false}
-          className="object-contain transition-[filter] duration-300 invert dark:invert-0"
+          className="object-contain transition-[filter] duration-300 dark:invert"
           style={size}
         />
       ) : (
