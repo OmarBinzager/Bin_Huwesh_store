@@ -642,7 +642,7 @@
     transition: min-height 0.35s ease;
   }
   .stage[data-open] {
-    min-height: clamp(660px, 88svh, 740px);
+    min-height: clamp(520px, 74svh, 580px);
   }
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -668,11 +668,12 @@
     bottom: 16px;
   }
   .panel {
-    top: 200px;
-    bottom: 10px;
+    top: 185px;
+    bottom: auto;
     left: 8px;
     right: 8px;
     width: auto;
+    max-height: calc(100% - 195px);
     padding: 12px 14px 10px;
     border: 1px solid var(--sh-line);
     border-radius: 22px;
@@ -703,12 +704,12 @@
     height: 36px;
   }
   .panelBody {
-    flex: 1;
+    flex: 0 1 auto;
     min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    padding-bottom: 6px;
+    padding-bottom: 4px;
   }
   .name {
     font-size: clamp(17px, 4.4vw, 20px);

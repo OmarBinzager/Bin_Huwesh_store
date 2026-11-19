@@ -127,7 +127,7 @@ export default function ShoeShelf({ shoes }: Props) {
       maxW = freeW * 0.68;
       maxH = H * 0.66;
     } else {
-      const freeH = panel.offsetTop || 200;
+      const freeH = panel.offsetTop || 185;
       cx = W / 2;
       cy = freeH * 0.52;
       maxW = W * 0.9;
