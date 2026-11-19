@@ -39,6 +39,7 @@ jobs:
             --exclude='bootstrap/cache/' \
             --exclude='Modules/' \
             --exclude='public/storage' \
+            --exclude='public/Modules' \
             -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
             ./dashboard/ "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/bin-huwesh/dashboard/"
 
@@ -53,6 +54,7 @@ jobs:
             composer install --no-dev --optimize-autoloader --no-interaction
             php artisan migrate --force
             php artisan storage:link || true
+            ln -sfn /var/www/bin-huwesh/dashboard/Modules /var/www/bin-huwesh/dashboard/public/Modules
             php artisan optimize:clear
             php artisan view:cache || true
             echo "${{ secrets.VPS_SUDO_PASS }}" | sudo -S chown -R www-data:www-data storage bootstrap/cache
