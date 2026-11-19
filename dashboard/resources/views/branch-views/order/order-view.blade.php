@@ -464,15 +464,15 @@
                                                             @foreach ($item as $subKey => $subItem)
                                                                 @if (is_array($subItem))
                                                                     @foreach ($subItem as $deepKey => $deepVal)
-                                                                        <span><strong>{{ translate($deepKey) }}:</strong> {{ translate($deepVal) }}</span><br>
+                                                                        <span><strong>{{ $deepKey }}:</strong> {{ $deepVal }}</span><br>
                                                                     @endforeach
                                                                 @else
-                                                                    <span><strong>{{ translate($subKey) }}:</strong> {{ translate($subItem) }}</span><br>
+                                                                    <span><strong>{{ $subKey }}:</strong> {{ $subItem }}</span><br>
                                                                 @endif
                                                             @endforeach
                                                         </div>
                                                     @else
-                                                        <span> {{ translate($item) }}</span>
+                                                        <span> {{ $item }}</span>
                                                     @endif
                                                 </div>
                                             @endif
