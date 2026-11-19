@@ -226,6 +226,9 @@ Route::group(['prefix' => 'seller', 'as' => 'seller.', 'middleware' => ['module:
             Route::get('bulk-export', [ProductController::class, 'bulkExportProduct'])->name('bulk-export');
             Route::get('view/{id}', [ProductController::class, 'view'])->name('view');
             Route::get('remove-image/{id}/{index}', [ProductController::class, 'removeImage'])->name('remove-image');
+            Route::get('patterns/{id}', [ProductController::class, 'patterns'])->name('patterns');
+            Route::post('patterns/{id}/bulk-upload', [ProductController::class, 'patternsBulkUpload'])->name('patterns.bulk-upload');
+            Route::post('patterns/{id}/update-stock', [ProductController::class, 'patternsUpdateStock'])->name('patterns.update-stock');
             Route::get('get-categories', [ProductController::class, 'getCategories'])->name('get-categories');
             Route::post('daily-needs', [ProductController::class, 'dailyNeeds'])->name('daily-needs');
             Route::get('limited-stock', [ProductController::class, 'limitedStock'])->name('limited-stock');
@@ -252,6 +255,9 @@ Route::group(['prefix' => 'seller', 'as' => 'seller.', 'middleware' => ['module:
             Route::delete('rail/{id}', [Storefront3DController::class, 'deleteRail'])->name('rail.delete');
             Route::post('categories', [Storefront3DController::class, 'saveCategoryCard'])->name('categories.save');
             Route::delete('categories/{id}', [Storefront3DController::class, 'deleteCategoryCard'])->name('categories.delete');
+            Route::post('testimonials/settings', [Storefront3DController::class, 'saveTestimonialsSettings'])->name('testimonials.settings');
+            Route::post('testimonials', [Storefront3DController::class, 'saveTestimonial'])->name('testimonials.save');
+            Route::delete('testimonials/{id}', [Storefront3DController::class, 'deleteTestimonial'])->name('testimonials.delete');
         });
         Route::group(['prefix' => 'size-chart', 'as' => 'size-chart.', 'middleware' => ['module:product_management']], function () {
             Route::get('/', [SizeChartController::class, 'index'])->name('index');

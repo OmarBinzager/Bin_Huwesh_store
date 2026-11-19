@@ -9,7 +9,8 @@ import { useDemoBag } from "./DemoBag";
 import LanguageToggle from "./LanguageToggle";
 import { AuthModal, MobileMenuDrawer, SearchModal } from "./StoreModals";
 import ThemeToggle from "./ThemeToggle";
-import { BagIcon, HeartIcon, MenuIcon, SearchIcon, UserIcon } from "./icons";
+import UserMenuDropdown from "./UserMenuDropdown";
+import { BagIcon, HeartIcon, MenuIcon, SearchIcon } from "./icons";
 
 export default function StoreHeader({ current }: { current?: string } = {}) {
   const { t } = useI18n();
@@ -66,14 +67,7 @@ export default function StoreHeader({ current }: { current?: string } = {}) {
             >
               <SearchIcon />
             </button>
-            <button
-              type="button"
-              aria-label={t.header.accountAria}
-              onClick={() => setAuthOpen(true)}
-              className="hidden size-10 place-items-center rounded-full hover:bg-ink/6 sm:grid"
-            >
-              <UserIcon />
-            </button>
+            <UserMenuDropdown onOpenAuthModal={() => setAuthOpen(true)} />
             <button
               type="button"
               aria-label={t.header.favoritesAria}

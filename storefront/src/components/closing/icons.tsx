@@ -72,9 +72,10 @@ export const QuoteMark = (p: P) => (
 );
 
 /* Social glyphs: simple generic outlines, used only when the admin has entered the account link. */
-export const SOCIAL_META: Record<SocialPlatform, { label: string; icon: (p: P) => React.ReactElement }> = {
+export const SOCIAL_META: Record<SocialPlatform, { label: string; labelEn: string; icon: (p: P) => React.ReactElement }> = {
   instagram: {
     label: "إنستغرام",
+    labelEn: "Instagram",
     icon: (p) => (
       <svg {...base} {...p}>
         <rect x="4" y="4" width="16" height="16" rx="4.5" />
@@ -85,6 +86,7 @@ export const SOCIAL_META: Record<SocialPlatform, { label: string; icon: (p: P) =
   },
   facebook: {
     label: "فيسبوك",
+    labelEn: "Facebook",
     icon: (p) => (
       <svg {...base} {...p}>
         <path d="M14 8.5h2.5V5H14a3.5 3.5 0 0 0-3.5 3.5V11H8v3.5h2.5V20H14v-5.5h2.4l.6-3.5h-3V9a.5.5 0 0 1 .5-.5z" />
@@ -93,6 +95,7 @@ export const SOCIAL_META: Record<SocialPlatform, { label: string; icon: (p: P) =
   },
   tiktok: {
     label: "تيك توك",
+    labelEn: "TikTok",
     icon: (p) => (
       <svg {...base} {...p}>
         <path d="M14 4v10.5a3.5 3.5 0 1 1-3.5-3.5" />
@@ -102,6 +105,7 @@ export const SOCIAL_META: Record<SocialPlatform, { label: string; icon: (p: P) =
   },
   snapchat: {
     label: "سناب شات",
+    labelEn: "Snapchat",
     icon: (p) => (
       <svg {...base} {...p}>
         <path d="M12 4c2.8 0 4.5 2 4.5 4.6V11l1.8-.4c.5 0 .7.6.3.9l-1.9 1.2c.5 1.6 1.7 2.8 3.3 3.3-.3.6-1.4.9-2.6 1-.2.6-.3 1-.6 1.1-.8-.1-1.6-.3-2.4 0-.8.4-1.4 1-2.4 1s-1.6-.6-2.4-1c-.8-.3-1.6-.1-2.4 0-.3-.1-.4-.5-.6-1.1-1.2-.1-2.3-.4-2.6-1 1.6-.5 2.8-1.7 3.3-3.3l-1.9-1.2c-.4-.3-.2-.9.3-.9l1.8.4V8.6C7.5 6 9.2 4 12 4z" />
@@ -110,6 +114,7 @@ export const SOCIAL_META: Record<SocialPlatform, { label: string; icon: (p: P) =
   },
   x: {
     label: "إكس",
+    labelEn: "X",
     icon: (p) => (
       <svg {...base} {...p}>
         <path d="M5 5l14 14M19 5 5 19" />
@@ -118,6 +123,7 @@ export const SOCIAL_META: Record<SocialPlatform, { label: string; icon: (p: P) =
   },
   youtube: {
     label: "يوتيوب",
+    labelEn: "YouTube",
     icon: (p) => (
       <svg {...base} {...p}>
         <rect x="3.5" y="6" width="17" height="12" rx="3.5" />

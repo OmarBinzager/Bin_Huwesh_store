@@ -43,6 +43,15 @@
                             @endforeach
                         </div>
                     </div>
+
+                    @if(!empty($order->offline_payment?->receipt_image_full_url))
+                        <div class="mt-3 text-center">
+                            <h6>{{ translate('Transfer Receipt') }}</h6>
+                            <a href="{{ $order->offline_payment->receipt_image_full_url }}" target="_blank">
+                                <img src="{{ $order->offline_payment->receipt_image_full_url }}" alt="Receipt" class="img-fluid rounded border mt-2" style="max-height: 260px;">
+                            </a>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

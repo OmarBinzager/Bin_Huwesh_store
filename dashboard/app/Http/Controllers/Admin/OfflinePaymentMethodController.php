@@ -73,6 +73,7 @@ class OfflinePaymentMethodController extends Controller
             'information_name' => 'required|array',
             'information_placeholder' => 'required|array',
             'information_required' => '',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
         $methodFields = [];
@@ -94,6 +95,9 @@ class OfflinePaymentMethodController extends Controller
 
         $method = $this->offlinePaymentMethod;
         $method->method_name = $request->method_name;
+        $method->image = $request->hasFile('image')
+            ? Helpers::upload('offline_payment/', APPLICATION_IMAGE_FORMAT, $request->file('image'))
+            : null;
         $method->method_fields = $methodFields;
         $method->payment_note = $request->payment_note;
         $method->method_informations = $methodInformations;
@@ -144,6 +148,7 @@ class OfflinePaymentMethodController extends Controller
             'information_name' => 'required|array',
             'information_placeholder' => 'required|array',
             'information_required' => '',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
         ]);
 
 
@@ -166,6 +171,9 @@ class OfflinePaymentMethodController extends Controller
 
         $method = $this->offlinePaymentMethod->find($id);
         $method->method_name = $request->method_name;
+        if ($request->hasFile('image')) {
+            $method->image = Helpers::update('offline_payment/', $method->image, APPLICATION_IMAGE_FORMAT, $request->file('image'));
+        }
         $method->method_fields = $methodFields;
         $method->payment_note = $request->payment_note;
         $method->method_informations = $methodInformations;
@@ -182,6 +190,9 @@ class OfflinePaymentMethodController extends Controller
     public function delete(Request $request): RedirectResponse
     {
         $method = $this->offlinePaymentMethod->find($request->id);
+        if ($method && $method->image) {
+            Helpers::delete('offline_payment/' . $method->image);
+        }
         $method->delete();
 
         Toastr::success(translate('successfully removed'));

@@ -162,7 +162,8 @@ class OrderController extends Controller
             'payment_method' => $request['payment_method'],
         ];
         try {
-            $amountData = $this->calculateOrderAmount(cart: $request['cart'], couponCode: $request['coupon_code'], customerId: $customerId, deliveryChargeInfo: $deliveryChargeInfo, isPartiallyPaid: $isPartiallyPaid, paymentInfo: $paymentInfo);
+            $lookIds = is_array($request->input('look_ids')) ? $request->input('look_ids') : [];
+            $amountData = $this->calculateOrderAmount(cart: $request['cart'], couponCode: $request['coupon_code'], customerId: $customerId, deliveryChargeInfo: $deliveryChargeInfo, isPartiallyPaid: $isPartiallyPaid, paymentInfo: $paymentInfo, userType: $userType, lookIds: $lookIds);
         }  catch (ValidationException $e) {
             $formattedErrors = [];
 
@@ -184,6 +185,8 @@ class OrderController extends Controller
 
         $orderAmount = $amountData['ordered_amount'];
         $couponDiscount = $amountData['coupon_discount_amount'];
+        $extraDiscount = $amountData['extra_discount'] ?? 0;
+        $couponDiscountTitle = $amountData['coupon_discount_title'] ?? null;
         $weightChargeAmount = $amountData['weight_charge_amount'];
         $freeDeliveryAmount = $amountData['free_delivery_charge_amount'];
 
@@ -233,7 +236,8 @@ class OrderController extends Controller
                 'currency_amount' => $orderCurrencyAmount,
                 'coupon_code' =>  $request['coupon_code'],
                 'coupon_discount_amount' => $couponDiscount,
-                'coupon_discount_title' => $request->coupon_discount_title == 0 ? null : 'coupon_discount_title',
+                'coupon_discount_title' => $couponDiscountTitle,
+                'extra_discount' => $extraDiscount,
                 'payment_status' => $paymentStatus,
                 'order_status' => $orderStatus,
                 'total_tax_amount' => $amountData['total_product_tax_amount'],
@@ -261,7 +265,7 @@ class OrderController extends Controller
             $orderDeliveryDate = $or['delivery_date'];
 
             foreach ($request['cart'] as $item) {
-                $product = $this->product->find($item['product_id']);
+                $product = $this->product->where('id', $item['product_id'])->lockForUpdate()->first();
                 if (!$product) continue;
                 $rawVariations = $product['variations'] ?? [];
                 $hasVariations = !empty(is_string($rawVariations) ? json_decode($rawVariations, true) : $rawVariations);
@@ -275,8 +279,10 @@ class OrderController extends Controller
                 $categoryId = collect(json_decode($product['category_ids'], true))->firstWhere('position', 1)['id'] ?? null;
                 $category_discount = Helpers::category_discount_calculate($categoryId, $price);
                 $product_discount = Helpers::discount_calculate($product, $price);
-                $discount = ($category_discount >= $price) ? $product_discount : max($category_discount, $product_discount);
-                $discount_type = ($category_discount >= $price) ? 'discount_on_product' : ($product_discount > $category_discount ? 'discount_on_product' : 'discount_on_category');
+                $flash_discount = Helpers::flash_deal_discount_calculate((int)$product->id, $price);
+                $effective_category_discount = ($category_discount >= $price) ? 0 : $category_discount;
+                $discount = max($effective_category_discount, $product_discount, $flash_discount);
+                $discount_type = $discount == $product_discount || $discount == $flash_discount ? 'discount_on_product' : 'discount_on_category';
                 $tax_on_product = Helpers::tax_calculate($product, ($price - $discount));
 
                 $purchase_price = $hasVariations
@@ -304,6 +310,8 @@ class OrderController extends Controller
                     }
                 }
 
+                $type = $item['variation'][0]['type'] ?? null;
+                $variantImage = $product->resolveVariationImage($type);
                 $or_d = [
                     'order_id' => $orderId,
                     'product_id' => $item['product_id'],
@@ -319,19 +327,45 @@ class OrderController extends Controller
                     'discount_type' => $discount_type,
                     'variant' => json_encode($item['variant']),
                     'variation' => json_encode($item['variation']),
+                    'variant_image' => $variantImage,
                     'is_stock_decreased' => 1,
                     'vat_status' => Helpers::get_business_settings('product_vat_tax_status') === 'included' ? 'included' : 'excluded',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
 
-                $type = $item['variation'][0]['type'] ?? null;
                 $variationStore = [];
                 $productVariations = json_decode($product['variations'] ?? '[]', true) ?: [];
-                if (!empty($type) && is_array($productVariations)) {
+                $patternsStore = is_string($product->patterns) ? (json_decode($product->patterns, true) ?? []) : ($product->patterns ?? []);
+                $matchedVar = false;
+
+                if ($product->isUniquePatterns() && !empty($type) && is_array($patternsStore)) {
+                    foreach ($patternsStore as &$pat) {
+                        $patType = str_replace(' ', '', (string)($pat['type'] ?? $pat['name'] ?? ''));
+                        if ($patType === str_replace(' ', '', (string)$type)) {
+                            $matchedVar = true;
+                            if ((int)($pat['stock'] ?? 0) < (int)$item['quantity']) {
+                                DB::rollBack();
+                                return response()->json([
+                                    'errors' => [['code' => 'stock', 'message' => 'عذراً، هذا الشكل غير متوفر حالياً أو تم بيعه للتو: ' . $type]]
+                                ], 400);
+                            }
+                            $pat['stock'] = (int)$pat['stock'] - (int)$item['quantity'];
+                        }
+                    }
+                    unset($pat);
+                    $variationStore = $productVariations;
+                } elseif (!empty($type) && is_array($productVariations)) {
                     foreach ($productVariations as $var) {
                         if ($type == ($var['type'] ?? null)) {
-                            $var['stock'] -= $item['quantity'];
+                            $matchedVar = true;
+                            if ((int)($var['stock'] ?? 0) < (int)$item['quantity']) {
+                                DB::rollBack();
+                                return response()->json([
+                                    'errors' => [['code' => 'stock', 'message' => 'عذراً، هذا الشكل أو المقاس غير متوفر حالياً أو تم بيعه للتو: ' . $type]]
+                                ], 400);
+                            }
+                            $var['stock'] = (int)$var['stock'] - (int)$item['quantity'];
                         }
                         $variationStore[] = $var;
                     }
@@ -339,11 +373,23 @@ class OrderController extends Controller
                     $variationStore = $productVariations;
                 }
 
-                $this->product->where(['id' => $product['id']])->update([
+                if (!$matchedVar && (int)$product['total_stock'] < (int)$item['quantity']) {
+                    DB::rollBack();
+                    return response()->json([
+                        'errors' => [['code' => 'stock', 'message' => 'عذراً، الكمية المطلوبة غير متوفرة حالياً']]
+                    ], 400);
+                }
+
+                $updatePayload = [
                     'variations' => json_encode($variationStore),
-                    'total_stock' => $product['total_stock'] - $item['quantity'],
+                    'total_stock' => max(0, (int)$product['total_stock'] - (int)$item['quantity']),
                     'popularity_count' => $product['popularity_count'] + 1
-                ]);
+                ];
+                if ($product->isUniquePatterns()) {
+                    $updatePayload['patterns'] = json_encode(array_values($patternsStore), JSON_UNESCAPED_UNICODE);
+                }
+
+                $this->product->where(['id' => $product['id']])->update($updatePayload);
 
                 DB::table('order_details')->insert($or_d);
             }
@@ -760,8 +806,9 @@ class OrderController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'order_id' => 'required',
-            'is_partial' => 'required|in:0,1',
+            'is_partial' => 'nullable|in:0,1',
             'payment_info' => 'required',
+            'receipt_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:4096',
         ]);
 
         if ($validator->fails()) {
@@ -825,7 +872,18 @@ class OrderController extends Controller
             $existingPayment->order_id = $request->order_id;
         }
 
-        $existingPayment->payment_info = json_encode($request['payment_info']);
+        $paymentInfo = is_string($request['payment_info'])
+            ? (json_decode($request['payment_info'], true) ?? $request['payment_info'])
+            : $request['payment_info'];
+
+        $existingPayment->payment_info = json_encode($paymentInfo);
+        if ($request->hasFile('receipt_image')) {
+            $existingPayment->receipt_image = Helpers::upload(
+                'offline_payment_receipt/',
+                APPLICATION_IMAGE_FORMAT,
+                $request->file('receipt_image')
+            );
+        }
         $existingPayment->status = 0;
         $existingPayment->save();
 

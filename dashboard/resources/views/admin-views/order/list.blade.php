@@ -390,13 +390,13 @@
                                             <span class="badge badge-soft-info">
                                                 {{ translate('take_away') }}
                                             </span>
-                                        @elseif($order['order_type'] == 'convenient_delivery' || $order['order_type'] == 'self_pickup')
+                                        @elseif($order['order_type'] == 'self_pickup')
                                             <span class="badge badge-soft-info">
-                                                {{ translate('Convenient Delivery (24 hours)') }}
+                                                {{ translate('self_pickup') }}
                                             </span>
-                                        @elseif($order['order_type'] == 'fast_delivery' || $order['order_type'] == 'delivery')
+                                        @elseif($order['order_type'] == 'delivery' || $order['order_type'] == 'fast_delivery' || $order['order_type'] == 'convenient_delivery')
                                             <span class="badge badge-soft-success">
-                                                {{ translate('Fast Delivery (59 minute)') }}
+                                                {{ translate('delivery') }}
                                             </span>
                                         @else
                                             <span class="badge badge-soft-success">

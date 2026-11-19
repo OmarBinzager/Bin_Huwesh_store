@@ -1,0 +1,60 @@
+name: Deploy Dashboard (Laravel)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'dashboard/**'
+      - '.github/workflows/deploy-dashboard.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy Laravel Dashboard & API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Add VPS host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${{ secrets.VPS_PORT || 22 }}" -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync dashboard files to VPS
+        run: |
+          rsync -az --delete \
+            --exclude='.env' \
+            --exclude='.git' \
+            --exclude='vendor/' \
+            --exclude='node_modules/' \
+            --exclude='storage/app/public/' \
+            --exclude='storage/framework/cache/*' \
+            --exclude='storage/framework/sessions/*' \
+            --exclude='storage/framework/views/*' \
+            --exclude='storage/logs/*' \
+            --exclude='public/storage' \
+            -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
+            ./dashboard/ "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/bin-huwesh/dashboard/"
+
+      - name: Install dependencies, migrate & optimize
+        run: |
+          ssh -p "${{ secrets.VPS_PORT || 22 }}" "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" << 'EOF'
+            set -e
+            cd /var/www/bin-huwesh/dashboard
+            composer install --no-dev --optimize-autoloader --no-interaction
+            php artisan migrate --force
+            php artisan storage:link || true
+            php artisan optimize:clear
+            php artisan view:cache || true
+            echo "${{ secrets.VPS_SUDO_PASS }}" | sudo -S chown -R www-data:www-data storage bootstrap/cache
+            echo "${{ secrets.VPS_SUDO_PASS }}" | sudo -S chmod -R 775 storage bootstrap/cache
+            echo "${{ secrets.VPS_SUDO_PASS }}" | sudo -S systemctl reload php8.3-fpm
+          EOF

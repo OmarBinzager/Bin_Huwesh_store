@@ -190,7 +190,7 @@ function generateCombinationVariationTable(variationData) {
     let rowsHtml = '';
 
     variationData.forEach((variation) => {
-        let variationName = variation.option.replace(/\s+/g, '');
+        let variationName = variation.option.trim().replace(/\s+/g, ' ');
         rowsHtml += `<tr>
             <td>
                 <label class="control-label">${variationName}</label>

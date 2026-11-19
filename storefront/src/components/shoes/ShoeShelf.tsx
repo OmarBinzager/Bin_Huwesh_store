@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
 import { useDemoBag } from "@/components/store/DemoBag";
 import type { Shoe } from "@/content/shoes-types";
-import { formatYER } from "@/lib/catalog";
+import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n/context";
 import { Camera } from "./camera";
 import s from "./shoe-shelf.module.css";
@@ -33,6 +33,7 @@ type Props = { shoes: Shoe[] };
 
 export default function ShoeShelf({ shoes }: Props) {
   const { locale } = useI18n();
+  const { formatMoney } = useCurrency();
   const isEn = locale === "en";
   const bag = useDemoBag();
   const stageRef = useRef<HTMLDivElement>(null);
@@ -388,7 +389,7 @@ export default function ShoeShelf({ shoes }: Props) {
           <span className={s.cone} />
           <span className={s.pool} />
         </span>
-        <ul className={s.grid} aria-label="الأحذية">
+        <ul className={s.grid} aria-label={isEn ? "Shoes" : "الأحذية"}>
           {shoes.map((sh, i) => {
             const c = sh.colors[colorIdx(sh)];
             return (
@@ -405,7 +406,7 @@ export default function ShoeShelf({ shoes }: Props) {
                   type="button"
                   className={s.cell}
                   data-current={open && i === current ? "" : undefined}
-                  aria-label={`${sh.name} — ${formatYER(sh.price)}. عرض التفاصيل`}
+                  aria-label={`${sh.name} — ${formatMoney(sh.price)}. ${isEn ? "View details" : "عرض التفاصيل"}`}
                   onPointerEnter={(e) => e.pointerType === "mouse" && moveSpot(i)}
                   onFocus={() => moveSpot(i)}
                   onBlur={hideSpot}
@@ -432,7 +433,7 @@ export default function ShoeShelf({ shoes }: Props) {
                   <span className={s.label} aria-hidden>
                     <span className={s.labelName}>{sh.name}</span>
                     <span className={s.labelPrice} dir="ltr">
-                      {formatYER(sh.price)}
+                      {formatMoney(sh.price)}
                     </span>
                   </span>
                 </button>
@@ -464,7 +465,7 @@ export default function ShoeShelf({ shoes }: Props) {
         </div>
 
         <p className={s.srOnly} aria-live="polite">
-          {open ? `${shoe.name} — ${formatYER(shoe.price, locale)} (${current + 1} / ${n})` : ""}
+          {open ? `${shoe.name} — ${formatMoney(shoe.price)} (${current + 1} / ${n})` : ""}
         </p>
         <div key={shoe.id} className={s.panelBody}>
           <h3 ref={headingRef} tabIndex={-1} className={s.name}>
@@ -472,7 +473,7 @@ export default function ShoeShelf({ shoes }: Props) {
           </h3>
           {shoe.description && <p className={s.desc}>{shoe.description}</p>}
           <p className={s.price} dir="ltr">
-            {formatYER(shoe.price, locale)}
+            {formatMoney(shoe.price)}
           </p>
 
           {shoe.colors.length > 1 ? (
@@ -520,7 +521,7 @@ export default function ShoeShelf({ shoes }: Props) {
           >
             {justAdded ? (isEn ? "Added to Bag ✓" : "أُضيف إلى السلة ✓") : size ? (
               <>
-                {isEn ? "Add to Bag" : "أضف إلى السلة"} · <span dir="ltr">{formatYER(shoe.price, locale)}</span>
+                {isEn ? "Add to Bag" : "أضف إلى السلة"} · <span dir="ltr">{formatMoney(shoe.price)}</span>
               </>
             ) : (
               isEn ? "Select Size to Add" : "اختر المقاس للإضافة"

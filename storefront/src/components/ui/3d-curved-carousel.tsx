@@ -678,6 +678,7 @@ export default function CurvedLensCarousel({
   const vars = { "--clc-font": "var(--font-alexandria), var(--font-plex), ui-sans-serif, sans-serif", ...style } as React.CSSProperties
   const f = slide.focus ?? { x: 50, y: 50 }
 
+  const isEn = dir === "ltr";
   return (
     <div
       ref={rootRef}
@@ -686,7 +687,7 @@ export default function CurvedLensCarousel({
       style={vars}
       tabIndex={0}
       role="region"
-      aria-roledescription="عرض دوّار"
+      aria-roledescription={isEn ? "carousel" : "عرض دوّار"}
       aria-label={label}
     >
       <style>{CSS}</style>
@@ -727,16 +728,16 @@ export default function CurvedLensCarousel({
           </span>
         </div>
         <div className="clc-btns">
-          <button type="button" className="clc-btn" aria-label="القسم السابق" disabled={n < 2} onClick={() => api.current.go(-1)}>
+          <button type="button" className="clc-btn" aria-label={isEn ? "Previous category" : "القسم السابق"} disabled={n < 2} onClick={() => api.current.go(-1)}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
           </button>
-          <button type="button" className="clc-btn" aria-label="القسم التالي" disabled={n < 2} onClick={() => api.current.go(1)}>
+          <button type="button" className="clc-btn" aria-label={isEn ? "Next category" : "القسم التالي"} disabled={n < 2} onClick={() => api.current.go(1)}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
           </button>
         </div>
       </div>
       <p className="clc-sr" aria-live="polite">
-        {slide.title} — {index + 1} من {n}
+        {slide.title} — {isEn ? `${index + 1} of ${n}` : `${index + 1} من ${n}`}
       </p>
       {/* Every department link, reachable without seeing (or dragging) the photos. */}
       <ul className="clc-sr">

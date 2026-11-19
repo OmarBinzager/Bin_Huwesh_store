@@ -307,6 +307,9 @@
                                                     <option value="pc"
                                                         {{ $product['unit'] == 'pc' ? 'selected' : '' }}>
                                                         {{ translate('pc') }}</option>
+                                                    <option value="set"
+                                                        {{ $product['unit'] == 'set' ? 'selected' : '' }}>
+                                                        {{ translate('set_unit') }}</option>
                                                     <option value="ml"
                                                         {{ $product['unit'] == 'ml' ? 'selected' : '' }}>
                                                         {{ translate('ml') }}</option>
@@ -343,9 +346,9 @@
                                                     <span>({{ Helpers::get_business_settings('product_weight_unit') }})</span>
                                                 </label>
 
-                                                <input type="number" min="0.00" step=".00"
-                                                    value="{{ $product['weight'] }}" name="weight" id="weight"
-                                                    class="form-control" placeholder="{{ translate('Ex : 1') }}">
+                                                <input type="number" min="0" step="any"
+                                                    value="{{ old('weight', $product['weight']) }}" name="weight" id="weight"
+                                                    class="form-control" placeholder="{{ translate('Ex : 1.00') }}">
                                             </div>
                                         </div>
 
@@ -717,7 +720,22 @@
                                         </div>
                                     </div>
                                     <div class="col-12">
+                                        @if($product->isUniquePatterns())
+                                            <div class="alert alert-soft-primary d-flex flex-wrap justify-content-between align-items-center mb-3">
+                                                <div>
+                                                    <strong><i class="tio-image mr-1"></i> نمط الأشكال الفريدة (المعاوز) مفعّل لهذا المنتج</strong>
+                                                    <div class="small text-muted mt-1">
+                                                        الأشكال ({{ count($product->patterns_list) }}) تُدار بشكل مستقل بسعر المنتج الأساسي ولا تندمج مع جدول الألوان والسمات أدناه.
+                                                    </div>
+                                                </div>
+                                                <a href="{{ route('admin.product.patterns', [$product->id]) }}" class="btn btn-sm btn-primary mt-2 mt-md-0">
+                                                    إدارة الأشكال الفريدة
+                                                </a>
+                                            </div>
+                                        @endif
                                         @include('admin-views.product.partials._color-variants-studio')
+
+                                        @include('admin-views.product.partials._specifications')
 
                                         <div class="form-group __select-attr mb-0">
                                             <label class="input-label"

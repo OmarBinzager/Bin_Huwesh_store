@@ -441,12 +441,17 @@ class InfoSoftCatalogService
         $product->erp_cmbkey = $parentId . '01';
         $product->price = $minPrice;
         $product->purchase_price = $baseCost;
-        $product->total_stock = $totalStock;
-        $product->attributes = json_encode($attributeIds);
-        $product->choice_options = json_encode($choiceOptions);
-        $product->variations = json_encode($variations);
-        if (!empty($colorImages)) {
-            $product->color_images = $colorImages;
+        $product->erp_total_stock = $totalStock;
+        if (!$product->isUniquePatterns()) {
+            $product->total_stock = $totalStock;
+            $product->attributes = json_encode($attributeIds);
+            $product->choice_options = json_encode($choiceOptions);
+            $product->variations = json_encode($variations);
+            if (!empty($colorImages)) {
+                $product->color_images = $colorImages;
+            }
+        } elseif ($totalStock <= 0) {
+            $product->total_stock = 0;
         }
         $product->save();
 
@@ -534,7 +539,12 @@ class InfoSoftCatalogService
         $product->erp_barcode = $barcode;
         $product->price = $price;
         $product->purchase_price = $cost;
-        $product->total_stock = max(0, $stock);
+        $product->erp_total_stock = max(0, $stock);
+        if (!$product->isUniquePatterns()) {
+            $product->total_stock = max(0, $stock);
+        } elseif ($stock <= 0) {
+            $product->total_stock = 0;
+        }
         if ($discount > 0) {
             $product->discount = $discount;
             $product->discount_type = 'percent';

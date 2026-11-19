@@ -27,6 +27,12 @@ class SellerController extends Controller
         Seller $seller,
         Product $product
     ){
+        $this->middleware(function ($request, $next) {
+            if (!Helpers::is_feature_active('multi_vendor')) {
+                abort(404);
+            }
+            return $next($request);
+        });
         $this->seller = $seller;
         $this->product = $product;
         $this->initUploadLimits();

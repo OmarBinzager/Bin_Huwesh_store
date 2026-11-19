@@ -27,7 +27,10 @@ class Product extends Model
         'warranty_years' => 'integer',
         'purchase_price' => 'float',
         'size_chart_id'  => 'integer',
+        'erp_total_stock' => 'integer',
         'color_images'   => 'array',
+        'patterns'       => 'array',
+        'specifications' => 'array',
     ];
 
     public function translations(): \Illuminate\Database\Eloquent\Relations\MorphMany
@@ -173,5 +176,87 @@ class Product extends Model
     public function erp_mapping(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(InfoSoftProductMapping::class, 'product_id');
+    }
+
+    public function isUniquePatterns(): bool
+    {
+        return ($this->variant_mode ?? 'standard') === 'unique_patterns';
+    }
+
+    /**
+     * Build pattern list from dedicated `patterns` column (separate from color_images).
+     */
+    public function getPatternsListAttribute(): array
+    {
+        $raw = $this->patterns;
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true) ?? [];
+        }
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        $patterns = [];
+        foreach ($raw as $item) {
+            $name = trim((string)($item['name'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+            $typeKey = str_replace(' ', '', (string)($item['type'] ?? $name));
+            $img = $item['image'] ?? null;
+            $imgUrl = ($img && Storage::disk('public')->exists('product/' . $img))
+                ? asset('storage/app/public/product/' . $img)
+                : asset('public/assets/admin/img/160x160/2.png');
+            $stock = (int)($item['stock'] ?? 0);
+            $patterns[] = [
+                'name'      => $name,
+                'type'      => $typeKey,
+                'image'     => $img,
+                'image_url' => $imgUrl,
+                'price'     => (float)$this->price,
+                'stock'     => $stock,
+                'is_sold'   => $stock <= 0,
+            ];
+        }
+
+        return $patterns;
+    }
+
+    public function resolveVariationImage(?string $variationType): ?string
+    {
+        if (!$variationType) {
+            return null;
+        }
+        $needle = str_replace(' ', '', $variationType);
+        foreach ($this->patterns_list as $p) {
+            if ($p['type'] === $needle || $p['name'] === $variationType) {
+                return $p['image'] ?? null;
+            }
+        }
+        foreach ($this->color_images_list as $item) {
+            $cName = str_replace(' ', '', (string)($item['color_name'] ?? ''));
+            if ($cName !== '' && ($cName === $needle || str_starts_with($needle, $cName . '-'))) {
+                return $item['image'] ?? null;
+            }
+        }
+        return null;
+    }
+
+    public function getErpStockDiscrepancyAttribute(): ?array
+    {
+        if (!$this->isUniquePatterns() || empty($this->erp_item_id) || $this->erp_total_stock === null) {
+            return null;
+        }
+        $erp = (int)$this->erp_total_stock;
+        $local = (int)$this->total_stock;
+        $diff = $erp - $local;
+        $status = $diff === 0 ? 'match' : ($diff > 0 ? 'missing_photos' : 'sold_in_pos');
+
+        return [
+            'erp_stock'      => $erp,
+            'patterns_stock' => $local,
+            'diff'           => $diff,
+            'status'         => $status,
+        ];
     }
 }

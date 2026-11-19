@@ -22,13 +22,13 @@
             @php
                 $str = '';
                 foreach ($combination as $combinationKey => $item){
-                    $trimmedItem = trim((string)$item);
+                    $trimmedItem = trim(preg_replace('/\s+/', ' ', (string)$item));
                     if ($trimmedItem === '') continue;
                     if(strlen($str) > 0 ){
-                        $str .= '-'.str_replace(' ', '', $trimmedItem);
+                        $str .= '-'.$trimmedItem;
                     }
                     else{
-                        $str .= str_replace(' ', '', $trimmedItem);
+                        $str .= $trimmedItem;
                     }
                 }
                 $matchedVariation = collect($productVariations ?? [])->firstWhere('type', $str);

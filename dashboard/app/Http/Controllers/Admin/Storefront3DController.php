@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Api\V1\StorefrontController;
 use App\Http\Controllers\Controller;
+use App\Model\BusinessSetting;
 use App\Model\Category;
 use App\Model\Product;
 use App\Model\StorefrontCategoryCard;
@@ -47,6 +48,10 @@ class Storefront3DController extends Controller
             ->orderBy('priority')
             ->get();
 
+        $sfSettings = json_decode(BusinessSetting::where('key', 'storefront_settings')->value('value') ?? '{}', true) ?: [];
+        $closingSettings = $sfSettings['closing'] ?? [];
+        $testimonials = $closingSettings['testimonials_items'] ?? [];
+
         return view('admin-views.storefront.index', compact(
             'tab',
             'looks',
@@ -55,7 +60,9 @@ class Storefront3DController extends Controller
             'rail',
             'categoryCards',
             'products',
-            'categories'
+            'categories',
+            'closingSettings',
+            'testimonials'
         ));
     }
 
@@ -325,9 +332,102 @@ class Storefront3DController extends Controller
         return redirect()->route('admin.storefront.index', ['tab' => 'categories']);
     }
 
+    public function saveTestimonialsSettings(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'testimonials_title'    => 'required|string|max:120',
+            'testimonials_subtitle' => 'nullable|string|max:240',
+        ]);
+
+        $sfSettings = $this->getStorefrontSettings();
+        $sfSettings['closing'] = $sfSettings['closing'] ?? [];
+        $sfSettings['closing']['testimonials_title'] = $request->input('testimonials_title');
+        $sfSettings['closing']['testimonials_subtitle'] = (string)$request->input('testimonials_subtitle', '');
+
+        $this->saveStorefrontSettings($sfSettings);
+        $this->purgeCache();
+        toastr()->success(translate('تم حفظ إعدادات قسم آراء العملاء!'));
+        return redirect()->route('admin.storefront.index', ['tab' => 'testimonials']);
+    }
+
+    public function saveTestimonial(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'name'   => 'required|string|max:100',
+            'quote'  => 'required|string|max:1000',
+            'source' => 'nullable|string|max:100',
+            'rating' => 'nullable|integer|min:1|max:5',
+        ]);
+
+        $sfSettings = $this->getStorefrontSettings();
+        $sfSettings['closing'] = $sfSettings['closing'] ?? [];
+        $items = $sfSettings['closing']['testimonials_items'] ?? [];
+        if (!is_array($items)) {
+            $items = [];
+        }
+
+        $id = $request->filled('id') ? (string)$request->input('id') : ('tm-' . Str::random(6));
+        $payload = [
+            'id'       => $id,
+            'name'     => trim((string)$request->input('name')),
+            'quote'    => trim((string)$request->input('quote')),
+            'source'   => trim((string)$request->input('source', 'تقييم متجر بن هويش')),
+            'rating'   => $request->filled('rating') ? (int)$request->input('rating') : 5,
+            'verified' => $request->boolean('verified', true),
+            'visible'  => $request->boolean('visible', true),
+        ];
+
+        $updated = false;
+        foreach ($items as $idx => $existing) {
+            if (($existing['id'] ?? '') === $id) {
+                $items[$idx] = $payload;
+                $updated = true;
+                break;
+            }
+        }
+        if (!$updated) {
+            $items[] = $payload;
+        }
+
+        $sfSettings['closing']['testimonials_items'] = array_values($items);
+        $this->saveStorefrontSettings($sfSettings);
+        $this->purgeCache();
+        toastr()->success(translate('تم حفظ رأي العميل بنجاح!'));
+        return redirect()->route('admin.storefront.index', ['tab' => 'testimonials']);
+    }
+
+    public function deleteTestimonial(string $id): RedirectResponse
+    {
+        $sfSettings = $this->getStorefrontSettings();
+        $items = $sfSettings['closing']['testimonials_items'] ?? [];
+        if (is_array($items)) {
+            $sfSettings['closing']['testimonials_items'] = array_values(array_filter($items, fn($it) => ($it['id'] ?? '') !== $id));
+            $this->saveStorefrontSettings($sfSettings);
+        }
+        $this->purgeCache();
+        toastr()->success(translate('تم حذف رأي العميل!'));
+        return redirect()->route('admin.storefront.index', ['tab' => 'testimonials']);
+    }
+
+    private function getStorefrontSettings(): array
+    {
+        $raw = BusinessSetting::where('key', 'storefront_settings')->value('value');
+        return json_decode($raw ?? '{}', true) ?: [];
+    }
+
+    private function saveStorefrontSettings(array $data): void
+    {
+        BusinessSetting::updateOrInsert(
+            ['key' => 'storefront_settings'],
+            ['value' => json_encode($data, JSON_UNESCAPED_UNICODE)]
+        );
+    }
+
     private function purgeCache(): void
     {
         Cache::forget(StorefrontController::CACHE_KEY);
+        Cache::forget(StorefrontController::CACHE_KEY . '_ar');
+        Cache::forget(StorefrontController::CACHE_KEY . '_en');
 
         $url = env('NEXTJS_REVALIDATE_URL');
         if ($url) {

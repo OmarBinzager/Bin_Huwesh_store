@@ -136,33 +136,6 @@
 
                             <div class="w-100 py-2">
                                 <div class="form-group d-none" id="home_delivery_section">
-                                    <div class="delivery-speed-container mb-3 p-2 bg-light border rounded">
-                                        <label class="input-label font-weight-bold text-dark mb-2">
-                                            <i class="tio-truck"></i> {{ translate('Delivery Service Option') }}
-                                        </label>
-                                        <div class="d-flex gap-2">
-                                            <label class="custom-radio d-flex gap-2 align-items-center m-0 flex-1 p-2 bg-white rounded border cursor-pointer">
-                                                <input type="radio" class="delivery-service-type-radio" name="delivery_service_type" value="fast_delivery"
-                                                    {{ !session()->has('delivery_service_type') || session('delivery_service_type') == 'fast_delivery' ? 'checked' : '' }}>
-                                                <span class="media align-items-center mb-0">
-                                                    <span class="media-body ml-1 font-weight-semibold">
-                                                        {{ translate('fast_delivery') }}
-                                                        <span class="badge badge-soft-info ml-1">{{ Helpers::set_symbol($fastDeliveryCharge ?? 0) }}</span>
-                                                    </span>
-                                                </span>
-                                            </label>
-                                            <label class="custom-radio d-flex gap-2 align-items-center m-0 flex-1 p-2 bg-white rounded border cursor-pointer">
-                                                <input type="radio" class="delivery-service-type-radio" name="delivery_service_type" value="convenient_delivery"
-                                                    {{ session('delivery_service_type') == 'convenient_delivery' ? 'checked' : '' }}>
-                                                <span class="media align-items-center mb-0">
-                                                    <span class="media-body ml-1 font-weight-semibold">
-                                                        {{ translate('convenient_delivery') }}
-                                                        <span class="badge badge-soft-success ml-1">{{ Helpers::set_symbol($convenientDeliveryCharge ?? 0) }}</span>
-                                                    </span>
-                                                </span>
-                                            </label>
-                                        </div>
-                                    </div>
                                     <div class="d-flex justify-content-between">
                                         <label for=""
                                             class="font-weight-semibold fs-16 text-dark">{{ translate('Delivery Information') }}
@@ -1057,11 +1030,6 @@
             }
         });
 
-        $(document).on('change', '.delivery-service-type-radio', function() {
-            var serviceType = $(this).val();
-            store_key('delivery_service_type', serviceType);
-        });
-
         function store_key(key, value) {
             $.ajaxSetup({
                 headers: {
@@ -1076,7 +1044,7 @@
                 },
                 success: function(data) {
                     var keyLabel = key == 'customer_id' ? "{{ translate('customer_id') }}" : (key == 'branch_id' ?
-                        "{{ translate('branch_id') }}" : (key == 'delivery_service_type' ? "{{ translate('Delivery Service Option') }}" : ''));
+                        "{{ translate('branch_id') }}" : '');
                     if (keyLabel) {
                         toastr.success(keyLabel + ' ' + '{{ translate('selected') }}!', {
                             CloseButton: true,
@@ -1105,7 +1073,7 @@
                         updateCart();
                     }
 
-                    if (key == 'delivery_service_type' || key == 'delivery_man_id') {
+                    if (key == 'delivery_man_id') {
                         updateCart();
                     }
                 },

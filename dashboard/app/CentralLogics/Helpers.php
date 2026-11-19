@@ -1150,38 +1150,44 @@ class Helpers
             $minDistanceForFreeDelivery = (float)($branch?->delivery_charge_setup?->minimum_distance_for_free_delivery ?? 0);
             $numDistance = $distance !== null ? (float)$distance : 0.0;
 
-            if ($orderType == 'self_pickup' || $orderType == 'convenient_delivery') {
-                $convenientCharge = (float)($branch?->delivery_charge_setup?->convenient_delivery_charge ?? 0);
-                if ($convenientCharge > 0) {
-                    $deliveryCharge = $convenientCharge;
-                } elseif ($minDistanceForFreeDelivery > 0 && $numDistance < $minDistanceForFreeDelivery) {
-                    $deliveryCharge = 0;
-                } elseif ($numDistance > 0) {
-                    $deliveryCharge = max($shippingChargePerKM * $numDistance, $minDeliveryCharge);
-                } else {
-                    $deliveryCharge = $minDeliveryCharge;
-                }
+            if ($orderType == 'self_pickup') {
+                $deliveryCharge = 0;
+            } elseif ($minDistanceForFreeDelivery > 0 && $numDistance < $minDistanceForFreeDelivery) {
+                $deliveryCharge = 0;
+            } elseif ($numDistance > 0) {
+                $distanceDeliveryCharge = $shippingChargePerKM * $numDistance;
+                $deliveryCharge = max($distanceDeliveryCharge, $minDeliveryCharge);
             } else {
-                if ($minDistanceForFreeDelivery > 0 && $numDistance < $minDistanceForFreeDelivery) {
-                    $deliveryCharge = 0;
-                } elseif ($numDistance > 0) {
-                    $distanceDeliveryCharge = $shippingChargePerKM * $numDistance;
-                    $deliveryCharge = max($distanceDeliveryCharge, $minDeliveryCharge);
-                } else {
-                    $deliveryCharge = $minDeliveryCharge;
-                }
+                $deliveryCharge = $minDeliveryCharge;
             }
         } else {
-            if ($orderType == 'self_pickup' || $orderType == 'convenient_delivery') {
-                $deliveryCharge = $branch?->delivery_charge_setup?->convenient_delivery_charge ?? 0;
-            } elseif ($orderType == 'fast_delivery' || $orderType == 'delivery') {
-                $deliveryCharge = $branch?->delivery_charge_setup?->fast_delivery_charge ?? ($branch?->delivery_charge_setup?->fixed_delivery_charge ?? 0);
+            if ($orderType == 'self_pickup') {
+                $deliveryCharge = 0;
             } else {
                 $deliveryCharge = $branch?->delivery_charge_setup?->fixed_delivery_charge ?? 0;
             }
         }
 
         return self::set_price($deliveryCharge);
+    }
+
+    public static function flash_deal_discount_calculate(int $productId, float $basePrice): float
+    {
+        $today = now()->toDateString();
+        $flashItem = \App\Model\FlashDealProduct::query()
+            ->join('flash_deals', 'flash_deals.id', '=', 'flash_deal_products.flash_deal_id')
+            ->where('flash_deal_products.product_id', $productId)
+            ->where('flash_deals.status', 1)
+            ->whereDate('flash_deals.start_date', '<=', $today)
+            ->whereDate('flash_deals.end_date', '>=', $today)
+            ->select('flash_deal_products.discount', 'flash_deal_products.discount_type')
+            ->first();
+        if (!$flashItem || (float)$flashItem->discount <= 0) {
+            return 0.0;
+        }
+        $fType = $flashItem->discount_type ?: 'percent';
+        $fVal = (float)$flashItem->discount;
+        return $fType === 'percent' ? ($basePrice * $fVal) / 100 : $fVal;
     }
 
     public static function module_permission_check($mod_name)

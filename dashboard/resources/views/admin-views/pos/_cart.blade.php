@@ -13,8 +13,6 @@
     if (!isset($chargeSetup)) {
         $chargeSetup = \App\Models\DeliveryChargeSetup::where('branch_id', $selectedBranchId)->first();
     }
-    $fastDeliveryCharge = $chargeSetup?->fast_delivery_charge ?? ($chargeSetup?->fixed_delivery_charge ?? 0);
-    $convenientDeliveryCharge = $chargeSetup?->convenient_delivery_charge ?? 0;
     $customer = session()->has('customer_id') ? \App\User::find(session('customer_id')) : null;
     $walletStatus = (bool)(\App\Model\BusinessSetting::where('key', 'wallet_status')->first()->value ?? false);
     $offlinePaymentMethods = \App\Models\OfflinePaymentMethod::active()->get();
@@ -138,7 +136,6 @@ if ($extraDiscountType === 'percent' && $extraDiscount > 0) {
 $deliveryCharge = 0;
 $productWeightCharge = 0;
 
-$deliveryServiceType = session()->get('delivery_service_type') ?? 'fast_delivery';
 if (session()->get('order_type') == 'home_delivery') {
     $distance = 0;
     $areaId = null;
@@ -147,7 +144,7 @@ if (session()->get('order_type') == 'home_delivery') {
         $distance = $address['distance'] ?? 0;
         $areaId = $address['area_id'] ?? null;
     }
-    $deliveryCharge = Helpers::get_delivery_charge(branchId: $selectedBranchId, distance: $distance, selectedDeliveryArea: $areaId, orderType: $deliveryServiceType);
+    $deliveryCharge = Helpers::get_delivery_charge(branchId: $selectedBranchId, distance: $distance, selectedDeliveryArea: $areaId, orderType: 'delivery');
     $delivery_charge = $deliveryCharge;
     $productWeightCharge = Helpers::productWeightChargeCalculation(branchId: $selectedBranchId, weight: $productWeight);
 } else {

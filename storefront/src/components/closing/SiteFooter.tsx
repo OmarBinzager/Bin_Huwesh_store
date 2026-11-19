@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import BrandLogo from "@/components/store/BrandLogo";
+import { closingData } from "@/content/closing";
 import { telHref, whatsappHref, type ClosingFile } from "@/content/closing-types";
 import { useI18n } from "@/lib/i18n/context";
 import { BackToTop, CurrentYear, FooterGroup } from "./FooterParts";
@@ -16,8 +17,9 @@ const BUILD_YEAR = new Date().getFullYear();
  * (collapsible on phones), social accounts only when the admin has set real
  * ones, the large faint BIN HUWESH wordmark, copyright and back-to-top.
  */
-export default function SiteFooter({ data }: { data: ClosingFile }) {
-  const { footer, contact } = data;
+export default function SiteFooter({ data }: { data?: ClosingFile }) {
+  const closing = data || closingData;
+  const { footer, contact } = closing;
   const { t, locale } = useI18n();
   return (
     <footer className={s.footer} aria-labelledby="footer-title">
@@ -57,7 +59,7 @@ export default function SiteFooter({ data }: { data: ClosingFile }) {
                   const Icon = m.icon;
                   return (
                     <li key={x.platform}>
-                      <a href={x.url} target="_blank" rel="noopener noreferrer" aria-label={m.label} className={s.socialBtn}>
+                      <a href={x.url} target="_blank" rel="noopener noreferrer" aria-label={locale === "en" ? m.labelEn : m.label} className={s.socialBtn}>
                         <Icon width={18} height={18} />
                       </a>
                     </li>

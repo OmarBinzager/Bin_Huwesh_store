@@ -159,10 +159,10 @@
                                 <span class="text-body">{{ translate('order') }} {{ translate('type') }}</span>
                                 :<label
                                     class="badge badge-soft-primary ml-3">
-                                    @if($order['order_type'] == 'convenient_delivery' || $order['order_type'] == 'self_pickup')
-                                        {{ translate('Convenient Delivery (24 hours)') }}
-                                    @elseif($order['order_type'] == 'fast_delivery' || $order['order_type'] == 'delivery')
-                                        {{ translate('Fast Delivery (59 minute)') }}
+                                    @if($order['order_type'] == 'self_pickup')
+                                        {{ translate('self_pickup') }}
+                                    @elseif($order['order_type'] == 'delivery' || $order['order_type'] == 'fast_delivery' || $order['order_type'] == 'convenient_delivery')
+                                        {{ translate('delivery') }}
                                     @else
                                         {{ translate(str_replace('_', ' ', $order['order_type'])) }}
                                     @endif
@@ -246,14 +246,16 @@
                                         </div>
                                         <div class="media-body">
                                             <h5 class="line--limit-1">{{ $product['name'] ?? ($detail->product->name ?? translate('Product')) }}</h5>
-                                            @php($sellerName = $product['seller']['name'] ?? ($detail->product->seller->name ?? (\App\Model\Seller::find($product['seller_id'] ?? ($detail->product->seller_id ?? null))->name ?? null)))
-                                            @if(empty($sellerName) && (($product['added_by'] ?? ($detail->product->added_by ?? null)) == 'admin'))
-                                                @php($sellerName = translate('In House Shop'))
-                                            @endif
-                                            @if(!empty($sellerName))
-                                                <div class="mt-1">
-                                                    <span class="badge badge-soft-info"><i class="tio-shop"></i> {{ translate('seller') }}: {{ $sellerName }}</span>
-                                                </div>
+                                            @if (\App\CentralLogics\Helpers::is_feature_active('multi_vendor'))
+                                                @php($sellerName = $product['seller']['name'] ?? ($detail->product->seller->name ?? (\App\Model\Seller::find($product['seller_id'] ?? ($detail->product->seller_id ?? null))->name ?? null)))
+                                                @if(empty($sellerName) && (($product['added_by'] ?? ($detail->product->added_by ?? null)) == 'admin'))
+                                                    @php($sellerName = translate('In House Shop'))
+                                                @endif
+                                                @if(!empty($sellerName))
+                                                    <div class="mt-1">
+                                                        <span class="badge badge-soft-info"><i class="tio-shop"></i> {{ translate('seller') }}: {{ $sellerName }}</span>
+                                                    </div>
+                                                @endif
                                             @endif
                                             @if (count(json_decode($detail['variation'], true) ?? []) > 0)
                                                 @foreach (json_decode($detail['variation'], true)[0] ?? json_decode($detail['variation'], true) as $key1 => $variation)
@@ -264,6 +266,14 @@
                                                         <span class="font-weight-bold">{{ $variation }}</span>
                                                     </div>
                                                 @endforeach
+                                            @endif
+                                            @if (!empty($detail['variant_image']))
+                                                <div class="mt-1">
+                                                    <img src="{{ asset('storage/app/public/product/' . $detail['variant_image']) }}"
+                                                         alt="صورة الشكل المختار"
+                                                         style="width: 56px; height: 56px; object-fit: cover; border-radius: 6px; border: 1px solid #e7eaf3;">
+                                                    <span class="badge badge-soft-primary ml-1">الشكل المختار</span>
+                                                </div>
                                             @endif
                                             <h5 class="mt-1"><span class="text-body">{{ translate('Unit') }}</span> :
                                                 {{ $detail['unit'] ?? ($detail->product->unit ?? '') }}
@@ -538,6 +548,18 @@
                                             <span class="fw-semibold"> # {{ translate('Payment Note') }}: </span>
                                             {{ $offlinePaymentNote }}
                                         </span>
+                                    </div>
+                                @endif
+
+                                @if (!empty($order->offline_payment?->receipt_image_full_url))
+                                    <div class="mt-3 text-center">
+                                        <h6 class="font-weight-bold mb-2">{{ translate('Transfer Receipt') }}</h6>
+                                        <a href="{{ $order->offline_payment->receipt_image_full_url }}" target="_blank" data-lightbox>
+                                            <img src="{{ $order->offline_payment->receipt_image_full_url }}"
+                                                alt="{{ translate('Transfer Receipt') }}"
+                                                class="img-fluid rounded border"
+                                                style="max-height: 260px; object-fit: contain;">
+                                        </a>
                                     </div>
                                 @endif
 

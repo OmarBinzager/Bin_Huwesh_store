@@ -26,6 +26,8 @@ export interface RailGarment {
   sideImage?: string;
   /** Short hang-tag text such as a price or a size. */
   tag?: string;
+  /** Numeric price in base currency; when provided, overrides tag with formatted currency. */
+  price?: number;
   /** Short facts listed in the detail view. */
   details?: string[];
 }

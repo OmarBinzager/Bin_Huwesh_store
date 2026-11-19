@@ -642,7 +642,7 @@ class POSController extends Controller
         }
 
         $orderType = session()->has('order_type') ? session()->get('order_type') : 'take_away';
-        $deliveryServiceType = session()->get('delivery_service_type') ?? 'fast_delivery';
+
 
         $deliveryCharge = 0;
         if ($orderType == 'home_delivery') {
@@ -664,7 +664,7 @@ class POSController extends Controller
                 branchId: session()->get('branch_id') ?? 1,
                 distance: $distance,
                 selectedDeliveryArea: $areaId,
-                orderType: $deliveryServiceType
+                orderType: 'delivery'
             );
 
             $customerAddress = CustomerAddress::updateOrCreate(
@@ -705,7 +705,7 @@ class POSController extends Controller
         $isPaid = in_array($paymentType, ['cash', 'card', 'wallet_payment']);
         $order->payment_status = $isPaid ? 'paid' : 'unpaid';
         $order->order_status = $orderType == 'take_away' ? 'delivered' : 'confirmed';
-        $order->order_type = $orderType == 'take_away' ? 'pos' : $deliveryServiceType;
+        $order->order_type = $orderType == 'take_away' ? 'pos' : 'delivery';
         $order->coupon_code = $request->coupon_code ?? null;
         $order->payment_method = $paymentType;
         $order->transaction_reference = $request->transaction_reference ?? null;

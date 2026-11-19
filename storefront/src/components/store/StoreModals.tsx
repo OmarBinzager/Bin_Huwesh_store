@@ -3,14 +3,25 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { STORE_CATEGORIES, categoryHref } from "@/content/categories";
-import { formatYER } from "@/lib/catalog";
+import {
+  clearAuthSession,
+  extractApiError,
+  fetchCustomerInfo,
+  getAuthToken,
+  loginWithPassword,
+  setAuthToken,
+  setAuthUser,
+} from "@/lib/auth-api";
+import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n/context";
+import { productHref } from "@/lib/product-url";
 import { API_BASE_URL, type CatalogProduct } from "@/lib/storefront-api";
 import LanguageToggle from "./LanguageToggle";
 import ThemeToggle from "./ThemeToggle";
 
 export function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { locale, dir, t } = useI18n();
+  const { formatMoney } = useCurrency();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<CatalogProduct[]>([]);
   const [loading, setLoading] = useState(false);
@@ -72,27 +83,38 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
           ) : results.length === 0 ? (
             <p className="py-8 text-center text-[13px] text-muted">{t.modals.noSearchResults}</p>
           ) : (
-            <ul className="divide-y divide-line">
-              {results.map((p) => (
-                <li key={p.id}>
-                  <Link
-                    href={`/products/${p.id}`}
-                    onClick={onClose}
-                    className="flex items-center gap-3 rounded-xl p-2.5 transition-colors hover:bg-ink/5"
-                  >
-                    <img
-                      src={Array.isArray(p.images) && p.images[0] ? p.images[0] : p.image}
-                      alt={p.name}
-                      className="size-14 rounded-lg bg-stage object-cover"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[14px] font-medium">{p.name}</p>
-                      <p className="nums text-[12px] text-brand">{formatYER(p.final_price ?? p.price, locale)}</p>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <div className="space-y-3">
+              <ul className="divide-y divide-line">
+                {results.map((p) => (
+                  <li key={p.id}>
+                    <Link
+                      href={productHref(p.id, p.name)}
+                      onClick={onClose}
+                      className="flex items-center gap-3 rounded-xl p-2.5 transition-colors hover:bg-ink/5"
+                    >
+                      <img
+                        src={Array.isArray(p.images) && p.images[0] ? p.images[0] : p.image}
+                        alt={p.name}
+                        className="size-14 rounded-lg bg-stage object-cover"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[14px] font-medium">{p.name}</p>
+                        <p className="nums text-[12px] text-brand">{formatMoney(p.final_price ?? p.price)}</p>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <div className="border-t border-line pt-3 text-center">
+                <Link
+                  href={`/products?q=${encodeURIComponent(query.trim())}`}
+                  onClick={onClose}
+                  className="inline-flex h-9 items-center rounded-full bg-ink px-5 text-xs font-medium text-on-ink transition hover:bg-brand"
+                >
+                  {t.catalog.viewAllSearchResults}
+                </Link>
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -106,15 +128,8 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [userToken, setUserToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    try {
-      setUserToken(localStorage.getItem("bh-auth-token"));
-    } catch {
-      /* ignore */
-    }
-  }, [open]);
+  const [userToken, setUserToken] = useState<string | null>(() => getAuthToken());
+  const activeToken = open ? (userToken ?? getAuthToken()) : userToken;
 
   if (!open) return null;
 
@@ -122,22 +137,23 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
     e.preventDefault();
     setBusy(true);
     setStatus(null);
+    const trimmed = phone.trim();
+    const type: "phone" | "email" = trimmed.includes("@") ? "email" : "phone";
+
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          "X-localization": locale,
-        },
-        body: JSON.stringify({ email_or_phone: phone.trim(), password }),
-      });
-      const body = await res.json();
-      if (!res.ok || !body?.token) {
-        throw new Error(body?.errors?.[0]?.message || t.modals.loginError);
+      const res = await loginWithPassword(
+        { email_or_phone: trimmed, password, type },
+        locale,
+      );
+      if (!res.ok || !res.data.token) {
+        throw new Error(extractApiError(res.data, t.modals.loginError));
       }
-      localStorage.setItem("bh-auth-token", body.token);
-      setUserToken(body.token);
+      setAuthToken(res.data.token);
+      setUserToken(res.data.token);
+      const profile = await fetchCustomerInfo(res.data.token, locale);
+      if (profile) {
+        setAuthUser(profile);
+      }
       setStatus(t.modals.loginSuccess);
     } catch (err) {
       setStatus((err as Error).message);
@@ -147,7 +163,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
   };
 
   const logout = () => {
-    localStorage.removeItem("bh-auth-token");
+    clearAuthSession();
     setUserToken(null);
     setStatus(t.modals.logoutSuccess);
   };
@@ -166,7 +182,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
           </button>
         </div>
 
-        {userToken ? (
+        {activeToken ? (
           <div className="space-y-4">
             <p className="rounded-xl bg-emerald-500/10 px-4 py-3 text-[13px] text-emerald-700 dark:text-emerald-400">
               {t.modals.loggedInMsg}
@@ -220,6 +236,19 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
             >
               {busy ? t.modals.loggingIn : t.modals.login}
             </button>
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 text-[12px] text-muted">
+              <Link href="/forgot-password" onClick={onClose} className="hover:text-ink underline-offset-4 hover:underline">
+                {t.modals.forgotPassword}
+              </Link>
+              <div className="flex items-center gap-3">
+                <Link href="/register" onClick={onClose} className="font-medium text-ink hover:underline underline-offset-4">
+                  {t.modals.createAccount}
+                </Link>
+                <Link href="/login" onClick={onClose} className="hover:text-ink underline-offset-4 hover:underline">
+                  {t.modals.fullAuthOptions}
+                </Link>
+              </div>
+            </div>
           </form>
         )}
       </div>

@@ -19,6 +19,20 @@ class StoreOrderRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if (auth('api')->check()) {
+            $this->merge([
+                'customer_id' => $this->input('customer_id', auth('api')->id()),
+                'is_guest' => $this->input('is_guest', 0),
+            ]);
+        } elseif ($this->header('guest-id') && !$this->has('is_guest')) {
+            $this->merge([
+                'is_guest' => 1,
+            ]);
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *

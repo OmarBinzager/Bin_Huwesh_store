@@ -1,6 +1,4 @@
-<?php
-
-return array (
+<?php return array (
   'attribute' => 'Attribute',
   'update' => 'Update',
   'name' => 'Name',
@@ -94,6 +92,7 @@ return array (
   'gm' => 'Gm',
   'ltr' => 'Ltr',
   'pc' => 'Pc',
+  'set_unit' => 'Set',
   'tax' => 'Tax',
   'percent' => 'Percent',
   'amount' => 'Amount',
@@ -4181,4 +4180,5 @@ return array (
   'Save Rule' => 'Save Rule',
   'Variant dictionary rule saved successfully!' => 'Variant dictionary rule saved successfully!',
   'Dictionary rule deleted successfully!' => 'Dictionary rule deleted successfully!',
+  'واجهة المتجر 3D' => 'واجهة المتجر 3D',
 );

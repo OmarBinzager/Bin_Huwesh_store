@@ -15,12 +15,14 @@ trait CalculateOrderDataTrait
     /**
      * @throws ValidationException
      */
-    protected function calculateOrderAmount(array $cart, ?string $couponCode = null, ?int $customerId = null, array $deliveryChargeInfo = [], bool $isPartiallyPaid = false, array $paymentInfo = [], int|string $userType = 0): array|JsonResponse
+    protected function calculateOrderAmount(array $cart, ?string $couponCode = null, ?int $customerId = null, array $deliveryChargeInfo = [], bool $isPartiallyPaid = false, array $paymentInfo = [], int|string $userType = 0, array $lookIds = []): array|JsonResponse
     {
         if (empty($cart)) {
             return [
                 'ordered_amount' => 0,
                 'coupon_discount_amount' => 0,
+                'coupon_discount_title' => null,
+                'extra_discount' => 0,
                 'delivery_charge_amount' => 0,
                 'weight_charge_amount' => 0,
                 'total_product_tax_amount' => 0,
@@ -36,6 +38,7 @@ trait CalculateOrderDataTrait
         $totalProductTax = 0;
         $deliveryCharge = 0;
         $productWeightCharge = 0;
+        $cartByPid = [];
         foreach ($cart as $item) {
             $product = $products->get($item['product_id']);
             if (!$product) continue;
@@ -58,27 +61,68 @@ trait CalculateOrderDataTrait
             $categoryId = collect(json_decode($product['category_ids'], true))->firstWhere('position', 1)['id'] ?? null;
             $singleProductCategoryDiscount = Helpers::category_discount_calculate($categoryId, $singleProductPrice);
             $singleProductBaseDiscount = Helpers::discount_calculate($product, $singleProductPrice);
-            $discountOnSingleProduct = ($singleProductCategoryDiscount >= $singleProductPrice) ? $singleProductBaseDiscount : max($singleProductCategoryDiscount, $singleProductBaseDiscount);
+            $singleProductFlashDiscount = Helpers::flash_deal_discount_calculate((int)$product->id, $singleProductPrice);
+            $effectiveCategoryDiscount = ($singleProductCategoryDiscount >= $singleProductPrice) ? 0 : $singleProductCategoryDiscount;
+            $discountOnSingleProduct = max($effectiveCategoryDiscount, $singleProductBaseDiscount, $singleProductFlashDiscount);
             $singleProductTax = Helpers::tax_calculate($product, ($singleProductPrice - $discountOnSingleProduct));
-            $totalProductWeight += $product['weight'] * $item['quantity'];
-            $totalProductPrice += ($singleProductPrice - $discountOnSingleProduct) * $item['quantity'];
-            $totalProductTax += $singleProductTax * $item['quantity'];
+            $qty = (int)($item['quantity'] ?? 1);
+            $netUnitPrice = max(0, $singleProductPrice - $discountOnSingleProduct);
+            $totalProductWeight += $product['weight'] * $qty;
+            $totalProductPrice += $netUnitPrice * $qty;
+            $totalProductTax += $singleProductTax * $qty;
+
+            $pid = (int)$product->id;
+            if (!isset($cartByPid[$pid])) {
+                $cartByPid[$pid] = ['qty' => 0, 'subtotal' => 0.0];
+            }
+            $cartByPid[$pid]['qty'] += $qty;
+            $cartByPid[$pid]['subtotal'] += $netUnitPrice * $qty;
         }
 
-        $couponDiscountData = $this->calculateCouponAmount(userType: $userType, couponCode: $couponCode, customerId: $customerId, totalProductPrice: $totalProductPrice);
+        // Server-verified Look / Bundle discount (applies only when all linked items of a published look are in cart)
+        $lookBundleDiscount = 0;
+        if (!empty($lookIds)) {
+            $looks = \App\Model\StorefrontLook::with('items')
+                ->whereIn('uid', $lookIds)
+                ->where('published', true)
+                ->where('whole_look_discount', '>', 0)
+                ->get();
+            foreach ($looks as $look) {
+                $requiredPids = $look->items->pluck('product_id')->filter()->map(fn($v) => (int)$v)->unique();
+                if ($requiredPids->isEmpty()) {
+                    continue;
+                }
+                $allPresent = $requiredPids->every(fn($pid) => isset($cartByPid[$pid]) && $cartByPid[$pid]['qty'] > 0);
+                if ($allPresent) {
+                    $bundleCount = $requiredPids->min(fn($pid) => $cartByPid[$pid]['qty']);
+                    $lookSubtotal = 0.0;
+                    foreach ($requiredPids as $pid) {
+                        $unitAvg = $cartByPid[$pid]['subtotal'] / max(1, $cartByPid[$pid]['qty']);
+                        $lookSubtotal += $unitAvg * $bundleCount;
+                    }
+                    $lookBundleDiscount += (int)round(($lookSubtotal * (int)$look->whole_look_discount) / 100);
+                }
+            }
+            $lookBundleDiscount = min($lookBundleDiscount, (int)round($totalProductPrice));
+        }
+
+        $totalProductPriceAfterLooks = max(0, $totalProductPrice - $lookBundleDiscount);
+        $couponDiscountData = $this->calculateCouponAmount(userType: $userType, couponCode: $couponCode, customerId: $customerId, totalProductPrice: $totalProductPriceAfterLooks);
         $couponDiscountAmount = $couponDiscountData['coupon_discount_amount'];
+        $couponDiscountTitle = $couponDiscountData['coupon_discount_title'] ?? null;
         $couponType = $couponDiscountData['coupon_type'];
         $freeDeliveryStatus = Helpers::get_business_settings('free_delivery_over_amount_status') == 1;
         $getFreeDeliveryAmount = Helpers::get_business_settings('free_delivery_over_amount');
         $freeDeliveryChargeAmount = 0;
-        $totalOrderedAmountWithoutDeliveryCharge = $totalProductPrice + $totalProductTax - $couponDiscountAmount;
+        $totalOrderedAmountWithoutDeliveryCharge = max(0, $totalProductPriceAfterLooks + $totalProductTax - $couponDiscountAmount);
         $isSelfPickup = ($deliveryChargeInfo['order_type'] == 'self_pickup' && ($deliveryChargeInfo['is_legacy_pickup'] ?? false));
-        if (!$isSelfPickup && ($couponType != 'free_delivery' || !$freeDeliveryStatus || $getFreeDeliveryAmount > ($totalOrderedAmountWithoutDeliveryCharge))) {
+        $qualifiesForFreeDeliveryOverAmount = $freeDeliveryStatus && (float)$getFreeDeliveryAmount > 0 && $totalProductPrice >= (float)$getFreeDeliveryAmount;
+        if (!$isSelfPickup && !$qualifiesForFreeDeliveryOverAmount && ($couponType != 'free_delivery' || !$freeDeliveryStatus || $getFreeDeliveryAmount > ($totalOrderedAmountWithoutDeliveryCharge))) {
             $deliveryCharge = Helpers::get_delivery_charge(branchId: $deliveryChargeInfo['branch_id'], distance: $deliveryChargeInfo['distance'], selectedDeliveryArea: $deliveryChargeInfo['selected_delivery_area'], orderType: $deliveryChargeInfo['order_type'] ?? null);
             $productWeightCharge = Helpers::productWeightChargeCalculation(branchId: $deliveryChargeInfo['branch_id'], weight: $totalProductWeight);
         }
 
-        if (!$isSelfPickup && ($couponType == 'free_delivery' && $freeDeliveryStatus && $getFreeDeliveryAmount <= ($totalOrderedAmountWithoutDeliveryCharge))) {
+        if (!$isSelfPickup && ($qualifiesForFreeDeliveryOverAmount || ($couponType == 'free_delivery' && $freeDeliveryStatus && $getFreeDeliveryAmount <= ($totalOrderedAmountWithoutDeliveryCharge)))) {
             $freeDeliveryChargeAmount = Helpers::get_delivery_charge(branchId: $deliveryChargeInfo['branch_id'], distance: $deliveryChargeInfo['distance'], selectedDeliveryArea: $deliveryChargeInfo['selected_delivery_area'], orderType: $deliveryChargeInfo['order_type'] ?? null);
         }
 
@@ -132,6 +176,8 @@ trait CalculateOrderDataTrait
         return [
             'ordered_amount' => $totalOrderedAmount,
             'coupon_discount_amount' => $couponDiscountAmount,
+            'coupon_discount_title' => $couponDiscountTitle,
+            'extra_discount' => $lookBundleDiscount,
             'delivery_charge_amount' => $deliveryCharge,
             'weight_charge_amount' => $productWeightCharge,
             'total_product_tax_amount' => $totalProductTax,
@@ -147,6 +193,7 @@ trait CalculateOrderDataTrait
         if (!$couponCode || !$customerId) {
             return [
                 'coupon_discount_amount' => 0,
+                'coupon_discount_title' => null,
                 'coupon_type' => null,
             ];
         }
@@ -155,6 +202,7 @@ trait CalculateOrderDataTrait
         if (!$coupon) {
             return [
                 'coupon_discount_amount' => 0,
+                'coupon_discount_title' => null,
                 'coupon_type' => null,
             ];
         }
@@ -175,13 +223,14 @@ trait CalculateOrderDataTrait
 
         if ($coupon->discount_type == 'percent') {
             $couponDiscountAmount = (($totalProductPrice * $coupon->discount) / 100);
-            if ($couponDiscountAmount > $coupon->max_discount) {
+            if ($coupon->max_discount > 0 && $couponDiscountAmount > $coupon->max_discount) {
                 $couponDiscountAmount = $coupon->max_discount;
             }
         }
 
         return [
             'coupon_discount_amount' => $couponDiscountAmount,
+            'coupon_discount_title' => $coupon->title ?? null,
             'coupon_type' => $coupon->coupon_type,
         ];
     }

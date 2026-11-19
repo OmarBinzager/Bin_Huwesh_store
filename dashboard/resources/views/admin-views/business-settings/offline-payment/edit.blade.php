@@ -13,7 +13,7 @@
             </h2>
         </div>
 
-        <form action="{{route('admin.business-settings.web-app.third-party.offline-payment.update', [$method['id']])}}" method="post">
+        <form action="{{route('admin.business-settings.web-app.third-party.offline-payment.update', [$method['id']])}}" method="post" enctype="multipart/form-data">
             @csrf
 
             <div class="d-flex justify-content-end my-3">
@@ -35,11 +35,20 @@
                 </div>
 
                 <div class="card card-body mb-3">
-                    <div class="d-flex align-items-end gap-3 mb-4">
+                    <div class="d-flex align-items-end gap-3 mb-4 flex-wrap">
                         <div class="flex-grow-1">
                             <label class="input-label">{{translate('Payment Method Name')}}</label>
                             <input type="text" maxlength="255" name="method_name" id="method_name" class="form-control"
                                   value="{{ $method['method_name'] }}" placeholder="{{ translate('ABC Company') }}" required>
+                        </div>
+                        <div class="flex-grow-1">
+                            <label class="input-label">{{translate('Bank / Service Logo')}} ({{translate('Optional')}})</label>
+                            <div class="d-flex align-items-center gap-3">
+                                @if(!empty($method['image_full_url']))
+                                    <img src="{{ $method['image_full_url'] }}" alt="{{ $method['method_name'] }}" class="rounded border" style="width:44px;height:44px;object-fit:contain;">
+                                @endif
+                                <input type="file" name="image" accept="image/*" class="form-control">
+                            </div>
                         </div>
                     </div>
 

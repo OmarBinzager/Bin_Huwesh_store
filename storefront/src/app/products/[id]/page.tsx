@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import SiteFooter from "@/components/closing/SiteFooter";
 import { DemoBagProvider } from "@/components/store/DemoBag";
 import ProductDetailClient from "@/components/store/ProductDetailClient";
 import StoreHeader from "@/components/store/StoreHeader";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getServerLocale } from "@/lib/i18n/server";
+import { extractProductIdFromParam, productHref } from "@/lib/product-url";
 import { fetchProductDetail } from "@/lib/storefront-api";
 
 export async function generateMetadata({
@@ -14,12 +15,14 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
+  const numericId = extractProductIdFromParam(id);
   const locale = await getServerLocale();
   const t = getDictionary(locale);
-  const data = await fetchProductDetail(id, locale);
+  const data = await fetchProductDetail(numericId, locale);
   if (!data) return { title: `${t.product.fallbackTitle} — ${t.meta.brandSuffix}` };
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://binhuwesh.com";
+  const canonicalPath = productHref(data.product.id, data.product.name);
   const desc = data.product.brand?.name
     ? locale === "en"
       ? `${data.product.name} — ${data.product.brand.name}. Shop now at Bin Huwesh Trading Co. in Yemen.`
@@ -36,12 +39,12 @@ export async function generateMetadata({
     title: `${data.product.name} — ${t.meta.brandSuffix}`,
     description: desc,
     alternates: {
-      canonical: `/products/${id}`,
+      canonical: canonicalPath,
     },
     openGraph: {
       type: "website",
       locale: locale === "ar" ? "ar_YE" : "en_US",
-      url: `${siteUrl}/products/${id}`,
+      url: `${siteUrl}${canonicalPath}`,
       title: `${data.product.name} — ${t.meta.brandSuffix}`,
       description: desc,
       images: productImages.map((img) => ({
@@ -64,10 +67,23 @@ export default async function ProductDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const numericId = extractProductIdFromParam(id);
   const locale = await getServerLocale();
-  const data = await fetchProductDetail(id, locale);
+  const data = await fetchProductDetail(numericId, locale);
   if (!data) {
     notFound();
+  }
+
+  const canonicalPath = productHref(data.product.id, data.product.name);
+  const expectedParam = canonicalPath.replace(/^\/products\//, "");
+  let currentParam = id;
+  try {
+    currentParam = decodeURIComponent(id);
+  } catch {
+    currentParam = id;
+  }
+  if (currentParam !== expectedParam) {
+    permanentRedirect(canonicalPath);
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://binhuwesh.com";
@@ -88,7 +104,7 @@ export default async function ProductDetailPage({
       : undefined,
     offers: {
       "@type": "Offer",
-      url: `${siteUrl}/products/${id}`,
+      url: `${siteUrl}${canonicalPath}`,
       priceCurrency: "YER",
       price: data.product.final_price || data.product.price,
       availability:

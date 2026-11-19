@@ -68,8 +68,11 @@
                             <tr>
                                 <td>{{ $methods->firstitem() + $key }}</td>
                                 <td>
-                                    <div class="max-w300 text-wrap">
-                                        {{ $method['method_name'] }}
+                                    <div class="max-w300 text-wrap d-flex align-items-center gap-2">
+                                        @if(!empty($method['image_full_url']))
+                                            <img src="{{ $method['image_full_url'] }}" alt="{{ $method['method_name'] }}" class="rounded border" style="width:36px;height:36px;object-fit:contain;">
+                                        @endif
+                                        <span>{{ $method['method_name'] }}</span>
                                     </div>
                                 </td>
                                 <td>

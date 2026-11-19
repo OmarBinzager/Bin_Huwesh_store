@@ -11,8 +11,8 @@ import {
 } from "framer-motion";
 import { useEffect } from "react";
 import type { Look, LookItem } from "@/content/types";
-import { formatYER, resolvePrice } from "@/lib/catalog";
-import { useI18n } from "@/lib/i18n/context";
+import { resolvePrice } from "@/lib/catalog";
+import { useCurrency } from "@/lib/currency";
 import {
   detailPose,
   gridPose,
@@ -190,7 +190,7 @@ function Hotspot({
   onSelect: (id: string) => void;
   compact: boolean;
 }) {
-  const { locale } = useI18n();
+  const { formatMoney } = useCurrency();
   const price = resolvePrice(item);
   // Desktop: pills open towards the roomier side of the figure.
   // Phone: the figure is centred on a narrow screen, so a sideways pill
@@ -214,7 +214,7 @@ function Hotspot({
             e.stopPropagation();
             onSelect(item.id);
           }}
-          aria-label={`${item.label} — ${formatYER(price.amount, locale)}`}
+          aria-label={`${item.label} — ${formatMoney(price.amount)}`}
           aria-pressed={selected}
           className="nums relative grid size-11 place-items-center rounded-full outline-none"
         >
@@ -236,7 +236,7 @@ function Hotspot({
           className={`pointer-events-none absolute z-10 whitespace-nowrap rounded-full border border-ink/10 bg-card/95 px-3 py-1.5 text-[12px] text-ink shadow-md backdrop-blur transition-all duration-200 ${pillPos} ${selected ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"}`}
         >
           <span className="font-medium">{item.label}</span>
-          <span className="nums ms-2 text-muted">{formatYER(price.amount, locale)}</span>
+          <span className="nums ms-2 text-muted">{formatMoney(price.amount)}</span>
         </span>
       </div>
     </motion.div>

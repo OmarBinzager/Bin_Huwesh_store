@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import { formatYER } from "@/lib/catalog";
+import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n/context";
 
 export type BagLine = {
@@ -54,6 +54,7 @@ export const useDemoBag = () => useContext(Ctx);
 
 export function DemoBagProvider({ children }: { children: ReactNode }) {
   const { locale, dir, t } = useI18n();
+  const { formatMoney } = useCurrency();
   const [lines, setLines] = useState<BagLine[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -239,7 +240,7 @@ export function DemoBagProvider({ children }: { children: ReactNode }) {
                               +
                             </button>
                           </div>
-                          <span className="nums text-[13px] font-semibold">{formatYER(l.price * (l.qty || 1), locale)}</span>
+                          <span className="nums text-[13px] font-semibold">{formatMoney(l.price * (l.qty || 1))}</span>
                         </div>
                       </div>
                       <button
@@ -260,7 +261,7 @@ export function DemoBagProvider({ children }: { children: ReactNode }) {
               <footer className="border-t border-line bg-background/60 p-5">
                 <div className="mb-3 flex items-baseline justify-between">
                   <span className="text-[14px] text-muted">{t.bag.subtotal}</span>
-                  <span className="nums font-display text-xl font-semibold">{formatYER(subtotal, locale)}</span>
+                  <span className="nums font-display text-xl font-semibold">{formatMoney(subtotal)}</span>
                 </div>
                 <Link
                   href="/checkout"

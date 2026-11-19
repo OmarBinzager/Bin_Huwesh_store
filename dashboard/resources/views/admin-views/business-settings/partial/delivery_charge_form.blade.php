@@ -25,7 +25,7 @@
             @csrf
             <div class="row">
                 <input type="hidden" name="branch_id" id="" value="{{ $branch->id }}">
-                <div class="col-md-4">
+                <div class="col-md-12">
                     <div class="form-group">
                         <label for="fixed_delivery_charge">{{ translate('Fixed Delivery Charge') }}
                             ({{ Helpers::currency_symbol() }})</label>
@@ -33,26 +33,6 @@
                             max="99999999" step="0.001"
                             value="{{ $branch?->delivery_charge_setup?->fixed_delivery_charge }}"
                             id="fixed_delivery_charge" placeholder="Ex: 10" required>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label for="convenient_delivery_charge">{{ translate('Convenient Delivery (24 hours)') }}
-                            ({{ Helpers::currency_symbol() }})</label>
-                        <input type="number" class="form-control" name="convenient_delivery_charge" min="0"
-                            max="99999999" step="0.001"
-                            value="{{ $branch?->delivery_charge_setup?->convenient_delivery_charge ?? 0 }}"
-                            id="convenient_delivery_charge" placeholder="Ex: 0">
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label for="fast_delivery_charge">{{ translate('Fast Delivery (59 minute)') }}
-                            ({{ Helpers::currency_symbol() }})</label>
-                        <input type="number" class="form-control" name="fast_delivery_charge" min="0"
-                            max="99999999" step="0.001"
-                            value="{{ $branch?->delivery_charge_setup?->fast_delivery_charge ?? ($branch?->delivery_charge_setup?->fixed_delivery_charge ?? 0) }}"
-                            id="fast_delivery_charge" placeholder="Ex: 10">
                     </div>
                 </div>
             </div>
@@ -97,7 +77,7 @@
             @csrf
             <div class="row">
                 <input type="hidden" name="branch_id" id="" value="{{ $branch->id }}">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label for="per_km_charge">{{ translate('Per KM Delivery Charge') }}
                             ({{ Helpers::currency_symbol() }})</label>
@@ -107,7 +87,7 @@
                             id="delivery_charge_per_kilometer" placeholder="Ex: 10" required>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label for="min_delivery_charge">{{ translate('Minimum Delivery Charge') }}
                             ({{ Helpers::currency_symbol() }})</label>
@@ -117,7 +97,7 @@
                             id="minimum_delivery_charge" placeholder="Ex: 10" required>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="form-group">
                         <label for="min_distance_free_delivery">{{ translate('Distance Area for Free Delivery') }}
                             (Km)</label>
@@ -125,16 +105,6 @@
                             min="0" max="99999999" step="0.001"
                             value="{{ $branch?->delivery_charge_setup?->minimum_distance_for_free_delivery }}"
                             id="minimum_distance_for_free_delivery" placeholder="Ex: 10" required>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="form-group">
-                        <label for="convenient_delivery_charge_km">{{ translate('Convenient Delivery (24 hours)') }}
-                            ({{ Helpers::currency_symbol() }})</label>
-                        <input type="number" class="form-control" name="convenient_delivery_charge" min="0"
-                            max="99999999" step="0.001"
-                            value="{{ $branch?->delivery_charge_setup?->convenient_delivery_charge ?? 0 }}"
-                            id="convenient_delivery_charge_km" placeholder="Ex: 0">
                     </div>
                 </div>
             </div>

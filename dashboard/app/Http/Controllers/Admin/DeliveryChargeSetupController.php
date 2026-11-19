@@ -65,7 +65,6 @@ class DeliveryChargeSetupController extends Controller
             'delivery_charge_per_kilometer' => 'required|numeric|min:0|max:99999999',
             'minimum_delivery_charge' => 'required|numeric|min:0|max:99999999',
             'minimum_distance_for_free_delivery' => 'required|numeric|min:0|max:99999999',
-            'convenient_delivery_charge' => 'nullable|numeric|min:0|max:99999999',
         ]);
 
         $data = [
@@ -75,12 +74,6 @@ class DeliveryChargeSetupController extends Controller
             'minimum_delivery_charge' => $request['minimum_delivery_charge'],
             'minimum_distance_for_free_delivery' => $request['minimum_distance_for_free_delivery'],
         ];
-
-        if ($request->has('convenient_delivery_charge')) {
-            $data['convenient_delivery_charge'] = $request->filled('convenient_delivery_charge')
-                ? (float) $request['convenient_delivery_charge']
-                : 0.0;
-        }
 
         $this->deliveryChargeSetup->updateOrCreate([
             'branch_id' => (integer) $request['branch_id']
@@ -99,24 +92,7 @@ class DeliveryChargeSetupController extends Controller
         $request->validate([
             'branch_id' => 'required',
             'fixed_delivery_charge' => 'required|numeric|min:0|max:99999999',
-            'convenient_delivery_charge' => 'nullable|numeric|min:0|max:99999999',
-            'fast_delivery_charge' => 'nullable|numeric|min:0|max:99999999',
         ]);
-
-        try {
-            if (!Schema::hasColumn('delivery_charge_setups', 'convenient_delivery_charge')) {
-                Schema::table('delivery_charge_setups', function (Blueprint $table) {
-                    $table->double('convenient_delivery_charge')->default(0)->nullable();
-                });
-            }
-            if (!Schema::hasColumn('delivery_charge_setups', 'fast_delivery_charge')) {
-                Schema::table('delivery_charge_setups', function (Blueprint $table) {
-                    $table->double('fast_delivery_charge')->default(0)->nullable();
-                });
-            }
-        } catch (\Exception $e) {
-            info('Could not auto-add columns to delivery_charge_setups: ' . $e->getMessage());
-        }
 
         $data = [
             'branch_id' => (int) $request['branch_id'],
@@ -127,18 +103,6 @@ class DeliveryChargeSetupController extends Controller
         $existing = $this->deliveryChargeSetup->where('branch_id', (int) $request['branch_id'])->first();
         if (!$existing || empty($existing->delivery_charge_type)) {
             $data['delivery_charge_type'] = 'fixed';
-        }
-
-        if (Schema::hasColumn('delivery_charge_setups', 'convenient_delivery_charge')) {
-            $data['convenient_delivery_charge'] = ($request->filled('convenient_delivery_charge') && is_numeric($request['convenient_delivery_charge']))
-                ? (float) $request['convenient_delivery_charge']
-                : 0.0;
-        }
-
-        if (Schema::hasColumn('delivery_charge_setups', 'fast_delivery_charge')) {
-            $data['fast_delivery_charge'] = ($request->filled('fast_delivery_charge') && is_numeric($request['fast_delivery_charge']))
-                ? (float) $request['fast_delivery_charge']
-                : (float) $request['fixed_delivery_charge'];
         }
 
         $this->deliveryChargeSetup->updateOrCreate([

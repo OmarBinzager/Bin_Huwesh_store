@@ -1,4 +1,7 @@
+"use client";
+
 import { telHref, whatsappHref, type ClosingFile } from "@/content/closing-types";
+import { useI18n } from "@/lib/i18n/context";
 import { MapIcon, PhoneIcon, PinIcon, StoreIcon, WhatsAppIcon } from "./icons";
 import s from "./closing.module.css";
 
@@ -7,7 +10,9 @@ import s from "./closing.module.css";
  * action; the map button only exists when a real map link is set.
  */
 export default function VisitSection({ data }: { data: ClosingFile }) {
+  const { locale } = useI18n();
   const c = data.contact;
+  const isEn = locale === "en";
   return (
     <section id="visit" aria-labelledby="visit-title" className={s.closingBand}>
       <div className="mx-auto max-w-[1440px] px-4 py-12 sm:px-8 sm:py-16">
@@ -21,16 +26,16 @@ export default function VisitSection({ data }: { data: ClosingFile }) {
             <div className={s.actions}>
               <a href={whatsappHref(c.phoneIntl)} target="_blank" rel="noopener noreferrer" className={`${s.btn} ${s.btnPrimary}`}>
                 <WhatsAppIcon />
-                تواصل عبر واتساب
+                {isEn ? "Chat on WhatsApp" : "تواصل عبر واتساب"}
               </a>
               <a href={telHref(c.phoneIntl)} className={`${s.btn} ${s.btnGhost}`}>
                 <PhoneIcon />
-                اتصل بنا
+                {isEn ? "Call Us" : "اتصل بنا"}
               </a>
               {c.mapUrl && (
                 <a href={c.mapUrl} target="_blank" rel="noopener noreferrer" className={`${s.btn} ${s.btnGhost}`}>
                   <MapIcon />
-                  موقع المعرض
+                  {isEn ? "Showroom Location" : "موقع المعرض"}
                 </a>
               )}
             </div>
@@ -41,7 +46,7 @@ export default function VisitSection({ data }: { data: ClosingFile }) {
                 <StoreIcon />
               </span>
               <span>
-                <span className={s.infoLabel}>الشركة</span>
+                <span className={s.infoLabel}>{isEn ? "Company" : "الشركة"}</span>
                 <span className={s.infoValue}>{c.company}</span>
               </span>
             </p>
@@ -50,7 +55,7 @@ export default function VisitSection({ data }: { data: ClosingFile }) {
                 <PinIcon />
               </span>
               <span>
-                <span className={s.infoLabel}>المعرض</span>
+                <span className={s.infoLabel}>{isEn ? "Showroom" : "المعرض"}</span>
                 <span className={s.infoValue}>{c.address}</span>
               </span>
             </p>
@@ -59,7 +64,7 @@ export default function VisitSection({ data }: { data: ClosingFile }) {
                 <PhoneIcon />
               </span>
               <span>
-                <span className={s.infoLabel}>الهاتف</span>
+                <span className={s.infoLabel}>{isEn ? "Phone" : "الهاتف"}</span>
                 <a href={telHref(c.phoneIntl)} className={`${s.infoValue} ${s.phone}`} dir="ltr">
                   {c.phoneDisplay}
                 </a>

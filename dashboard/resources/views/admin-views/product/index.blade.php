@@ -289,6 +289,7 @@
                                                     <option value="gm">{{ translate('gm') }}</option>
                                                     <option value="ltr">{{ translate('ltr') }}</option>
                                                     <option value="pc">{{ translate('pc') }}</option>
+                                                    <option value="set">{{ translate('set_unit') }}</option>
                                                     <option value="ml">{{ translate('ml') }}</option>
                                                 </select>
                                             </div>
@@ -319,8 +320,8 @@
                                                     <span>({{ Helpers::get_business_settings('product_weight_unit') }})</span>
                                                 </label>
 
-                                                <input type="number" min="0.00" step=".00"
-                                                    value="{{ old('weight', 0.0) }}" name="weight" id="weight"
+                                                <input type="number" min="0" step="any"
+                                                    value="{{ old('weight') }}" name="weight" id="weight"
                                                     class="form-control" placeholder="{{ translate('Ex : 1.00') }}">
                                             </div>
                                         </div>
@@ -638,6 +639,8 @@
                                 </div>
 
                                 @include('admin-views.product.partials._color-variants-studio')
+
+                                @include('admin-views.product.partials._specifications')
 
                                 <div class="form-group __select-attr">
                                     <label class="input-label"

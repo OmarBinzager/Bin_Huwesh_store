@@ -40,6 +40,9 @@ if (str_starts_with($uri, '/public/')) {
     $fullPath = __DIR__ . '/public' . $cleanPath;
     if (file_exists($fullPath) && !is_dir($fullPath)) {
         $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, OPTIONS');
+        header('Access-Control-Allow-Headers: *');
         header('Content-Type: ' . ($mimes[$ext] ?? 'application/octet-stream'));
         readfile($fullPath);
         exit;
@@ -51,6 +54,9 @@ if (str_starts_with($uri, '/storage/app/public/')) {
     $fullPath = __DIR__ . '/storage/app/public' . $cleanPath;
     if (file_exists($fullPath) && !is_dir($fullPath)) {
         $ext = strtolower(pathinfo($fullPath, PATHINFO_EXTENSION));
+        header('Access-Control-Allow-Origin: *');
+        header('Access-Control-Allow-Methods: GET, OPTIONS');
+        header('Access-Control-Allow-Headers: *');
         header('Content-Type: ' . ($mimes[$ext] ?? 'application/octet-stream'));
         readfile($fullPath);
         exit;

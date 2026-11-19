@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useDemoBag } from "@/components/store/DemoBag";
 import { categoriesInUse, visibleItems } from "@/content/new-arrivals";
 import type { NaItem, NewArrivalsFile } from "@/content/new-arrivals-types";
-import { formatYER } from "@/lib/catalog";
+import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n/context";
 import { approach, cardWidth, isNarrow, mod, offset, pose, slotPlan, xsTable } from "./arc";
 import s from "./virtual-fit.module.css";
@@ -31,6 +31,7 @@ type ArcApi = { step: (d: number) => void; goToItem: (k: number) => void };
 
 export default function VirtualFit({ data }: { data: NewArrivalsFile }) {
   const { locale } = useI18n();
+  const { formatMoney } = useCurrency();
   const isEn = locale === "en";
   const all = useMemo(() => visibleItems(data), [data]);
   const cats = useMemo(() => categoriesInUse(data), [data]);
@@ -482,11 +483,15 @@ export default function VirtualFit({ data }: { data: NewArrivalsFile }) {
     <div
       ref={sceneRef}
       className={s.scene}
-      dir="rtl"
+      dir={isEn ? "ltr" : "rtl"}
       tabIndex={0}
       role="region"
-      aria-roledescription="معرض تجربة القطع"
-      aria-label="وصل حديثًا — اسحب أو استخدم الأسهم لتجربة القطع على المودل"
+      aria-roledescription={isEn ? "virtual try-on gallery" : "معرض تجربة القطع"}
+      aria-label={
+        isEn
+          ? "New arrivals — drag or use arrow keys to try pieces on the model"
+          : "وصل حديثًا — اسحب أو استخدم الأسهم لتجربة القطع على المودل"
+      }
     >
       <div ref={roomRef} className={s.room} style={{ backgroundImage: `url(${data.settings.room})` }} aria-hidden />
       <div ref={ghostRef} className={s.ghost} aria-hidden>
@@ -497,9 +502,9 @@ export default function VirtualFit({ data }: { data: NewArrivalsFile }) {
 
       {/* category tabs — real filters */}
       {cats.length > 1 && (
-        <div ref={tabsRef} className={`${s.tabs} ${s.glass}`} data-vf-ui role="toolbar" aria-label="تصفية القطع">
+        <div ref={tabsRef} className={`${s.tabs} ${s.glass}`} data-vf-ui role="toolbar" aria-label={isEn ? "Filter items" : "تصفية القطع"}>
           <span ref={pillRef} className={s.pill} aria-hidden />
-          {[{ id: "all", name: "الكل" }, ...cats].map((c) => (
+          {[{ id: "all", name: isEn ? "All" : "الكل" }, ...cats].map((c) => (
             <button key={c.id} type="button" className={s.tab} aria-pressed={cat === c.id} onClick={() => setCat(c.id)}>
               {c.name}
             </button>
@@ -509,7 +514,7 @@ export default function VirtualFit({ data }: { data: NewArrivalsFile }) {
 
       {/* side rail — only buttons that do something */}
       <div className={`${s.rail} ${s.glass}`} data-vf-ui>
-        <button type="button" className={s.railBtn} aria-label={`السلة التجريبية: ${lines.length} قطع`} aria-expanded={bagOpen} onClick={() => setBagOpen((v) => !v)}>
+        <button type="button" className={s.railBtn} aria-label={isEn ? `Preview bag: ${lines.length} items` : `السلة التجريبية: ${lines.length} قطع`} aria-expanded={bagOpen} onClick={() => setBagOpen((v) => !v)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
             <path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.6a2 2 0 0 0 2-1.5L20.5 8H6.2" />
             <circle cx="10" cy="20" r="1.3" />
@@ -519,10 +524,10 @@ export default function VirtualFit({ data }: { data: NewArrivalsFile }) {
         </button>
       </div>
       {bagOpen && (
-        <div className={`${s.bag} ${s.glass}`} data-vf-ui role="dialog" aria-label="السلة التجريبية">
-          <h3>السلة التجريبية</h3>
+        <div className={`${s.bag} ${s.glass}`} data-vf-ui role="dialog" aria-label={isEn ? "Preview bag" : "السلة التجريبية"}>
+          <h3>{isEn ? "Preview Bag" : "السلة التجريبية"}</h3>
           {lines.length === 0 ? (
-            <p className={s.bagNote}>لم تُضف قطع بعد.</p>
+            <p className={s.bagNote}>{isEn ? "No items added yet." : "لم تُضف قطع بعد."}</p>
           ) : (
             <ul>
               {lines.map((l) => (
@@ -530,14 +535,14 @@ export default function VirtualFit({ data }: { data: NewArrivalsFile }) {
                   <span>
                     {l.label} · <span dir="ltr">{l.size}</span>
                   </span>
-                  <span dir="ltr">{formatYER(l.price)}</span>
+                  <span dir="ltr">{formatMoney(l.price)}</span>
                 </li>
               ))}
             </ul>
           )}
           {lines.length > 0 && (
             <p>
-              المجموع: <span dir="ltr">{formatYER(total)}</span>
+              {isEn ? "Total:" : "المجموع:"} <span dir="ltr">{formatMoney(total)}</span>
             </p>
           )}
           <p className={s.bagNote}>
@@ -563,7 +568,7 @@ export default function VirtualFit({ data }: { data: NewArrivalsFile }) {
             {/* eslint-disable-next-line @next/next/no-img-element -- transparent cut-out, sized by the card */}
             <img src={it.colors[0].garment} alt="" draggable={false} />
             <span className={s.cardName}>{it.name}</span>
-            <span className={s.cardPrice}>{formatYER(it.price, locale)}</span>
+            <span className={s.cardPrice}>{formatMoney(it.price)}</span>
             <span className={s.sheen} />
           </div>
         ))}
@@ -588,7 +593,7 @@ export default function VirtualFit({ data }: { data: NewArrivalsFile }) {
         <div className={s.info}>
           <Roll text={item.name} className={s.pName} />
           {item.description && <Roll text={item.description} className={s.pDesc} />}
-          <Roll text={formatYER(item.price, locale)} className={s.pPrice} />
+          <Roll text={formatMoney(item.price)} className={s.pPrice} />
           <span className={s.demo}>{isEn ? "Sample price" : "سعر تجريبي"}</span>
         </div>
         <div className={`${s.group} ${s.sizeGroup}`}>
@@ -636,7 +641,7 @@ export default function VirtualFit({ data }: { data: NewArrivalsFile }) {
 
       {/* accessible list + live announcement */}
       <div className={s.sr} data-vf-ui>
-        <p aria-live="polite">{`${item.name}، ${item.description ? item.description + "، " : ""}${formatYER(item.price, locale)}، ${color.name}`}</p>
+        <p aria-live="polite">{`${item.name}، ${item.description ? item.description + "، " : ""}${formatMoney(item.price)}، ${color.name}`}</p>
         <ul>
           {items.map((it, k) => (
             <li key={it.id}>

@@ -63,6 +63,7 @@ Route::group(['middleware'=>'localization'], function () {
     Route::group(['prefix' => 'storefront'], function () {
         Route::get('bootstrap', [StorefrontController::class, 'bootstrap']);
         Route::get('categories/{slugOrId}', [StorefrontController::class, 'getCategoryCatalog']);
+        Route::get('products', [StorefrontController::class, 'getProductsCatalog']);
         Route::get('products/{id}', [StorefrontController::class, 'getProductDetail']);
         Route::get('policies', [StorefrontController::class, 'getPolicies']);
     });

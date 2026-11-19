@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
+import { useI18n } from "@/lib/i18n/context";
 import {
   motion,
   useScroll,
@@ -244,31 +245,10 @@ export function CollectionSurfer({
            * need. `text-left` keeps the RTL line flush with the block's left
            * edge instead of drifting to the container's right.
            */}
-          <h1
-            dir="rtl"
-            lang="ar"
-            className="font-heading font-bold text-[clamp(2.5rem,7.5vw,6.5rem)] leading-[1.15] text-left"
-          >
-            وجهتك الأولى لعالم الأناقة
-          </h1>
-          <p className="font-heading font-bold text-[clamp(1rem,2.4vw,2rem)] leading-[0.9] tracking-[0.12em] uppercase">
-            MEN&apos;S CURATED COLLECTION
-            <span className="text-[0.4em] align-top relative top-[0.6em] ml-2 font-mono tabular-nums">
-              ({items.length})
-            </span>
-          </p>
+          <CollectionSurferCopy count={items.length} />
         </div>
 
-        {/* Same corner, same weight — `uppercase`/`tracking` dropped because
-            neither does anything useful to Arabic, and the extra step in size
-            keeps it as legible as the Latin original was at this scale. */}
-        <div
-          dir="rtl"
-          lang="ar"
-          className="absolute bottom-[3vw] right-[3vw] z-50 text-sm opacity-70"
-        >
-          مرّر لاكتشاف المجموعة
-        </div>
+        <CollectionSurferScrollHint />
 
         {/* 3D Scene */}
         <div
@@ -406,6 +386,41 @@ function Card({
 
       <div className="absolute inset-0 bg-gradient-to-tr from-black/20 to-transparent pointer-events-none" />
     </motion.div>
+  );
+}
+
+function CollectionSurferCopy({ count }: { count: number }) {
+  const { locale, dir } = useI18n();
+  const isEn = locale === "en";
+  return (
+    <>
+      <h1
+        dir={dir}
+        lang={locale}
+        className="font-heading font-bold text-[clamp(2.5rem,7.5vw,6.5rem)] leading-[1.15] text-left"
+      >
+        {isEn ? "Your First Destination for Elegance" : "وجهتك الأولى لعالم الأناقة"}
+      </h1>
+      <p className="font-heading font-bold text-[clamp(1rem,2.4vw,2rem)] leading-[0.9] tracking-[0.12em] uppercase">
+        MEN&apos;S CURATED COLLECTION
+        <span className="text-[0.4em] align-top relative top-[0.6em] ml-2 font-mono tabular-nums">
+          ({count})
+        </span>
+      </p>
+    </>
+  );
+}
+
+function CollectionSurferScrollHint() {
+  const { locale, dir } = useI18n();
+  return (
+    <div
+      dir={dir}
+      lang={locale}
+      className="absolute bottom-[3vw] right-[3vw] z-50 text-sm opacity-70"
+    >
+      {locale === "en" ? "Scroll to explore the collection" : "مرّر لاكتشاف المجموعة"}
+    </div>
   );
 }
 

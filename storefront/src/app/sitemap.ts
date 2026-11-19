@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { STORE_CATEGORIES } from "@/content/categories";
+import { productHref } from "@/lib/product-url";
 import { API_BASE_URL } from "@/lib/storefront-api";
 
 export const revalidate = 3600; // Cache sitemap for 1 hour
@@ -72,8 +73,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (res.ok) {
       const data = await res.json();
       const products = Array.isArray(data) ? data : data?.products ?? [];
-      productPages = products.map((p: { id: number; updated_at?: string }) => ({
-        url: `${siteUrl}/products/${p.id}`,
+      productPages = products.map((p: { id: number; name?: string; updated_at?: string }) => ({
+        url: `${siteUrl}${productHref(p.id, p.name)}`,
         lastModified: p.updated_at ? new Date(p.updated_at) : now,
         changeFrequency: "weekly",
         priority: 0.7,

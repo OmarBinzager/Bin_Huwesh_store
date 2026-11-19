@@ -1,17 +1,52 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDemoBag } from "@/components/store/DemoBag";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n/context";
+import { productHref } from "@/lib/product-url";
 import type { ProductDetailResponse } from "@/lib/storefront-api";
 
 export default function ProductDetailClient({ data }: { data: ProductDetailResponse }) {
   const { locale, t } = useI18n();
   const { formatMoney: formatPrice } = useCurrency();
-  const { product, related_products } = data;
+  const { product, related_products, complete_the_look } = data;
   const bag = useDemoBag();
+  const [quickAddedId, setQuickAddedId] = useState<number | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [recentlyViewed, setRecentlyViewed] = useState<
+    Array<{ id: number; name: string; image: string; final_price: number; brandName?: string }>
+  >([]);
+
+  useEffect(() => {
+    try {
+      const storageKey = "bh_recently_viewed_v1";
+      const raw = localStorage.getItem(storageKey);
+      const parsed: Array<{
+        id: number;
+        name: string;
+        image: string;
+        final_price: number;
+        brandName?: string;
+      }> = raw ? JSON.parse(raw) : [];
+      const others = parsed.filter((p) => p.id !== product.id);
+      setRecentlyViewed(others.slice(0, 4));
+      const updated = [
+        {
+          id: product.id,
+          name: product.name,
+          image: product.image,
+          final_price: product.final_price,
+          brandName: product.brand?.name,
+        },
+        ...others,
+      ].slice(0, 10);
+      localStorage.setItem(storageKey, JSON.stringify(updated));
+    } catch {
+      // Ignore storage quota / privacy mode errors
+    }
+  }, [product.id, product.name, product.image, product.final_price, product.brand?.name]);
 
   const isUniquePatterns =
     product.variant_mode === "unique_patterns" && (product.patterns?.length ?? 0) > 0;
@@ -499,6 +534,112 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
             </button>
           </div>
 
+          {/* Quick Share & WhatsApp Fit Inquiry */}
+          <div className="mt-4 flex flex-wrap items-center gap-2.5">
+            <a
+              href={`https://wa.me/967780024406?text=${encodeURIComponent(
+                locale === "en"
+                  ? `Hello, I have a question about "${product.name}" (Size: ${selectedSize})`
+                  : `مرحباً، أرغب بالاستفسار عن مقاس وتوفر "${product.name}" (المقاس: ${selectedSize})`,
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-emerald-600/30 bg-emerald-600/8 px-4 py-2 text-[12px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-600 hover:text-white dark:text-emerald-400"
+            >
+              <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91C21.95 6.45 17.5 2 12.04 2zm5.8 14.11c-.25.7-1.44 1.34-2 1.42-.52.08-1.18.11-1.9-.12-.44-.14-1-.33-1.72-.64-3.03-1.31-5-4.37-5.15-4.57-.15-.2-1.23-1.64-1.23-3.13 0-1.49.78-2.22 1.06-2.52.28-.3.61-.38.81-.38.2 0 .41 0 .59.01.19.01.44-.07.69.53.25.61.86 2.1.94 2.25.08.15.13.33.02.53-.1.2-.15.33-.3.51-.15.18-.32.4-.45.54-.15.15-.31.31-.13.61.18.3.79 1.3 1.7 2.11 1.17 1.04 2.15 1.36 2.45 1.51.3.15.48.13.66-.08.18-.2.76-.88.96-1.18.2-.3.41-.25.68-.15.28.1 1.76.83 2.06.98.3.15.5.23.58.35.08.13.08.73-.17 1.43z" />
+              </svg>
+              <span>{locale === "en" ? "Ask about size on WhatsApp" : "اسأل عن المقاس عبر واتساب"}</span>
+            </a>
+
+            <button
+              type="button"
+              onClick={async () => {
+                const url = window.location.href;
+                if (navigator.share) {
+                  try {
+                    await navigator.share({ title: product.name, url });
+                    return;
+                  } catch {
+                    // Fallback to clipboard copy
+                  }
+                }
+                await navigator.clipboard?.writeText(url).catch(() => {});
+                setCopiedLink(true);
+                setTimeout(() => setCopiedLink(false), 1800);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-full border border-line bg-card px-4 py-2 text-[12px] font-semibold text-ink transition-colors hover:border-brand/50"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+              <span>
+                {copiedLink
+                  ? locale === "en"
+                    ? "Link Copied ✓"
+                    : "تم نسخ الرابط ✓"
+                  : locale === "en"
+                    ? "Share Product"
+                    : "مشاركة المنتج"}
+              </span>
+            </button>
+          </div>
+
+          {/* Trust & Delivery Badges */}
+          <div className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+            {[
+              {
+                icon: "✓",
+                title: locale === "en" ? "100% Authentic" : "أصلي 100%",
+                sub: locale === "en" ? "Guaranteed quality" : "جودة مضمونة",
+              },
+              {
+                icon: "⚡",
+                title: locale === "en" ? "Fast Delivery" : "توصيل سريع",
+                sub: locale === "en" ? "24–48h dispatch" : "شحن خلال 24-48 ساعة",
+              },
+              {
+                icon: "↺",
+                title: locale === "en" ? "Easy Exchange" : "استبدال مرن",
+                sub: locale === "en" ? "Hassle-free returns" : "إرجاع واستبدال ميسّر",
+              },
+              {
+                icon: "★",
+                title: locale === "en" ? "Flexible Pay" : "دفع ميسّر",
+                sub: locale === "en" ? "COD & online" : "عند الاستلام أو إلكترونياً",
+              },
+            ].map((b) => (
+              <div
+                key={b.title}
+                className="rounded-2xl border border-line bg-stage/35 px-3 py-2.5 text-center"
+              >
+                <div className="text-[13px] font-bold text-brand">{b.icon}</div>
+                <div className="mt-0.5 text-[12px] font-semibold text-ink">{b.title}</div>
+                <div className="text-[11px] text-muted">{b.sub}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Specifications */}
+          {product.specifications && product.specifications.length > 0 && (
+            <div className="mt-8 border-t border-line pt-6">
+              <h2 className="mb-3 text-[14px] font-semibold text-ink">
+                {locale === "en" ? "Product Specifications" : "مواصفات المنتج"}
+              </h2>
+              <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {product.specifications.map((spec, idx) => (
+                  <div
+                    key={`${spec.label}-${idx}`}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-line bg-card px-3.5 py-2.5 text-[13px]"
+                  >
+                    <dt className="font-medium text-muted">{spec.label}</dt>
+                    <dd className="font-semibold text-ink">{spec.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )}
+
           {/* Description */}
           {product.description && (
             <div className="mt-8 border-t border-line pt-6">
@@ -509,6 +650,43 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
               />
             </div>
           )}
+
+          {/* Care Instructions */}
+          <div className="mt-8 border-t border-line pt-6">
+            <h2 className="mb-3 text-[14px] font-semibold text-ink">
+              {locale === "en" ? "Care Instructions" : "إرشادات العناية بالقطعة"}
+            </h2>
+            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+              {[
+                {
+                  symbol: "30°",
+                  label: locale === "en" ? "Gentle cold wash" : "غسيل لطيف بدرجة 30°",
+                },
+                {
+                  symbol: "✕",
+                  label: locale === "en" ? "Do not bleach" : "يُمنع استخدام المبيض",
+                },
+                {
+                  symbol: "♨",
+                  label: locale === "en" ? "Medium heat iron" : "كي بدرجة حرارة متوسطة",
+                },
+                {
+                  symbol: "☀",
+                  label: locale === "en" ? "Dry in shade" : "تجفيف بعيداً عن الشمس",
+                },
+              ].map((care) => (
+                <div
+                  key={care.label}
+                  className="flex items-center gap-2.5 rounded-xl border border-line bg-card px-3 py-2.5"
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-stage text-[11px] font-bold text-ink">
+                    {care.symbol}
+                  </span>
+                  <span className="text-[12px] leading-snug text-muted">{care.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
           {/* Reviews */}
           {product.reviews && product.reviews.length > 0 && (
@@ -536,6 +714,114 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
         </div>
       </div>
 
+      {/* Complete Your Look (Distinct Horizontal Compact Cards) */}
+      {complete_the_look && complete_the_look.length > 0 && (
+        <section className="mt-14 rounded-3xl border border-line bg-stage/35 p-5 sm:p-7">
+          <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <span className="inline-block rounded-full bg-brand/12 px-3 py-0.5 text-[11px] font-semibold text-brand">
+                {locale === "en" ? "STYLIST PICKS" : "تنسيق الإطلالة"}
+              </span>
+              <h2 className="mt-1.5 font-display text-2xl font-semibold text-ink">
+                {locale === "en" ? "Complete Your Look" : "أكمل إطلالتك"}
+              </h2>
+              <p className="mt-0.5 text-[13px] text-muted">
+                {locale === "en"
+                  ? "Curated pieces that pair effortlessly with this item"
+                  : "قطع متناسقة تكمل أناقتك مع هذا المنتج"}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3.5 md:grid-cols-2 lg:grid-cols-3">
+            {complete_the_look.map((item) => {
+              const isAdded = quickAddedId === item.id;
+              const defaultSize = item.sizes?.[0] || "Standard";
+              const defaultColor =
+                item.color_images?.[0]?.color_name || item.color_images?.[0]?.color || undefined;
+              return (
+                <div
+                  key={item.id}
+                  className="group flex items-center gap-3.5 rounded-2xl border border-line bg-card p-3 transition-all hover:border-brand/50 hover:shadow-sm"
+                >
+                  <Link
+                    href={productHref(item.id, item.name)}
+                    className="relative h-24 w-20 shrink-0 overflow-hidden rounded-xl bg-stage"
+                  >
+                    {item.image && (
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    )}
+                  </Link>
+
+                  <div className="min-w-0 flex-1">
+                    {item.brand?.name && (
+                      <p className="text-[11px] font-semibold text-brand uppercase">
+                        {item.brand.name}
+                      </p>
+                    )}
+                    <Link
+                      href={productHref(item.id, item.name)}
+                      className="line-clamp-1 text-[13px] font-semibold text-ink hover:text-brand"
+                    >
+                      {item.name}
+                    </Link>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="nums text-[13px] font-bold text-ink">
+                        {formatPrice(item.final_price)}
+                      </span>
+                      {item.discount > 0 && item.final_price < item.price && (
+                        <span className="nums text-[11px] text-muted line-through">
+                          {formatPrice(item.price)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      bag.add([
+                        {
+                          lookId: "complete-look",
+                          itemId: String(item.id),
+                          productId: item.id,
+                          label: item.name,
+                          size: defaultSize,
+                          color: defaultColor,
+                          price: item.final_price,
+                          qty: 1,
+                          image: item.image || undefined,
+                        },
+                      ]);
+                      setQuickAddedId(item.id);
+                      setTimeout(() => setQuickAddedId((prev) => (prev === item.id ? null : prev)), 1600);
+                    }}
+                    className={`shrink-0 rounded-full px-3.5 py-2 text-[12px] font-semibold transition-all ${
+                      isAdded
+                        ? "bg-emerald-600 text-white"
+                        : "border border-brand/40 bg-brand/8 text-brand hover:bg-brand hover:text-white"
+                    }`}
+                  >
+                    {isAdded
+                      ? locale === "en"
+                        ? "Added ✓"
+                        : "تمت الإضافة ✓"
+                      : locale === "en"
+                        ? "+ Add"
+                        : "+ أضف"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Related Products */}
       {related_products && related_products.length > 0 && (
         <section className="mt-16 border-t border-line pt-10">
@@ -544,7 +830,7 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
             {related_products.map((rel) => (
               <Link
                 key={rel.id}
-                href={`/products/${rel.id}`}
+                href={productHref(rel.id, rel.name)}
                 className="group overflow-hidden rounded-2xl border border-line bg-card transition-all hover:border-brand/50"
               >
                 <div className="relative aspect-[3/4] bg-stage">
@@ -563,6 +849,48 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
                   </h3>
                   <p className="nums mt-1 text-[14px] font-bold text-ink">
                     {formatPrice(rel.final_price)}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Recently Viewed Products */}
+      {recentlyViewed.length > 0 && (
+        <section className="mt-14 border-t border-line pt-10">
+          <h2 className="mb-5 font-display text-xl font-semibold text-ink sm:text-2xl">
+            {locale === "en" ? "Recently Viewed" : "شاهدتها مؤخراً"}
+          </h2>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:gap-6">
+            {recentlyViewed.map((rv) => (
+              <Link
+                key={rv.id}
+                href={productHref(rv.id, rv.name)}
+                className="group overflow-hidden rounded-2xl border border-line bg-card transition-all hover:border-brand/50"
+              >
+                <div className="relative aspect-[3/4] bg-stage">
+                  {rv.image && (
+                    <img
+                      src={rv.image}
+                      alt={rv.name}
+                      loading="lazy"
+                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  )}
+                </div>
+                <div className="p-3.5">
+                  {rv.brandName && (
+                    <p className="text-[10px] font-semibold tracking-wider text-brand uppercase">
+                      {rv.brandName}
+                    </p>
+                  )}
+                  <h3 className="line-clamp-1 text-[13px] font-semibold text-ink group-hover:text-brand">
+                    {rv.name}
+                  </h3>
+                  <p className="nums mt-1 text-[14px] font-bold text-ink">
+                    {formatPrice(rv.final_price)}
                   </p>
                 </div>
               </Link>

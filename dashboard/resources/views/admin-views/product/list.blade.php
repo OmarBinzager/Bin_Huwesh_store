@@ -205,7 +205,17 @@
                                             title="{{ translate('update_quantity') }}">
                                             <i class="tio-add-circle c1"></i>
                                         </button>
+                                        <a href="{{ route('admin.product.patterns', [$product['id']]) }}"
+                                           class="btn py-0 px-1 fs-16 {{ $product->isUniquePatterns() ? 'text-success' : 'text-muted' }}"
+                                           title="إدارة الأشكال الفريدة (المعاوز)">
+                                            <i class="tio-image"></i>
+                                        </a>
                                     </div>
+                                    @if($product->erp_stock_discrepancy && $product->erp_stock_discrepancy['status'] !== 'match')
+                                        <span class="badge badge-soft-warning mt-1" title="فرق مع رصيد InfoSoft">
+                                            ERP: {{ $product->erp_stock_discrepancy['erp_stock'] }}
+                                        </span>
+                                    @endif
                                 </td>
 
                                 <td class="text-dark pt-1 pb-3  {{ $key == 0 ? 'pt-4' : '' }}">

@@ -103,6 +103,11 @@
                 {{ translate('بطاقات الأقسام (WebGL)') }} ({{ $categoryCards->count() }})
             </a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link {{ $tab === 'testimonials' ? 'active' : '' }}" href="{{ route('admin.storefront.index', ['tab' => 'testimonials']) }}">
+                {{ translate('آراء العملاء') }} ({{ count($testimonials ?? []) }})
+            </a>
+        </li>
     </ul>
 
     {{-- TAB 1: LOOKS --}}
@@ -251,12 +256,48 @@
                         <thead class="thead-light"><tr><th>{{ translate('القطعة') }}</th><th>{{ translate('الفئة') }}</th><th>{{ translate('الألوان') }}</th><th></th></tr></thead>
                         <tbody>
                         @forelse($virtualFit as $vf)
+                            @php
+                                $vfColorsArr = is_array($vf->colors) ? $vf->colors : [];
+                                $vfResolvedColors = array_map(function($vc) {
+                                    $vc['garment_url'] = \App\Model\StorefrontVirtualFitItem::resolveMediaUrl($vc['garment_path'] ?? '', 'storefront/virtual-fit');
+                                    $vc['model_url'] = \App\Model\StorefrontVirtualFitItem::resolveMediaUrl($vc['model_path'] ?? '', 'storefront/virtual-fit');
+                                    return $vc;
+                                }, $vfColorsArr);
+                                $vfEditPayload = [
+                                    'id' => $vf->id,
+                                    'product_id' => $vf->product_id,
+                                    'name' => $vf->name,
+                                    'category_key' => $vf->category_key,
+                                    'category_name' => $vf->category_name,
+                                    'sizes' => is_array($vf->sizes) ? implode(',', $vf->sizes) : 'S,M,L,XL,XXL',
+                                    'colors' => $vfResolvedColors,
+                                ];
+                            @endphp
                             <tr>
                                 <td><strong>{{ $vf->name }}</strong><br><small class="text-muted">{{ $vf->product ? 'مرتبط: #'.$vf->product_id : 'غير مرتبط بمنتج' }}</small></td>
                                 <td>{{ $vf->category_name }}</td>
-                                <td>{{ count($vf->colors ?? []) }}</td>
                                 <td>
-                                    <form action="{{ route('admin.storefront.virtual-fit.delete', $vf->id) }}" method="POST" onsubmit="return confirm('حذف؟')">
+                                    <div class="d-flex flex-wrap align-items-center gap-2">
+                                        <span class="badge badge-soft-dark">{{ count($vfResolvedColors) }}</span>
+                                        @foreach($vfResolvedColors as $vc)
+                                            @php
+                                                $gUrl = $vc['garment_url'] ?? '';
+                                                $mUrl = $vc['model_url'] ?? '';
+                                            @endphp
+                                            <div class="d-inline-flex align-items-center gap-1 border rounded p-1 bg-light" title="{{ $vc['name'] ?? '' }}">
+                                                @if($gUrl)
+                                                    <img src="{{ $gUrl }}" alt="{{ $vc['name'] ?? '' }}" class="sf-checker rounded" style="width:28px;height:36px;object-fit:contain;cursor:pointer;" onclick="openExampleModal(this.src, '{{ e($vf->name . ' - ' . ($vc['name'] ?? '') . ' (القطعة)') }}', '')">
+                                                @endif
+                                                @if($mUrl)
+                                                    <img src="{{ $mUrl }}" alt="{{ $vc['name'] ?? '' }}" class="sf-checker rounded" style="width:28px;height:36px;object-fit:contain;cursor:pointer;" onclick="openExampleModal(this.src, '{{ e($vf->name . ' - ' . ($vc['name'] ?? '') . ' (المودل)') }}', '')">
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </td>
+                                <td class="text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick='editVirtualFit(@json($vfEditPayload))'>{{ translate('تعديل') }}</button>
+                                    <form action="{{ route('admin.storefront.virtual-fit.delete', $vf->id) }}" method="POST" class="d-inline" onsubmit="return confirm('حذف؟')">
                                         @csrf @method('DELETE')
                                         <button class="btn btn-sm btn-outline-danger"><i class="tio-delete"></i></button>
                                     </form>
@@ -274,13 +315,14 @@
             <div class="card">
                 <div class="card-header"><h5 class="card-title mb-0">{{ translate('إضافة قطعة لتجربة القياس على المودل') }}</h5></div>
                 <div class="card-body">
-                    <form action="{{ route('admin.storefront.virtual-fit.save') }}" method="POST">
+                    <form action="{{ route('admin.storefront.virtual-fit.save') }}" method="POST" id="vfForm">
                         @csrf
+                        <input type="hidden" name="id" id="vf_id">
                         <input type="hidden" name="colors_json" id="vf_colors_json" value="[]">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="input-label">{{ translate('ربط بمنتج من الكتالوج') }}</label>
-                                <select name="product_id" class="form-control js-select2-custom">
+                                <select name="product_id" id="vf_product_id" class="form-control js-select2-custom">
                                     <option value="">-- {{ translate('اختياري: ربط بمنتج حقيقي') }} --</option>
                                     @foreach($products as $p)
                                         <option value="{{ $p->id }}">#{{ $p->id }} — {{ $p->name }} ({{ number_format($p->price) }} ر.ي)</option>
@@ -289,19 +331,19 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="input-label">{{ translate('اسم القطعة في العرض') }} *</label>
-                                <input type="text" name="name" class="form-control" required placeholder="تيشيرت بولو قطني">
+                                <input type="text" name="name" id="vf_name" class="form-control" required placeholder="تيشيرت بولو قطني">
                             </div>
                             <div class="col-md-4">
                                 <label class="input-label">{{ translate('معرف التبويب (إنجليزي)') }} *</label>
-                                <input type="text" name="category_key" class="form-control" required value="shirts" placeholder="shirts / jackets">
+                                <input type="text" name="category_key" id="vf_category_key" class="form-control" required value="shirts" placeholder="shirts / jackets">
                             </div>
                             <div class="col-md-4">
                                 <label class="input-label">{{ translate('اسم التبويب') }} *</label>
-                                <input type="text" name="category_name" class="form-control" required value="قمصان">
+                                <input type="text" name="category_name" id="vf_category_name" class="form-control" required value="قمصان">
                             </div>
                             <div class="col-md-4">
                                 <label class="input-label">{{ translate('المقاسات الافتراضية') }}</label>
-                                <input type="text" name="sizes" class="form-control" value="S,M,L,XL,XXL">
+                                <input type="text" name="sizes" id="vf_sizes" class="form-control" value="S,M,L,XL,XXL">
                             </div>
                             <div class="col-12">
                                 <div class="border rounded p-3 bg-light">
@@ -309,11 +351,35 @@
                                     <div class="row g-2 mt-2">
                                         <div class="col-md-4"><input type="text" id="vf_c_name" class="form-control" placeholder="اسم اللون (أبيض)"></div>
                                         <div class="col-md-2"><input type="color" id="vf_c_swatch" class="form-control form-control-color" value="#111111"></div>
-                                        <div class="col-md-3"><label class="small">صورة القطعة</label><input type="file" id="vf_c_garment" accept="image/png,image/webp" class="form-control form-control-sm"></div>
-                                        <div class="col-md-3"><label class="small">صورة المودل (1360px)</label><input type="file" id="vf_c_model" accept="image/png,image/webp" class="form-control form-control-sm"></div>
+                                        <div class="col-md-3">
+                                            <label class="small">صورة القطعة</label>
+                                            <input type="file" id="vf_c_garment" accept="image/png,image/webp" class="form-control form-control-sm" onchange="previewVfFile(this, 'vf_garment_preview', 'vf_garment_empty')">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="small">صورة المودل (1360px)</label>
+                                            <input type="file" id="vf_c_model" accept="image/png,image/webp" class="form-control form-control-sm" onchange="previewVfFile(this, 'vf_model_preview', 'vf_model_empty')">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="border rounded p-2 bg-white text-center">
+                                                <div class="small text-muted mb-1">{{ translate('معاينة صورة القطعة المختارة') }}</div>
+                                                <div class="sf-checker rounded d-flex align-items-center justify-content-center mx-auto" style="height:120px;">
+                                                    <img id="vf_garment_preview" src="" alt="" class="d-none" style="max-height:112px;max-width:100%;object-fit:contain;">
+                                                    <span id="vf_garment_empty" class="small text-muted">{{ translate('لم يتم اختيار صورة') }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="border rounded p-2 bg-white text-center">
+                                                <div class="small text-muted mb-1">{{ translate('معاينة صورة المودل المختارة') }}</div>
+                                                <div class="sf-checker rounded d-flex align-items-center justify-content-center mx-auto" style="height:120px;">
+                                                    <img id="vf_model_preview" src="" alt="" class="d-none" style="max-height:112px;max-width:100%;object-fit:contain;">
+                                                    <span id="vf_model_empty" class="small text-muted">{{ translate('لم يتم اختيار صورة') }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                         <div class="col-12"><button type="button" class="btn btn-sm btn-outline-primary" onclick="addVfColor()">+ {{ translate('معالجة ورفع اللون') }}</button></div>
                                     </div>
-                                    <div id="vfColorsList" class="mt-2 d-flex flex-wrap gap-2"></div>
+                                    <div id="vfColorsList" class="mt-3 d-flex flex-wrap gap-2"></div>
                                     <div class="sf-example-box d-flex flex-wrap align-items-center gap-3 mt-3">
                                         <div class="d-flex align-items-center gap-2">
                                             <img src="{{ asset('public/assets/admin/img/storefront-examples/vf-garment-example.webp') }}"
@@ -333,7 +399,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="mt-3 text-end"><button type="submit" class="btn btn-primary">{{ translate('حفظ القطعة') }}</button></div>
+                        <div class="mt-3 d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn btn-secondary" onclick="resetVfForm()">{{ translate('جديد') }}</button>
+                            <button type="submit" class="btn btn-primary">{{ translate('حفظ القطعة') }}</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -349,21 +418,46 @@
                 <div class="card-header"><h5 class="card-title mb-0">{{ translate('الأحذية على الرفوف (حد أقصى 10)') }}</h5></div>
                 <div class="card-body p-0">
                     <table class="table table-align-middle mb-0">
-                        <thead class="thead-light"><tr><th>{{ translate('الحذاء') }}</th><th>{{ translate('المرتبط') }}</th><th></th></tr></thead>
+                        <thead class="thead-light"><tr><th>{{ translate('الحذاء') }}</th><th>{{ translate('الصور') }}</th><th>{{ translate('المرتبط') }}</th><th></th></tr></thead>
                         <tbody>
                         @forelse($shoes as $sh)
+                            @php
+                                $shColorsArr = is_array($sh->colors) ? $sh->colors : [];
+                                $shResolvedColors = array_map(function($sc) {
+                                    $sc['image_url'] = \App\Model\StorefrontShoeShelfItem::resolveMediaUrl($sc['image_path'] ?? '', 'storefront/shoes');
+                                    return $sc;
+                                }, $shColorsArr);
+                                $shEditPayload = [
+                                    'id' => $sh->id,
+                                    'product_id' => $sh->product_id,
+                                    'name' => $sh->name,
+                                    'description' => $sh->description,
+                                    'sizes' => is_array($sh->sizes) ? implode(',', $sh->sizes) : '39,40,41,42,43,44',
+                                    'colors' => $shResolvedColors,
+                                ];
+                            @endphp
                             <tr>
                                 <td><strong>{{ $sh->name }}</strong></td>
-                                <td>{{ $sh->product ? '#'.$sh->product_id : 'تجريبي' }}</td>
                                 <td>
-                                    <form action="{{ route('admin.storefront.shoes.delete', $sh->id) }}" method="POST" onsubmit="return confirm('حذف؟')">
+                                    <div class="d-flex flex-wrap align-items-center gap-1">
+                                        @foreach($shResolvedColors as $sc)
+                                            @if(!empty($sc['image_url']))
+                                                <img src="{{ $sc['image_url'] }}" alt="{{ $sc['name'] ?? '' }}" title="{{ $sc['name'] ?? '' }}" class="sf-checker rounded border" style="width:46px;height:28px;object-fit:contain;cursor:pointer;" onclick="openExampleModal(this.src, '{{ e($sh->name . ' - ' . ($sc['name'] ?? '')) }}', '')">
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                </td>
+                                <td>{{ $sh->product ? '#'.$sh->product_id : 'تجريبي' }}</td>
+                                <td class="text-nowrap">
+                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick='editShoe(@json($shEditPayload))'>{{ translate('تعديل') }}</button>
+                                    <form action="{{ route('admin.storefront.shoes.delete', $sh->id) }}" method="POST" class="d-inline" onsubmit="return confirm('حذف؟')">
                                         @csrf @method('DELETE')
                                         <button class="btn btn-sm btn-outline-danger"><i class="tio-delete"></i></button>
                                     </form>
                                 </td>
                             </tr>
                         @empty
-                            <tr><td colspan="3" class="text-center py-4 text-muted">{{ translate('لا توجد أحذية مضافة بعد') }}</td></tr>
+                            <tr><td colspan="4" class="text-center py-4 text-muted">{{ translate('لا توجد أحذية مضافة بعد') }}</td></tr>
                         @endforelse
                         </tbody>
                     </table>
@@ -374,13 +468,14 @@
             <div class="card">
                 <div class="card-header"><h5 class="card-title mb-0">{{ translate('إضافة حذاء للرف المضيء (معايرة 1400×800 تلقائية)') }}</h5></div>
                 <div class="card-body">
-                    <form action="{{ route('admin.storefront.shoes.save') }}" method="POST">
+                    <form action="{{ route('admin.storefront.shoes.save') }}" method="POST" id="shForm">
                         @csrf
+                        <input type="hidden" name="id" id="sh_id">
                         <input type="hidden" name="colors_json" id="sh_colors_json" value="[]">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="input-label">{{ translate('ربط بمنتج من الكتالوج') }}</label>
-                                <select name="product_id" class="form-control js-select2-custom">
+                                <select name="product_id" id="sh_product_id" class="form-control js-select2-custom">
                                     <option value="">-- {{ translate('اختياري') }} --</option>
                                     @foreach($products as $p)
                                         <option value="{{ $p->id }}">#{{ $p->id }} — {{ $p->name }}</option>
@@ -389,15 +484,15 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="input-label">{{ translate('اسم الحذاء') }} *</label>
-                                <input type="text" name="name" class="form-control" required>
+                                <input type="text" name="name" id="sh_name" class="form-control" required>
                             </div>
                             <div class="col-md-8">
                                 <label class="input-label">{{ translate('الوصف المختصر') }}</label>
-                                <input type="text" name="description" class="form-control">
+                                <input type="text" name="description" id="sh_description" class="form-control">
                             </div>
                             <div class="col-md-4">
                                 <label class="input-label">{{ translate('المقاسات (أوروبي)') }}</label>
-                                <input type="text" name="sizes" class="form-control" value="39,40,41,42,43,44">
+                                <input type="text" name="sizes" id="sh_sizes" class="form-control" value="39,40,41,42,43,44">
                             </div>
                             <div class="col-12">
                                 <div class="border rounded p-3 bg-light">
@@ -405,10 +500,19 @@
                                     <div class="row g-2 mt-2">
                                         <div class="col-md-4"><input type="text" id="sh_c_name" class="form-control" placeholder="أسود / بني"></div>
                                         <div class="col-md-2"><input type="color" id="sh_c_swatch" class="form-control form-control-color" value="#222222"></div>
-                                        <div class="col-md-4"><input type="file" id="sh_c_file" accept="image/png,image/webp" class="form-control form-control-sm"></div>
+                                        <div class="col-md-4"><input type="file" id="sh_c_file" accept="image/png,image/webp" class="form-control form-control-sm" onchange="previewVfFile(this, 'sh_file_preview', 'sh_file_empty')"></div>
                                         <div class="col-md-2"><button type="button" class="btn btn-sm btn-outline-primary w-100" onclick="addShoeColor()">+ {{ translate('رفع') }}</button></div>
+                                        <div class="col-12">
+                                            <div class="border rounded p-2 bg-white text-center">
+                                                <div class="small text-muted mb-1">{{ translate('معاينة صورة الحذاء المختارة') }}</div>
+                                                <div class="sf-checker rounded d-flex align-items-center justify-content-center mx-auto" style="height:105px;">
+                                                    <img id="sh_file_preview" src="" alt="" class="d-none" style="max-height:96px;max-width:100%;object-fit:contain;">
+                                                    <span id="sh_file_empty" class="small text-muted">{{ translate('لم يتم اختيار صورة') }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div id="shColorsList" class="mt-2 d-flex flex-wrap gap-2"></div>
+                                    <div id="shColorsList" class="mt-3 d-flex flex-wrap gap-2"></div>
                                     <div class="sf-example-box d-flex align-items-center gap-3 mt-3">
                                         <img src="{{ asset('public/assets/admin/img/storefront-examples/shoe-example.webp') }}"
                                              alt="مثال صورة الحذاء"
@@ -422,7 +526,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="mt-3 text-end"><button type="submit" class="btn btn-primary">{{ translate('حفظ الحذاء') }}</button></div>
+                        <div class="mt-3 d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn btn-secondary" onclick="resetShoeForm()">{{ translate('جديد') }}</button>
+                            <button type="submit" class="btn btn-primary">{{ translate('حفظ الحذاء') }}</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -582,6 +689,137 @@
         </div>
     </div>
     @endif
+
+    {{-- TAB 6: TESTIMONIALS --}}
+    @if($tab === 'testimonials')
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <div class="card mb-3">
+                <div class="card-header"><h5 class="card-title mb-0">{{ translate('إعدادات عنوان قسم آراء العملاء') }}</h5></div>
+                <div class="card-body">
+                    <form action="{{ route('admin.storefront.testimonials.settings') }}" method="POST">
+                        @csrf
+                        <div class="row g-2 align-items-end">
+                            <div class="col-md-5">
+                                <label class="input-label">{{ translate('عنوان القسم') }} *</label>
+                                <input type="text" name="testimonials_title" class="form-control" required value="{{ $closingSettings['testimonials_title'] ?? 'قالوا عن بن هويش' }}">
+                            </div>
+                            <div class="col-md-5">
+                                <label class="input-label">{{ translate('الوصف الفرعي') }}</label>
+                                <input type="text" name="testimonials_subtitle" class="form-control" value="{{ $closingSettings['testimonials_subtitle'] ?? 'آراء عملائنا الموثقة' }}">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-outline-primary w-100">{{ translate('حفظ') }}</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0">{{ translate('آراء العملاء المضافة') }}</h5></div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-align-middle mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>{{ translate('العميل') }}</th>
+                                    <th>{{ translate('الرأي') }}</th>
+                                    <th>{{ translate('التقييم') }}</th>
+                                    <th>{{ translate('الحالة') }}</th>
+                                    <th class="text-center">{{ translate('إجراء') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @forelse($testimonials ?? [] as $tm)
+                                <tr>
+                                    <td>
+                                        <strong>{{ $tm['name'] ?? '' }}</strong><br>
+                                        <small class="text-muted">{{ $tm['source'] ?? '' }}</small>
+                                        @if(!empty($tm['verified']))
+                                            <span class="badge badge-soft-success">{{ translate('موثق') }}</span>
+                                        @endif
+                                    </td>
+                                    <td style="max-width:260px;"><small>{{ \Illuminate\Support\Str::limit($tm['quote'] ?? '', 90) }}</small></td>
+                                    <td><span class="badge badge-soft-warning">{{ (int)($tm['rating'] ?? 5) }} ★</span></td>
+                                    <td>
+                                        <span class="badge {{ !empty($tm['visible']) ? 'badge-soft-success' : 'badge-soft-secondary' }}">
+                                            {{ !empty($tm['visible']) ? translate('ظاهر') : translate('مخفي') }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center text-nowrap">
+                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick='editTestimonial(@json($tm))'>{{ translate('تعديل') }}</button>
+                                        <form action="{{ route('admin.storefront.testimonials.delete', $tm['id']) }}" method="POST" class="d-inline" onsubmit="return confirm('حذف هذا الرأي؟')">
+                                            @csrf @method('DELETE')
+                                            <button class="btn btn-sm btn-outline-danger"><i class="tio-delete"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="5" class="text-center py-4 text-muted">{{ translate('لم تتم إضافة آراء مخصصة بعد — يعرض المتجر تقييمات المنتجات المفعلة تلقائيًا عند توفرها.') }}</td></tr>
+                            @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0">{{ translate('إضافة / تعديل رأي عميل') }}</h5></div>
+                <div class="card-body">
+                    <form action="{{ route('admin.storefront.testimonials.save') }}" method="POST" id="tmForm">
+                        @csrf
+                        <input type="hidden" name="id" id="tm_id">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="input-label">{{ translate('اسم العميل') }} *</label>
+                                <input type="text" name="name" id="tm_name" class="form-control" required placeholder="مثال: أبو محمد">
+                            </div>
+                            <div class="col-md-7">
+                                <label class="input-label">{{ translate('مصدر التقييم') }}</label>
+                                <input type="text" name="source" id="tm_source" class="form-control" value="تقييم متجر بن هويش" placeholder="مثال: تقييم Google / واتساب">
+                            </div>
+                            <div class="col-md-5">
+                                <label class="input-label">{{ translate('التقييم (نجوم)') }}</label>
+                                <select name="rating" id="tm_rating" class="form-control">
+                                    <option value="5" selected>5 نجوم</option>
+                                    <option value="4">4 نجوم</option>
+                                    <option value="3">3 نجوم</option>
+                                    <option value="2">2 نجوم</option>
+                                    <option value="1">1 نجمة</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="input-label">{{ translate('نص رأي العميل') }} *</label>
+                                <textarea name="quote" id="tm_quote" rows="4" class="form-control" required placeholder="اكتب رأي العميل هنا..."></textarea>
+                            </div>
+                            <div class="col-6">
+                                <label class="toggle-switch d-flex align-items-center">
+                                    <input type="checkbox" name="verified" id="tm_verified" value="1" class="toggle-switch-input" checked>
+                                    <span class="toggle-switch-label"><span class="toggle-switch-indicator"></span></span>
+                                    <span class="ms-2">{{ translate('تقييم موثق') }}</span>
+                                </label>
+                            </div>
+                            <div class="col-6">
+                                <label class="toggle-switch d-flex align-items-center">
+                                    <input type="checkbox" name="visible" id="tm_visible" value="1" class="toggle-switch-input" checked>
+                                    <span class="toggle-switch-label"><span class="toggle-switch-indicator"></span></span>
+                                    <span class="ms-2">{{ translate('ظاهر في الموقع') }}</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mt-4 d-flex gap-2 justify-content-end">
+                            <button type="button" class="btn btn-secondary" onclick="resetTestimonialForm()">{{ translate('جديد') }}</button>
+                            <button type="submit" class="btn btn-primary">{{ translate('حفظ الرأي') }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 @endsection
 
@@ -731,10 +969,88 @@ function resetLookForm() {
 
 /* --- VirtualFit Cutout Processor --- */
 let vfColors = [];
+function editVirtualFit(vf) {
+    document.getElementById('vf_id').value = vf.id || '';
+    const $prodSelect = $('#vf_product_id');
+    if ($prodSelect.length) {
+        $prodSelect.val(vf.product_id ? String(vf.product_id) : '').trigger('change');
+    }
+    document.getElementById('vf_name').value = vf.name || '';
+    document.getElementById('vf_category_key').value = vf.category_key || 'shirts';
+    document.getElementById('vf_category_name').value = vf.category_name || 'قمصان';
+    document.getElementById('vf_sizes').value = vf.sizes || 'S,M,L,XL,XXL';
+    vfColors = Array.isArray(vf.colors) ? vf.colors.map((c, i) => ({
+        id: c.id || ('c' + (i + 1)),
+        name: c.name || '',
+        swatch: c.swatch || '#111111',
+        garment_path: c.garment_path || '',
+        model_path: c.model_path || '',
+        garment_url: c.garment_url || '',
+        model_url: c.model_url || ''
+    })) : [];
+    renderVfColorsList();
+    document.getElementById('vfForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function resetVfForm() {
+    document.getElementById('vfForm')?.reset();
+    document.getElementById('vf_id').value = '';
+    const $prodSelect = $('#vf_product_id');
+    if ($prodSelect.length) {
+        $prodSelect.val('').trigger('change');
+    }
+    vfColors = [];
+    renderVfColorsList();
+    previewVfFile(document.getElementById('vf_c_garment'), 'vf_garment_preview', 'vf_garment_empty');
+    previewVfFile(document.getElementById('vf_c_model'), 'vf_model_preview', 'vf_model_empty');
+}
+function previewVfFile(input, previewId, emptyId) {
+    const img = document.getElementById(previewId);
+    const empty = document.getElementById(emptyId);
+    const file = input.files?.[0];
+    if (!img || !empty) return;
+    if (file) {
+        img.src = URL.createObjectURL(file);
+        img.classList.remove('d-none');
+        empty.classList.add('d-none');
+    } else {
+        img.src = '';
+        img.classList.add('d-none');
+        empty.classList.remove('d-none');
+    }
+}
+function renderVfColorsList() {
+    document.getElementById('vf_colors_json').value = JSON.stringify(vfColors.map(({ garment_url, model_url, ...rest }) => rest));
+    document.getElementById('vfColorsList').innerHTML = vfColors.map((c, idx) => `
+        <div class="border rounded p-2 bg-white d-flex flex-column gap-2" style="min-width:170px;">
+            <div class="d-flex align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-1">
+                    <span class="rounded-circle d-inline-block border" style="width:14px;height:14px;background:${c.swatch};"></span>
+                    <strong class="small">${c.name}</strong>
+                </div>
+                <button type="button" class="btn btn-xs btn-outline-danger py-0 px-1" onclick="vfColors.splice(${idx},1);renderVfColorsList()" title="حذف">×</button>
+            </div>
+            <div class="d-flex gap-2">
+                <div class="text-center flex-fill">
+                    <div class="sf-checker rounded p-1" style="height:82px;display:flex;align-items:center;justify-content:center;">
+                        <img src="${c.garment_url}" alt="القطعة" style="max-height:74px;max-width:100%;object-fit:contain;cursor:pointer;" onclick="openExampleModal(this.src, '${c.name} - صورة القطعة', '')">
+                    </div>
+                    <small class="text-muted d-block mt-1" style="font-size:10px;">القطعة</small>
+                </div>
+                <div class="text-center flex-fill">
+                    <div class="sf-checker rounded p-1" style="height:82px;display:flex;align-items:center;justify-content:center;">
+                        <img src="${c.model_url}" alt="المودل" style="max-height:74px;max-width:100%;object-fit:contain;cursor:pointer;" onclick="openExampleModal(this.src, '${c.name} - صورة المودل', '')">
+                    </div>
+                    <small class="text-muted d-block mt-1" style="font-size:10px;">المودل</small>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
 async function processCutoutCanvas(file, kind) {
     const bmp = await createImageBitmap(file);
-    const ratio = bmp.width / bmp.height;
-    if (kind === 'model' && (ratio < 0.3 || ratio > 0.5)) throw new Error('صورة المودل يجب أن تكون طولية (640×1360 أو 524×1360)');
+    if (kind === 'model' && bmp.width >= bmp.height) {
+        throw new Error('صورة المودل يجب أن تكون طولية (الارتفاع أكبر من العرض، مثل 640×1360 أو 524×1360)');
+    }
     const limit = kind === 'model' ? 1360 / bmp.height : 800 / Math.max(bmp.width, bmp.height);
     const scale = Math.min(1, limit);
     const out = document.createElement('canvas');
@@ -744,30 +1060,127 @@ async function processCutoutCanvas(file, kind) {
     return await new Promise(r => out.toBlob(r, 'image/webp', 0.9));
 }
 async function addVfColor() {
-    const name = document.getElementById('vf_c_name').value.trim();
+    const nameInput = document.getElementById('vf_c_name');
+    const name = (nameInput.value || '').trim();
     const swatch = document.getElementById('vf_c_swatch').value;
-    const gFile = document.getElementById('vf_c_garment').files?.[0];
-    const mFile = document.getElementById('vf_c_model').files?.[0];
-    if (!name || !gFile || !mFile) return toastr.error('أدخل اسم اللون وارفع الصورتين');
+    const gInput = document.getElementById('vf_c_garment');
+    const mInput = document.getElementById('vf_c_model');
+    const gFile = gInput.files?.[0];
+    const mFile = mInput.files?.[0];
+    if (!name || !gFile || !mFile) {
+        toastr.error('أدخل اسم اللون وارفع صورتي القطعة والمودل');
+        return false;
+    }
     try {
         const gBlob = await processCutoutCanvas(gFile, 'garment');
         const mBlob = await processCutoutCanvas(mFile, 'model');
         const gUp = await uploadBlob(gBlob, 'virtual-fit', 'garment.webp');
         const mUp = await uploadBlob(mBlob, 'virtual-fit', 'model.webp');
-        vfColors.push({ id: 'c' + (vfColors.length + 1), name, swatch, garment_path: gUp.path, model_path: mUp.path });
-        document.getElementById('vf_colors_json').value = JSON.stringify(vfColors);
-        document.getElementById('vfColorsList').innerHTML = vfColors.map(c => `<span class="badge badge-soft-dark p-2">${c.name}</span>`).join('');
+        vfColors.push({ id: 'c' + (vfColors.length + 1), name, swatch, garment_path: gUp.path, model_path: mUp.path, garment_url: gUp.url, model_url: mUp.url });
+        renderVfColorsList();
+        nameInput.value = '';
+        gInput.value = '';
+        mInput.value = '';
+        previewVfFile(gInput, 'vf_garment_preview', 'vf_garment_empty');
+        previewVfFile(mInput, 'vf_model_preview', 'vf_model_empty');
         toastr.success('تم رفع لون المودل بنجاح');
-    } catch (e) { toastr.error(e.message); }
+        return true;
+    } catch (e) {
+        toastr.error(e.message);
+        return false;
+    }
 }
+
+document.getElementById('vfForm')?.addEventListener('submit', async function (e) {
+    const gFile = document.getElementById('vf_c_garment')?.files?.[0];
+    const mFile = document.getElementById('vf_c_model')?.files?.[0];
+    const hasPendingColor = Boolean(gFile || mFile);
+
+    if (hasPendingColor) {
+        e.preventDefault();
+        const form = this;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const origText = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'جاري معالجة ورفع اللون...';
+        }
+        const ok = await addVfColor();
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origText;
+        }
+        if (ok && vfColors.length > 0) {
+            form.submit();
+        }
+        return;
+    }
+
+    if (vfColors.length === 0) {
+        e.preventDefault();
+        toastr.error('يجب إضافة لون واحد على الأقل مع صورتي القطعة والمودل.');
+    }
+});
 
 /* --- ShoeShelf 1400x800 Processor --- */
 let shColors = [];
+function renderShColorsList() {
+    document.getElementById('sh_colors_json').value = JSON.stringify(shColors.map(({ image_url, ...rest }) => rest));
+    document.getElementById('shColorsList').innerHTML = shColors.map((c, idx) => `
+        <div class="border rounded p-2 bg-white d-flex flex-column gap-2" style="min-width:150px;">
+            <div class="d-flex align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-1">
+                    <span class="rounded-circle d-inline-block border" style="width:14px;height:14px;background:${c.swatch};"></span>
+                    <strong class="small">${c.name}</strong>
+                </div>
+                <button type="button" class="btn btn-xs btn-outline-danger py-0 px-1" onclick="shColors.splice(${idx},1);renderShColorsList()" title="حذف">×</button>
+            </div>
+            <div class="sf-checker rounded p-1 d-flex align-items-center justify-content-center" style="height:72px;">
+                <img src="${c.image_url}" alt="${c.name}" style="max-height:64px;max-width:100%;object-fit:contain;cursor:pointer;" onclick="openExampleModal(this.src, '${c.name}', '')">
+            </div>
+        </div>
+    `).join('');
+}
+function editShoe(sh) {
+    document.getElementById('sh_id').value = sh.id || '';
+    const $prodSelect = $('#sh_product_id');
+    if ($prodSelect.length) {
+        $prodSelect.val(sh.product_id ? String(sh.product_id) : '').trigger('change');
+    }
+    document.getElementById('sh_name').value = sh.name || '';
+    document.getElementById('sh_description').value = sh.description || '';
+    document.getElementById('sh_sizes').value = sh.sizes || '39,40,41,42,43,44';
+    shColors = Array.isArray(sh.colors) ? sh.colors.map((c, i) => ({
+        id: c.id || ('c' + (i + 1)),
+        name: c.name || '',
+        swatch: c.swatch || '#222222',
+        image_path: c.image_path || '',
+        image_url: c.image_url || ''
+    })) : [];
+    renderShColorsList();
+    document.getElementById('shForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function resetShoeForm() {
+    document.getElementById('shForm')?.reset();
+    document.getElementById('sh_id').value = '';
+    const $prodSelect = $('#sh_product_id');
+    if ($prodSelect.length) {
+        $prodSelect.val('').trigger('change');
+    }
+    shColors = [];
+    renderShColorsList();
+    previewVfFile(document.getElementById('sh_c_file'), 'sh_file_preview', 'sh_file_empty');
+}
 async function addShoeColor() {
-    const name = document.getElementById('sh_c_name').value.trim();
+    const nameInput = document.getElementById('sh_c_name');
+    const name = (nameInput.value || '').trim();
     const swatch = document.getElementById('sh_c_swatch').value;
-    const file = document.getElementById('sh_c_file').files?.[0];
-    if (!name || !file) return toastr.error('أدخل اسم اللون وارفع صورة الحذاء');
+    const fileInput = document.getElementById('sh_c_file');
+    const file = fileInput.files?.[0];
+    if (!name || !file) {
+        toastr.error('أدخل اسم اللون وارفع صورة الحذاء');
+        return false;
+    }
     try {
         const bmp = await createImageBitmap(file);
         const src = document.createElement('canvas');
@@ -789,11 +1202,62 @@ async function addShoeColor() {
         out.getContext('2d').drawImage(src, x0, y0, bw, bh, Math.round((1400 - dw) / 2), 760 - dh, dw, dh);
         const blob = await new Promise(r => out.toBlob(r, 'image/webp', 0.9));
         const up = await uploadBlob(blob, 'shoes', 'shoe.webp');
-        shColors.push({ id: 'c' + (shColors.length + 1), name, swatch, image_path: up.path });
-        document.getElementById('sh_colors_json').value = JSON.stringify(shColors);
-        document.getElementById('shColorsList').innerHTML = shColors.map(c => `<span class="badge badge-soft-dark p-2">${c.name}</span>`).join('');
+        shColors.push({ id: 'c' + (shColors.length + 1), name, swatch, image_path: up.path, image_url: up.url });
+        renderShColorsList();
+        nameInput.value = '';
+        fileInput.value = '';
+        previewVfFile(fileInput, 'sh_file_preview', 'sh_file_empty');
         toastr.success('تمت معايرة الحذاء (1400×800) ورفعه');
-    } catch (e) { toastr.error(e.message); }
+        return true;
+    } catch (e) {
+        toastr.error(e.message);
+        return false;
+    }
+}
+document.getElementById('shForm')?.addEventListener('submit', async function (e) {
+    const file = document.getElementById('sh_c_file')?.files?.[0];
+    if (file) {
+        e.preventDefault();
+        const form = this;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const origText = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'جاري معالجة ورفع الصورة...';
+        }
+        const ok = await addShoeColor();
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = origText;
+        }
+        if (ok && shColors.length > 0) {
+            form.submit();
+        }
+        return;
+    }
+    if (shColors.length === 0) {
+        e.preventDefault();
+        toastr.error('يجب رفع صورة جانبية شفافة واحدة على الأقل للحذاء.');
+    }
+});
+
+function editTestimonial(tm) {
+    document.getElementById('tm_id').value = tm.id || '';
+    document.getElementById('tm_name').value = tm.name || '';
+    document.getElementById('tm_source').value = tm.source || 'تقييم متجر بن هويش';
+    document.getElementById('tm_rating').value = String(tm.rating || 5);
+    document.getElementById('tm_quote').value = tm.quote || '';
+    document.getElementById('tm_verified').checked = Boolean(tm.verified);
+    document.getElementById('tm_visible').checked = Boolean(tm.visible);
+    document.getElementById('tmForm')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetTestimonialForm() {
+    document.getElementById('tmForm')?.reset();
+    document.getElementById('tm_id').value = '';
+    document.getElementById('tm_rating').value = '5';
+    document.getElementById('tm_verified').checked = true;
+    document.getElementById('tm_visible').checked = true;
 }
 
 function openExampleModal(src, title, desc) {

@@ -1,0 +1,51 @@
+name: Deploy Storefront (Next.js)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'storefront/**'
+      - '.github/workflows/deploy-storefront.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy Next.js Storefront
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Add VPS host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -p "${{ secrets.VPS_PORT || 22 }}" -H "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync storefront files to VPS
+        run: |
+          rsync -az --delete \
+            --exclude='.env.local' \
+            --exclude='.env.production' \
+            --exclude='.git' \
+            --exclude='node_modules/' \
+            --exclude='.next/' \
+            -e "ssh -p ${{ secrets.VPS_PORT || 22 }}" \
+            ./storefront/ "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/var/www/bin-huwesh/storefront/"
+
+      - name: Install, build & restart PM2
+        run: |
+          ssh -p "${{ secrets.VPS_PORT || 22 }}" "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" << 'EOF'
+            set -e
+            cd /var/www/bin-huwesh/storefront
+            npm ci --no-audit --no-fund
+            npm run build
+            pm2 restart bin-huwesh-storefront || pm2 start npm --name "bin-huwesh-storefront" -- start -- -p 3000
+            pm2 save
+          EOF

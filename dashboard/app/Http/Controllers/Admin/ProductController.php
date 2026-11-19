@@ -70,7 +70,7 @@ class ProductController extends Controller
 
         if ($request->has('color_names') && is_array($request->color_names)) {
             $colorVals = array_values(array_filter(array_map(function($v) {
-                return trim(str_replace(' ', '', (string)$v));
+                return trim(preg_replace('/\s+/', ' ', (string)$v));
             }, $request->color_names), fn($v) => $v !== ''));
             if (!empty($colorVals)) {
                 $options[] = array_values(array_unique($colorVals));
@@ -142,7 +142,7 @@ public function index(): View|Factory|Application
 {
     $categories = $this->category->where(['position' => 0])->pluck('name', 'id');
     $brands = $this->brand->active()->orderBy('name')->get();
-    $sellers = $this->seller->active()->orderBy('name')->get();
+    $sellers = Helpers::is_feature_active('multi_vendor') ? $this->seller->active()->orderBy('name')->get() : collect();
     $sizeCharts = SizeChart::active()->orderBy('name')->get();
 
     $aIStatus = \App\CentralLogics\Helpers::is_feature_active('ai_integration') && AISetting::first()?->status;
@@ -268,6 +268,7 @@ public function index(): View|Factory|Application
             'price' => 'required|numeric|min:0',
             'purchase_price' => 'nullable|numeric|min:0',
             'total_stock' => 'required|numeric|min:1',
+            'weight' => 'nullable|numeric|min:0',
         ], [
             'name.0.required' => 'Product name is required',
             'name.0.unique' => 'Product name has already been taken',
@@ -347,7 +348,7 @@ public function index(): View|Factory|Application
 
         if ($request->has('color_names') && is_array($request->color_names)) {
             $colorVals = array_values(array_filter(array_map(function($v) {
-                return trim(str_replace(' ', '', (string)$v));
+                return trim(preg_replace('/\s+/', ' ', (string)$v));
             }, $request->color_names), fn($v) => $v !== ''));
             if (!empty($colorVals)) {
                 $choiceOptions[] = [
@@ -377,7 +378,7 @@ public function index(): View|Factory|Application
 
         if ($request->has('color_names') && is_array($request->color_names)) {
             $colorVals = array_values(array_filter(array_map(function($v) {
-                return trim(str_replace(' ', '', (string)$v));
+                return trim(preg_replace('/\s+/', ' ', (string)$v));
             }, $request->color_names), fn($v) => $v !== ''));
             if (!empty($colorVals)) {
                 $options[] = array_values(array_unique($colorVals));
@@ -404,17 +405,19 @@ public function index(): View|Factory|Application
             foreach ($combinations as $key => $combination) {
                 $str = '';
                 foreach ($combination as $k => $item) {
+                    $normalizedItem = trim(preg_replace('/\s+/', ' ', (string)$item));
                     if ($k > 0) {
-                        $str .= '-' . str_replace(' ', '', $item);
+                        $str .= '-' . $normalizedItem;
                     } else {
-                        $str .= str_replace(' ', '', $item);
+                        $str .= $normalizedItem;
                     }
                 }
+                $reqKey = str_replace(['.', ' '], '_', $str);
                 $item = [];
                 $item['type'] = $str;
-                $item['price'] = abs($request['price_' . str_replace('.', '_', $str)]);
-                $item['stock'] = abs($request['stock_' . str_replace('.', '_', $str)]);
-                $varPurchaseKey = 'purchase_price_' . str_replace('.', '_', $str);
+                $item['price'] = abs($request['price_' . $reqKey]);
+                $item['stock'] = abs($request['stock_' . $reqKey]);
+                $varPurchaseKey = 'purchase_price_' . $reqKey;
                 $item['purchase_price'] = isset($request[$varPurchaseKey]) && is_numeric($request[$varPurchaseKey])
                     ? abs((float)$request[$varPurchaseKey])
                     : (isset($request['purchase_price']) && is_numeric($request['purchase_price']) ? abs((float)$request['purchase_price']) : 0.0);
@@ -441,11 +444,12 @@ public function index(): View|Factory|Application
         $product = $this->product;
         $product->name = $request->name[array_search('en', $request->lang)];
         $product->brand_id = ($request->filled('brand_id') && is_numeric($request->brand_id)) ? (int)$request->brand_id : null;
-        $product->seller_id = ($request->filled('seller_id') && is_numeric($request->seller_id)) ? (int)$request->seller_id : null;
+        $product->seller_id = Helpers::is_feature_active('multi_vendor') ? (($request->filled('seller_id') && is_numeric($request->seller_id)) ? (int)$request->seller_id : null) : null;
         $product->category_ids = json_encode($category);
         $product->description = $request->description[array_search('en', $request->lang)];
         $product->choice_options = json_encode($choiceOptions);
         $product->variations = json_encode($variations);
+        $product->specifications = $this->extractSpecifications($request);
         $product->price = $request->price;
         $product->unit = $request->unit;
         $product->image = $imageData;
@@ -555,9 +559,8 @@ public function index(): View|Factory|Application
     {
         $product = $this->product->withoutGlobalScopes()->with('translations')->find($id);
         $productCategory = json_decode($product->category_ids);
-            $brands = $this->brand->active()->orderBy('name')->get();  // أضف هذا
-$sellers = $this->seller->active()->orderBy('name')->get();
-$brands = $this->brand->active()->orderBy('name')->get();
+            $brands = $this->brand->active()->orderBy('name')->get();
+            $sellers = Helpers::is_feature_active('multi_vendor') ? $this->seller->active()->orderBy('name')->get() : collect();
         $categories = $this->category->where(['parent_id' => 0])->get();
         $sizeCharts = SizeChart::active()->orderBy('name')->get();
         $aIStatus = \App\CentralLogics\Helpers::is_feature_active('ai_integration') && AISetting::first()?->status;
@@ -588,6 +591,7 @@ $brands = $this->brand->active()->orderBy('name')->get();
             'price' => 'required|numeric|min:0',
             'purchase_price' => 'nullable|numeric|min:0',
             'total_stock' => 'required|numeric|min:1',
+            'weight' => 'nullable|numeric|min:0',
         ], [
             'name.0.required' => 'Product name is required',
             'images.required' => 'Product image is required',
@@ -644,7 +648,7 @@ $brands = $this->brand->active()->orderBy('name')->get();
 
         $product->name = $request->name[array_search('en', $request->lang)];
         $product->brand_id = ($request->filled('brand_id') && is_numeric($request->brand_id)) ? (int)$request->brand_id : null;
-        $product->seller_id = ($request->filled('seller_id') && is_numeric($request->seller_id)) ? (int)$request->seller_id : null;
+        $product->seller_id = Helpers::is_feature_active('multi_vendor') ? (($request->filled('seller_id') && is_numeric($request->seller_id)) ? (int)$request->seller_id : null) : null;
 
         $category = [];
         if ($request->category_id != null) {
@@ -670,7 +674,7 @@ $brands = $this->brand->active()->orderBy('name')->get();
 
         if ($request->has('color_names') && is_array($request->color_names)) {
             $colorVals = array_values(array_filter(array_map(function($v) {
-                return trim(str_replace(' ', '', (string)$v));
+                return trim(preg_replace('/\s+/', ' ', (string)$v));
             }, $request->color_names), fn($v) => $v !== ''));
             if (!empty($colorVals)) {
                 $choiceOptions[] = [
@@ -700,7 +704,7 @@ $brands = $this->brand->active()->orderBy('name')->get();
 
         if ($request->has('color_names') && is_array($request->color_names)) {
             $colorVals = array_values(array_filter(array_map(function($v) {
-                return trim(str_replace(' ', '', (string)$v));
+                return trim(preg_replace('/\s+/', ' ', (string)$v));
             }, $request->color_names), fn($v) => $v !== ''));
             if (!empty($colorVals)) {
                 $options[] = array_values(array_unique($colorVals));
@@ -727,17 +731,19 @@ $brands = $this->brand->active()->orderBy('name')->get();
             foreach ($combinations as $key => $combination) {
                 $str = '';
                 foreach ($combination as $k => $item) {
+                    $normalizedItem = trim(preg_replace('/\s+/', ' ', (string)$item));
                     if ($k > 0) {
-                        $str .= '-' . str_replace(' ', '', $item);
+                        $str .= '-' . $normalizedItem;
                     } else {
-                        $str .= str_replace(' ', '', $item);
+                        $str .= $normalizedItem;
                     }
                 }
+                $reqKey = str_replace(['.', ' '], '_', $str);
                 $item = [];
                 $item['type'] = $str;
-                $item['price'] = abs($request['price_' . str_replace('.', '_', $str)]);
-                $item['stock'] = abs($request['stock_' . str_replace('.', '_', $str)]);
-                $varPurchaseKey = 'purchase_price_' . str_replace('.', '_', $str);
+                $item['price'] = abs($request['price_' . $reqKey]);
+                $item['stock'] = abs($request['stock_' . $reqKey]);
+                $varPurchaseKey = 'purchase_price_' . $reqKey;
                 $item['purchase_price'] = isset($request[$varPurchaseKey]) && is_numeric($request[$varPurchaseKey])
                     ? abs((float)$request[$varPurchaseKey])
                     : (isset($request['purchase_price']) && is_numeric($request['purchase_price']) ? abs((float)$request['purchase_price']) : 0.0);
@@ -765,6 +771,7 @@ $brands = $this->brand->active()->orderBy('name')->get();
         $product->description = $request->description[array_search('en', $request->lang)];
         $product->choice_options = json_encode($choiceOptions);
         $product->variations = json_encode($variations);
+        $product->specifications = $this->extractSpecifications($request);
         $product->price = $request->price;
         $product->capacity = $request->capacity;
         $product->unit = $request->unit;
@@ -1173,8 +1180,9 @@ $brands = $this->brand->active()->orderBy('name')->get();
             foreach ($request['type'] as $key => $str) {
                 $item = [];
                 $item['type'] = $str;
-                $item['price'] = (abs($request['price_' . str_replace('.', '_', $str)]));
-                $item['stock'] = abs($request['qty_' . str_replace('.', '_', $str)]);
+                $reqKey = str_replace(['.', ' '], '_', $str);
+                $item['price'] = (abs($request['price_' . $reqKey]));
+                $item['stock'] = abs($request['qty_' . $reqKey]);
                 $matchedExisting = collect($existingVariations ?? [])->firstWhere('type', $str);
                 $item['purchase_price'] = isset($matchedExisting['purchase_price']) && is_numeric($matchedExisting['purchase_price'])
                     ? (float)$matchedExisting['purchase_price']
@@ -1192,5 +1200,137 @@ $brands = $this->brand->active()->orderBy('name')->get();
             Toastr::warning(translate('product_quantity_can_not_be_less_than_0_!'));
         }
         return back();
+    }
+
+    /**
+     * Unique patterns / pieces manager (e.g. Maawaz).
+     */
+    public function patterns($id): View
+    {
+        $product = $this->product->findOrFail($id);
+        return view('admin-views.product.patterns', compact('product'));
+    }
+
+    /**
+     * Bulk upload multiple unique pattern images at once.
+     */
+    public function patternsBulkUpload(Request $request, $id): RedirectResponse
+    {
+        $request->validate([
+            'pattern_images'   => 'required|array|min:1',
+            'pattern_images.*' => 'image|max:4096',
+            'default_stock'    => 'nullable|integer|min:1|max:50',
+            'prefix'           => 'nullable|string|max:20',
+        ]);
+
+        $product = $this->product->findOrFail($id);
+        $defaultStock = max(1, (int)($request->input('default_stock', 1)));
+        $prefix = trim((string)$request->input('prefix', 'نقشة')) ?: 'نقشة';
+
+        $patterns = is_string($product->patterns)
+            ? (json_decode($product->patterns, true) ?? [])
+            : ($product->patterns ?? []);
+
+        $nextIndex = count($patterns) + 1;
+        foreach ($request->file('pattern_images') as $file) {
+            $code = $prefix . '-' . str_pad((string)$nextIndex, 2, '0', STR_PAD_LEFT);
+            $typeKey = str_replace(' ', '', $code);
+            $imgName = Helpers::upload('product/', APPLICATION_IMAGE_FORMAT, $file);
+
+            $patterns[] = [
+                'name'  => $code,
+                'type'  => $typeKey,
+                'image' => $imgName,
+                'stock' => $defaultStock,
+            ];
+            $nextIndex++;
+        }
+
+        $product->variant_mode = 'unique_patterns';
+        $this->syncPatternStructures($product, $patterns);
+
+        Toastr::success('تمت إضافة الأشكال الفريدة بنجاح');
+        return back();
+    }
+
+    /**
+     * Quick stock adjustment (+1, -1 sold in POS, or delete) for a single pattern.
+     */
+    public function patternsUpdateStock(Request $request, $id): RedirectResponse
+    {
+        $request->validate([
+            'type'   => 'required|string',
+            'action' => 'required|in:increment,decrement,delete,toggle_mode',
+        ]);
+
+        $product = $this->product->findOrFail($id);
+        $action = $request->input('action');
+
+        if ($action === 'toggle_mode') {
+            $product->variant_mode = $product->isUniquePatterns() ? 'standard' : 'unique_patterns';
+            $product->save();
+            Toastr::success('تم تحديث نمط المنتج');
+            return back();
+        }
+
+        $targetType = str_replace(' ', '', $request->input('type'));
+        $patterns = is_string($product->patterns)
+            ? (json_decode($product->patterns, true) ?? [])
+            : ($product->patterns ?? []);
+
+        if ($action === 'delete') {
+            $patterns = array_values(array_filter($patterns, function ($item) use ($targetType) {
+                return str_replace(' ', '', (string)($item['type'] ?? $item['name'] ?? '')) !== $targetType;
+            }));
+        } else {
+            $delta = $action === 'increment' ? 1 : -1;
+            foreach ($patterns as &$item) {
+                $itemType = str_replace(' ', '', (string)($item['type'] ?? $item['name'] ?? ''));
+                if ($itemType === $targetType) {
+                    $item['stock'] = max(0, (int)($item['stock'] ?? 0) + $delta);
+                    break;
+                }
+            }
+            unset($item);
+        }
+
+        $this->syncPatternStructures($product, $patterns);
+        Toastr::success('تم تحديث حالة الشكل بنجاح');
+        return back();
+    }
+
+    private function syncPatternStructures(Product $product, array $patterns): void
+    {
+        $totalStock = 0;
+        foreach ($patterns as $item) {
+            $totalStock += max(0, (int)($item['stock'] ?? 0));
+        }
+
+        $product->patterns = !empty($patterns) ? array_values($patterns) : null;
+        $product->total_stock = $totalStock;
+        $product->save();
+    }
+
+    private function extractSpecifications(Request $request): ?array
+    {
+        $keys = $request->input('spec_keys', []);
+        $values = $request->input('spec_values', []);
+        if (!is_array($keys) || !is_array($values)) {
+            return null;
+        }
+
+        $specs = [];
+        foreach ($keys as $idx => $rawKey) {
+            $label = trim((string)$rawKey);
+            $val = trim((string)($values[$idx] ?? ''));
+            if ($label !== '' && $val !== '') {
+                $specs[] = [
+                    'label' => $label,
+                    'value' => $val,
+                ];
+            }
+        }
+
+        return !empty($specs) ? $specs : null;
     }
 }
