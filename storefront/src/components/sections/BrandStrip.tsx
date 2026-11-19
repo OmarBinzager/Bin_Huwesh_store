@@ -119,7 +119,13 @@ function Logo({ brand }: { brand: Brand }) {
   return (
     <li className="flex shrink-0 items-center px-[clamp(18px,3.4vw,46px)]" title={brand.name}>
       {brand.mode === "color" && brand.colorLogo ? (
-        <img src={brand.colorLogo} alt="" draggable={false} className="object-contain" style={size} />
+        <img
+          src={brand.colorLogo}
+          alt=""
+          draggable={false}
+          className="object-contain transition-[filter] duration-300 invert dark:invert-0"
+          style={size}
+        />
       ) : (
         <span
           className="block bg-current text-ink/70 transition-colors duration-300 hover:text-ink"
