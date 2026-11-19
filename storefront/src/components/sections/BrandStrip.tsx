@@ -123,7 +123,7 @@ function Logo({ brand }: { brand: Brand }) {
           src={brand.colorLogo}
           alt=""
           draggable={false}
-          className="h-7 w-auto max-w-[140px] shrink-0 object-contain transition-[filter] duration-300 sm:h-9 dark:invert"
+          className="h-7 w-auto max-w-[140px] shrink-0 object-contain transition-[filter] duration-300 sm:h-9 dark:invert dark:hue-rotate-180"
         />
       ) : (
         <span
