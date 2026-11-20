@@ -149,7 +149,7 @@ class DecartTryOnService
         }
 
         $response = Http::timeout(12)
-            ->withToken($settings['api_key'])
+            ->withHeaders(['X-API-KEY' => $settings['api_key']])
             ->acceptJson()
             ->post(self::DECART_TOKENS_URL, $payload);
 
