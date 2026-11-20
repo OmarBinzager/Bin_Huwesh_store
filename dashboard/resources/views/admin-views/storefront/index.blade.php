@@ -893,14 +893,14 @@
                             <div class="col-md-12">
                                 <label class="input-label">{{ translate('مفتاح Decart API Key') }}</label>
                                 <input type="password" name="api_key" class="form-control" autocomplete="new-password"
-                                       placeholder="{{ !empty($tryOnSettings['api_key']) ? '•••••••••••••••••••••••• (محفوظ — اتركه فارغًا للإبقاء عليه)' : 'dct_...' }}">
+                                       placeholder="{{ !empty($tryOnSettings['api_key']) ? '•••••••••••••••••••••••• (' . translate('محفوظ — اتركه فارغًا للإبقاء عليه') . ')' : 'dct_...' }}">
                                 <small class="text-muted">{{ translate('يبقى المفتاح على الخادم فقط، ويتم إصدار رمز مؤقت قصير العمر للعميل عند كل جلسة.') }}</small>
                             </div>
 
                             <div class="col-md-4">
                                 <label class="input-label">{{ translate('نموذج الذكاء الاصطناعي') }}</label>
                                 <select name="model" class="form-control">
-                                    @foreach(['lucy-vton-latest' => 'Lucy VTON Latest (موصى به)', 'lucy-vton-3.6' => 'Lucy VTON 3.6', 'lucy-vton-3.5' => 'Lucy VTON 3.5'] as $mKey => $mLabel)
+                                    @foreach(['lucy-vton-latest' => translate('Lucy VTON Latest (موصى به)'), 'lucy-vton-3.6' => 'Lucy VTON 3.6', 'lucy-vton-3.5' => 'Lucy VTON 3.5'] as $mKey => $mLabel)
                                         <option value="{{ $mKey }}" {{ ($tryOnSettings['model'] ?? 'lucy-vton-latest') === $mKey ? 'selected' : '' }}>{{ $mLabel }}</option>
                                     @endforeach
                                 </select>
@@ -909,8 +909,8 @@
                             <div class="col-md-4">
                                 <label class="input-label">{{ translate('وضع السرعة والتكلفة') }}</label>
                                 <select name="speed" class="form-control">
-                                    <option value="standard" {{ ($tryOnSettings['speed'] ?? 'standard') === 'standard' ? 'selected' : '' }}>Standard 720p ($0.02 / ثانية)</option>
-                                    <option value="fast" {{ ($tryOnSettings['speed'] ?? 'standard') === 'fast' ? 'selected' : '' }}>Fast Mode ($0.04 / ثانية)</option>
+                                    <option value="standard" {{ ($tryOnSettings['speed'] ?? 'standard') === 'standard' ? 'selected' : '' }}>{{ translate('الوضع القياسي 720p ($0.02 / ثانية)') }}</option>
+                                    <option value="fast" {{ ($tryOnSettings['speed'] ?? 'standard') === 'fast' ? 'selected' : '' }}>{{ translate('الوضع السريع ($0.04 / ثانية)') }}</option>
                                 </select>
                             </div>
 
