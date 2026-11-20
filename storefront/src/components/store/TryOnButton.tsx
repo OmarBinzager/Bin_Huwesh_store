@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useState } from "react";
+import type { TryOnVariant } from "./TryOnModal";
 
 const TryOnModal = dynamic(() => import("./TryOnModal"), { ssr: false });
 
@@ -10,6 +11,7 @@ type TryOnButtonProps = {
   productName: string;
   garmentImage: string;
   selectedColor?: string;
+  variants?: TryOnVariant[];
   locale?: "ar" | "en";
   variant?: "card" | "detail";
 };
@@ -19,6 +21,7 @@ export function TryOnButton({
   productName,
   garmentImage,
   selectedColor,
+  variants,
   locale = "ar",
   variant = "card",
 }: TryOnButtonProps) {
@@ -66,6 +69,7 @@ export function TryOnButton({
           productName={productName}
           garmentImage={garmentImage}
           selectedColor={selectedColor}
+          variants={variants}
           locale={locale}
         />
       )}

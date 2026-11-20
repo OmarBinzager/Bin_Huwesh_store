@@ -866,18 +866,40 @@ class StorefrontController extends Controller
             return response()->json(['message' => $e->getMessage()], 422);
         }
 
-        // Resolve garment image matching the selected color if available
+        // Resolve garment image matching the selected color or pattern if available
         $garmentImage = ($product->identity_image_full_path[0] ?? null)
             ?: asset('public/assets/admin/img/160x160/2.png');
 
         $selectedColor = trim((string) ($validated['color'] ?? ''));
-        if ($selectedColor !== '' && is_array($product->color_images_list)) {
-            foreach ($product->color_images_list as $entry) {
-                $entryColor = trim((string) ($entry['color'] ?? $entry['name'] ?? ''));
-                if ($entryColor !== '' && mb_strtolower($entryColor) === mb_strtolower($selectedColor)) {
-                    $candidate = $entry['image'] ?? $entry['url'] ?? null;
-                    if (!empty($candidate)) {
-                        $garmentImage = $candidate;
+        if ($selectedColor !== '') {
+            $needle = mb_strtolower($selectedColor);
+
+            if (is_array($product->color_images_list)) {
+                foreach ($product->color_images_list as $entry) {
+                    $candidates = [
+                        $entry['color_name'] ?? '',
+                        $entry['color'] ?? '',
+                        $entry['name'] ?? '',
+                    ];
+                    $matched = false;
+                    foreach ($candidates as $c) {
+                        if (trim((string) $c) !== '' && mb_strtolower(trim((string) $c)) === $needle) {
+                            $matched = true;
+                            break;
+                        }
+                    }
+                    if ($matched && !empty($entry['image_url'])) {
+                        $garmentImage = $entry['image_url'];
+                        break;
+                    }
+                }
+            }
+
+            if ($product->isUniquePatterns() && is_array($product->patterns_list)) {
+                foreach ($product->patterns_list as $pattern) {
+                    $pName = trim((string) ($pattern['name'] ?? ''));
+                    if ($pName !== '' && mb_strtolower($pName) === $needle && !empty($pattern['image_url'])) {
+                        $garmentImage = $pattern['image_url'];
                         break;
                     }
                 }

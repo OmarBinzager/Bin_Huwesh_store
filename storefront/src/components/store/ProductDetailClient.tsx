@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useDemoBag } from "@/components/store/DemoBag";
 import { TryOnButton } from "@/components/store/TryOnButton";
+import type { TryOnVariant } from "@/components/store/TryOnModal";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n/context";
 import { productHref } from "@/lib/product-url";
@@ -224,6 +225,23 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
                   productName={product.name}
                   garmentImage={selectedImage}
                   selectedColor={selectedColor || undefined}
+                  variants={
+                    isUniquePatterns
+                      ? availablePatterns
+                          .filter((p) => Boolean(p.image_url))
+                          .map((p): TryOnVariant => ({
+                            label: p.name,
+                            image: p.image_url!,
+                          }))
+                      : (product.color_images ?? [])
+                          .filter((ci) => Boolean(ci.image_url || ci.image))
+                          .map((ci): TryOnVariant => ({
+                            label: ci.color_name || ci.color || "",
+                            image: (ci.image_url || ci.image)!,
+                            swatch: ci.color_code,
+                          }))
+                          .filter((v) => v.label !== "")
+                  }
                   locale={locale}
                   variant="detail"
                 />
