@@ -10,6 +10,7 @@ export default function TryOnEmbedClient() {
   const garmentImage = params.get("image") || "";
   const selectedColor = params.get("color") || undefined;
   const locale = params.get("lang") === "en" ? "en" : "ar";
+  const autoStart = params.get("autoStart") === "1";
 
   if (!productId || !garmentImage) {
     return (
@@ -23,6 +24,7 @@ export default function TryOnEmbedClient() {
     <TryOnModal
       open
       embedded
+      autoStart={autoStart}
       onClose={() => {
         if (typeof window !== "undefined") {
           window.history.back();

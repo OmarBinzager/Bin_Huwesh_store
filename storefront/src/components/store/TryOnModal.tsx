@@ -21,6 +21,7 @@ export type TryOnModalProps = {
   variants?: TryOnVariant[];
   locale?: "ar" | "en";
   embedded?: boolean;
+  autoStart?: boolean;
 };
 
 type Stage = "consent" | "connecting" | "live" | "error";
@@ -53,6 +54,7 @@ export default function TryOnModal({
   variants = [],
   locale = "ar",
   embedded = false,
+  autoStart = false,
 }: TryOnModalProps) {
   const isEn = locale === "en";
   const [stage, setStage] = useState<Stage>("consent");
@@ -122,8 +124,11 @@ export default function TryOnModal({
     onClose();
   }, [embedded, exitNativeFullscreen, onClose, stopEverything]);
 
+  const autoStartedRef = useRef<boolean>(false);
+
   useEffect(() => {
     if (!open) {
+      autoStartedRef.current = false;
       stopEverything();
     }
     return () => {
@@ -252,6 +257,15 @@ export default function TryOnModal({
     },
     [activeColor, activeImage, isEn, locale, productId, stopEverything]
   );
+
+  useEffect(() => {
+    if (open && autoStart && !autoStartedRef.current) {
+      autoStartedRef.current = true;
+      queueMicrotask(() => {
+        startSession(facingMode);
+      });
+    }
+  }, [autoStart, facingMode, open, startSession]);
 
   const handleSelectVariant = useCallback(
     async (variant: TryOnVariant) => {
