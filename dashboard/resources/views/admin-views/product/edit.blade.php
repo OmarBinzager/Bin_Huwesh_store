@@ -216,7 +216,23 @@
                                     <h5 class="mb-0 mr-2">{{ translate('Visibility') }}</h5>
                                     <label class="toggle-switch my-0">
                                         <input type="checkbox" class="toggle-switch-input" name="status" value="1"
-                                            checked>
+                                            {{ $product['status'] == 1 ? 'checked' : '' }}>
+                                        <span class="toggle-switch-label mx-auto text">
+                                            <span class="toggle-switch-indicator"></span>
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+                            <hr class="my-3">
+                            <div class="d-flex flex-wrap-reverse justify-content-between align-items-center">
+                                <div class="w-200 flex-grow-1 mr-3">
+                                    {{ translate('تفعيل زر «جرّبها عليك» (التجربة الافتراضية بالذكاء الاصطناعي) لهذا المنتج') }}
+                                </div>
+                                <div class="d-flex align-items-center mb-2 mb-sm-0">
+                                    <h5 class="mb-0 mr-2">{{ translate('جرّبها عليك') }}</h5>
+                                    <label class="toggle-switch my-0">
+                                        <input type="checkbox" class="toggle-switch-input" name="try_on_enabled" value="1"
+                                            {{ !empty($product->try_on_enabled) ? 'checked' : '' }}>
                                         <span class="toggle-switch-label mx-auto text">
                                             <span class="toggle-switch-indicator"></span>
                                         </span>

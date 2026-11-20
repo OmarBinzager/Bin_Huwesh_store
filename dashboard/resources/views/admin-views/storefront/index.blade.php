@@ -108,6 +108,14 @@
                 {{ translate('آراء العملاء') }} ({{ count($testimonials ?? []) }})
             </a>
         </li>
+        <li class="nav-item">
+            <a class="nav-link {{ $tab === 'try-on' ? 'active' : '' }}" href="{{ route('admin.storefront.index', ['tab' => 'try-on']) }}">
+                <i class="tio-camera mr-1"></i>{{ translate('التجربة الافتراضية (Anywear)') }}
+                @if(!empty($tryOnSettings['enabled']))
+                    <span class="badge badge-soft-success ml-1">{{ translate('مفعّل') }}</span>
+                @endif
+            </a>
+        </li>
     </ul>
 
     {{-- TAB 1: LOOKS --}}
@@ -852,6 +860,96 @@
                             <button type="submit" class="btn btn-primary">{{ translate('حفظ الرأي') }}</button>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    {{-- TAB 7: VIRTUAL TRY-ON (DECART ANYWEAR) --}}
+    @if($tab === 'try-on')
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">{{ translate('إعدادات ميزة «جرّبها عليك» (Decart Anywear / Lucy VTON)') }}</h5>
+                    <span class="badge badge-soft-primary">{{ translate('المنتجات المفعّلة:') }} {{ $tryOnEnabledCount ?? 0 }}</span>
+                </div>
+                <div class="card-body">
+                    <form action="{{ route('admin.storefront.try-on.settings') }}" method="POST">
+                        @csrf
+                        <div class="d-flex align-items-center justify-content-between p-3 mb-4 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                            <div>
+                                <h6 class="mb-1">{{ translate('تفعيل ميزة «جرّبها عليك» في الموقع والتطبيق') }}</h6>
+                                <small class="text-muted">{{ translate('يظهر الزر فقط للمنتجات التي تم تفعيل خيار التجربة الافتراضية لها من صفحة المنتج.') }}</small>
+                            </div>
+                            <label class="toggle-switch my-0">
+                                <input type="checkbox" class="toggle-switch-input" name="enabled" value="1" {{ !empty($tryOnSettings['enabled']) ? 'checked' : '' }}>
+                                <span class="toggle-switch-label"><span class="toggle-switch-indicator"></span></span>
+                            </label>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="input-label">{{ translate('مفتاح Decart API Key') }}</label>
+                                <input type="password" name="api_key" class="form-control" autocomplete="new-password"
+                                       placeholder="{{ !empty($tryOnSettings['api_key']) ? '•••••••••••••••••••••••• (محفوظ — اتركه فارغًا للإبقاء عليه)' : 'dct_...' }}">
+                                <small class="text-muted">{{ translate('يبقى المفتاح على الخادم فقط، ويتم إصدار رمز مؤقت قصير العمر للعميل عند كل جلسة.') }}</small>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="input-label">{{ translate('نموذج الذكاء الاصطناعي') }}</label>
+                                <select name="model" class="form-control">
+                                    @foreach(['lucy-vton-latest' => 'Lucy VTON Latest (موصى به)', 'lucy-vton-3.6' => 'Lucy VTON 3.6', 'lucy-vton-3.5' => 'Lucy VTON 3.5'] as $mKey => $mLabel)
+                                        <option value="{{ $mKey }}" {{ ($tryOnSettings['model'] ?? 'lucy-vton-latest') === $mKey ? 'selected' : '' }}>{{ $mLabel }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="input-label">{{ translate('وضع السرعة والتكلفة') }}</label>
+                                <select name="speed" class="form-control">
+                                    <option value="standard" {{ ($tryOnSettings['speed'] ?? 'standard') === 'standard' ? 'selected' : '' }}>Standard 720p ($0.02 / ثانية)</option>
+                                    <option value="fast" {{ ($tryOnSettings['speed'] ?? 'standard') === 'fast' ? 'selected' : '' }}>Fast Mode ($0.04 / ثانية)</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="input-label">{{ translate('الحد الأقصى للجلسة (ثانية)') }}</label>
+                                <input type="number" name="max_session_seconds" class="form-control" min="15" max="180"
+                                       value="{{ $tryOnSettings['max_session_seconds'] ?? 45 }}" required>
+                                <small class="text-muted">{{ translate('بين 15 و 180 ثانية لضبط التكلفة.') }}</small>
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="input-label">{{ translate('النطاقات المسموحة (Allowed Origins) — اختياري') }}</label>
+                                <input type="text" name="allowed_origins" class="form-control" dir="ltr"
+                                       value="{{ is_array($tryOnSettings['allowed_origins'] ?? null) ? implode(', ', $tryOnSettings['allowed_origins']) : ($tryOnSettings['allowed_origins'] ?? '') }}"
+                                       placeholder="https://bin-huwesh.com, https://www.bin-huwesh.com">
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">{{ translate('حفظ إعدادات التجربة الافتراضية') }}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header"><h5 class="card-title mb-0">{{ translate('إرشادات التشغيل والتكلفة') }}</h5></div>
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="p-3 rounded" style="background: #f8fafc;">
+                        <h6 class="mb-1">{{ translate('تفعيل المنتجات') }}</h6>
+                        <p class="small text-muted mb-2">{{ translate('لضمان أفضل جودة، فعّل الميزة فقط للقمصان والبولو والجواكت التي تعطي نتيجة واضحة من صفحة قائمة المنتجات أو تعديل المنتج.') }}</p>
+                        <a href="{{ route('admin.product.list') }}" class="btn btn-sm btn-outline-primary">{{ translate('الذهاب إلى قائمة المنتجات') }}</a>
+                    </div>
+                    <div class="p-3 rounded" style="background: #fff8f8; border: 1px solid #f5c2c7;">
+                        <h6 class="mb-1 text-danger">{{ translate('الخصوصية وإخلاء المسؤولية') }}</h6>
+                        <p class="small text-muted mb-0">{{ translate('تظهر للعميل شاشة موافقة صريحة قبل تشغيل الكاميرا، مع عبارة «معاينة تقريبية للشكل، وليست توصية بالمقاس»، وتتوقف الكاميرا والاتصال فور إغلاق النافذة.') }}</p>
+                    </div>
                 </div>
             </div>
         </div>

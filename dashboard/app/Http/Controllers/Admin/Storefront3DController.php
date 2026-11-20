@@ -13,6 +13,7 @@ use App\Model\StorefrontLookItem;
 use App\Model\StorefrontRailItem;
 use App\Model\StorefrontShoeShelfItem;
 use App\Model\StorefrontVirtualFitItem;
+use App\Services\DecartTryOnService;
 use App\Traits\StorefrontMediaTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -51,6 +52,8 @@ class Storefront3DController extends Controller
         $sfSettings = json_decode(BusinessSetting::where('key', 'storefront_settings')->value('value') ?? '{}', true) ?: [];
         $closingSettings = $sfSettings['closing'] ?? [];
         $testimonials = $closingSettings['testimonials_items'] ?? [];
+        $tryOnSettings = app(DecartTryOnService::class)->getSettings();
+        $tryOnEnabledCount = Product::withoutGlobalScopes()->where('status', 1)->where('try_on_enabled', 1)->count();
 
         return view('admin-views.storefront.index', compact(
             'tab',
@@ -62,7 +65,9 @@ class Storefront3DController extends Controller
             'products',
             'categories',
             'closingSettings',
-            'testimonials'
+            'testimonials',
+            'tryOnSettings',
+            'tryOnEnabledCount'
         ));
     }
 
@@ -407,6 +412,37 @@ class Storefront3DController extends Controller
         $this->purgeCache();
         toastr()->success(translate('تم حذف رأي العميل!'));
         return redirect()->route('admin.storefront.index', ['tab' => 'testimonials']);
+    }
+
+    public function saveTryOnSettings(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'model'               => 'required|in:lucy-vton-latest,lucy-vton-3.6,lucy-vton-3.5',
+            'speed'               => 'required|in:standard,fast',
+            'max_session_seconds' => 'required|integer|min:15|max:180',
+            'api_key'             => 'nullable|string|max:500',
+            'allowed_origins'     => 'nullable|string|max:1000',
+        ]);
+
+        $sfSettings = $this->getStorefrontSettings();
+        $existingTryOn = is_array($sfSettings['try_on'] ?? null) ? $sfSettings['try_on'] : [];
+
+        $newApiKey = trim((string) $request->input('api_key', ''));
+        $sfSettings['try_on'] = [
+            'enabled'             => $request->boolean('enabled'),
+            'api_key'             => $newApiKey !== '' ? $newApiKey : ($existingTryOn['api_key'] ?? ''),
+            'model'               => $request->input('model'),
+            'speed'               => $request->input('speed'),
+            'max_session_seconds' => (int) $request->input('max_session_seconds'),
+            'allowed_origins'     => trim((string) $request->input('allowed_origins', '')),
+        ];
+
+        $this->saveStorefrontSettings($sfSettings);
+        DecartTryOnService::clearCache();
+        $this->purgeCache();
+
+        toastr()->success(translate('تم حفظ إعدادات التجربة الافتراضية (Anywear) بنجاح!'));
+        return redirect()->route('admin.storefront.index', ['tab' => 'try-on']);
     }
 
     private function getStorefrontSettings(): array

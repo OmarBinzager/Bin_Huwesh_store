@@ -278,6 +278,7 @@ export type CatalogProduct = {
   discount: number;
   discount_type: string | null;
   total_stock: number;
+  try_on_enabled?: boolean;
   image: string;
   images: string[];
   color_images: Array<{ color?: string; color_code?: string; color_name?: string; image?: string; image_url?: string }>;
@@ -516,4 +517,62 @@ export async function fetchStoreBrandingConfig(): Promise<StoreBrandingConfig> {
   } catch {
     return { logoUrl: null, favIconUrl: null };
   }
+}
+
+export type TryOnConfig = {
+  enabled: boolean;
+  model: string;
+  speed: "standard" | "fast";
+  max_session_seconds: number;
+  disclaimer: string;
+  privacy_notice: string;
+};
+
+export type TryOnTokenResponse = {
+  api_key: string;
+  expires_at: string | null;
+  model: string;
+  speed: "standard" | "fast";
+  max_session_seconds: number;
+  garment_image_url: string;
+  product_name: string;
+  disclaimer: string;
+};
+
+export async function fetchTryOnConfig(locale = "ar"): Promise<TryOnConfig | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/storefront/try-on/config`, {
+      cache: "no-store",
+      headers: { Accept: "application/json", "X-localization": locale },
+    });
+    if (!res.ok) return null;
+    return (await res.json()) as TryOnConfig;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchTryOnToken(
+  productId: number,
+  color?: string,
+  locale = "ar"
+): Promise<TryOnTokenResponse> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/storefront/try-on/token`, {
+    method: "POST",
+    cache: "no-store",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "X-localization": locale,
+    },
+    body: JSON.stringify({
+      product_id: productId,
+      color: color || undefined,
+    }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data?.message || (locale === "en" ? "Unable to start virtual try-on" : "تعذر بدء التجربة الافتراضية حالياً"));
+  }
+  return data as TryOnTokenResponse;
 }

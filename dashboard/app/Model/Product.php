@@ -31,6 +31,7 @@ class Product extends Model
         'color_images'   => 'array',
         'patterns'       => 'array',
         'specifications' => 'array',
+        'try_on_enabled' => 'boolean',
     ];
 
     public function translations(): \Illuminate\Database\Eloquent\Relations\MorphMany

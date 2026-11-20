@@ -66,6 +66,8 @@ Route::group(['middleware'=>'localization'], function () {
         Route::get('products', [StorefrontController::class, 'getProductsCatalog']);
         Route::get('products/{id}', [StorefrontController::class, 'getProductDetail']);
         Route::get('policies', [StorefrontController::class, 'getPolicies']);
+        Route::get('try-on/config', [StorefrontController::class, 'getTryOnConfig']);
+        Route::post('try-on/token', [StorefrontController::class, 'createTryOnToken'])->middleware('throttle:15,1');
     });
 
     Route::group(['prefix' => 'products'], function () {

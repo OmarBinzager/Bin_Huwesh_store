@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Price } from "@/components/store/Price";
+import { TryOnButton } from "@/components/store/TryOnButton";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { productHref } from "@/lib/product-url";
 import type { CatalogProduct } from "@/lib/storefront-api";
@@ -81,6 +82,17 @@ export default function CatalogProductGrid({
                   <span className="absolute inset-x-3 bottom-3 rounded-full bg-black/75 py-1 text-center text-[11px] font-medium text-white">
                     {t.catalog.outOfStock}
                   </span>
+                )}
+                {product.try_on_enabled && product.image && !outOfStock && (
+                  <div className="absolute bottom-3 left-3 z-10">
+                    <TryOnButton
+                      productId={product.id}
+                      productName={product.name}
+                      garmentImage={product.image}
+                      locale={t.catalog.outOfStock === "Out of stock" ? "en" : "ar"}
+                      variant="card"
+                    />
+                  </div>
                 )}
               </div>
 

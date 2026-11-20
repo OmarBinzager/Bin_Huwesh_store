@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useDemoBag } from "@/components/store/DemoBag";
+import { TryOnButton } from "@/components/store/TryOnButton";
 import { useCurrency } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n/context";
 import { productHref } from "@/lib/product-url";
@@ -215,6 +216,18 @@ export default function ProductDetailClient({ data }: { data: ProductDetailRespo
               <span className="absolute top-4 right-4 rounded-full bg-brand px-3 py-1 text-xs font-semibold text-white">
                 {discountLabel}
               </span>
+            )}
+            {product.try_on_enabled && selectedImage && (
+              <div className="absolute bottom-4 left-4 z-10">
+                <TryOnButton
+                  productId={product.id}
+                  productName={product.name}
+                  garmentImage={selectedImage}
+                  selectedColor={selectedColor || undefined}
+                  locale={locale}
+                  variant="detail"
+                />
+              </div>
             )}
           </div>
 

@@ -17,6 +17,7 @@ use App\Model\StorefrontLookItem;
 use App\Model\StorefrontRailItem;
 use App\Model\StorefrontShoeShelfItem;
 use App\Model\StorefrontVirtualFitItem;
+use App\Services\DecartTryOnService;
 use App\Traits\StorefrontMediaTrait;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -55,6 +56,7 @@ class StorefrontController extends Controller
                 'categories' => $this->buildCategories($sfSettings['categories'] ?? []),
                 'brands'     => $this->buildBrands($sfSettings['brands'] ?? []),
                 'closing'    => $this->buildClosing($settingsMap, $sfSettings['closing'] ?? []),
+                'try_on'     => app(DecartTryOnService::class)->getPublicConfig(app()->getLocale() ?: 'ar'),
             ];
         });
 
@@ -832,6 +834,72 @@ class StorefrontController extends Controller
     }
 
     /**
+     * Public-safe configuration for Virtual Try-On ("جرّبها عليك" / Decart Anywear).
+     */
+    public function getTryOnConfig(DecartTryOnService $tryOnService): JsonResponse
+    {
+        $locale = app()->getLocale() ?: 'ar';
+        return response()->json($tryOnService->getPublicConfig($locale), 200);
+    }
+
+    /**
+     * Issue a short-lived ephemeral Decart client token for an eligible product.
+     */
+    public function createTryOnToken(Request $request, DecartTryOnService $tryOnService): JsonResponse
+    {
+        $validated = $request->validate([
+            'product_id' => 'required|integer|min:1',
+            'color'      => 'nullable|string|max:120',
+        ]);
+
+        $product = Product::active()->find((int) $validated['product_id']);
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        try {
+            $tokenData = $tryOnService->createClientToken(
+                $product,
+                $request->headers->get('origin')
+            );
+        } catch (\RuntimeException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        // Resolve garment image matching the selected color if available
+        $garmentImage = ($product->identity_image_full_path[0] ?? null)
+            ?: asset('public/assets/admin/img/160x160/2.png');
+
+        $selectedColor = trim((string) ($validated['color'] ?? ''));
+        if ($selectedColor !== '' && is_array($product->color_images_list)) {
+            foreach ($product->color_images_list as $entry) {
+                $entryColor = trim((string) ($entry['color'] ?? $entry['name'] ?? ''));
+                if ($entryColor !== '' && mb_strtolower($entryColor) === mb_strtolower($selectedColor)) {
+                    $candidate = $entry['image'] ?? $entry['url'] ?? null;
+                    if (!empty($candidate)) {
+                        $garmentImage = $candidate;
+                        break;
+                    }
+                }
+            }
+        }
+
+        $locale = app()->getLocale() ?: 'ar';
+        $publicConfig = $tryOnService->getPublicConfig($locale);
+
+        return response()->json([
+            'api_key'             => $tokenData['api_key'],
+            'expires_at'          => $tokenData['expires_at'],
+            'model'               => $tokenData['model'],
+            'speed'               => $tokenData['speed'],
+            'max_session_seconds' => $tokenData['max_session_seconds'],
+            'garment_image_url'   => $garmentImage,
+            'product_name'        => $this->translatedValue($product, 'name', $product->name),
+            'disclaimer'          => $publicConfig['disclaimer'],
+        ], 200);
+    }
+
+    /**
      * Extracts pure clean HTML content from BusinessSetting value which may be stored
      * as a raw HTML string or a JSON payload {"background_image":..., "description":"..."}.
      */
@@ -1463,8 +1531,9 @@ class StorefrontController extends Controller
             'final_price'   => $discInfo['final_price'],
             'discount'      => (float)$discInfo['discount'],
             'discount_type' => $discInfo['discount_type'],
-            'total_stock'   => (int)$product->total_stock,
-            'image'         => $images[0] ?? asset('public/assets/admin/img/160x160/2.png'),
+            'total_stock'    => (int)$product->total_stock,
+            'try_on_enabled' => (bool)$product->try_on_enabled,
+            'image'          => $images[0] ?? asset('public/assets/admin/img/160x160/2.png'),
             'images'        => $images,
             'color_images'  => $product->color_images_list,
             'sizes'         => $this->extractSizes($product, []),

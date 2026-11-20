@@ -462,6 +462,7 @@ public function index(): View|Factory|Application
         $product->total_stock = $request->total_stock;
         $product->attributes = $request->has('attribute_id') ? json_encode($request->attribute_id) : json_encode([]);
         $product->status = $request->status ? $request->status : 0;
+        $product->try_on_enabled = $request->boolean('try_on_enabled');
         $product->weight = ($request->filled('weight') && is_numeric($request->weight)) ? (float)$request->weight : 0;
 
         try {
@@ -784,6 +785,7 @@ public function index(): View|Factory|Application
         $product->total_stock = $request->total_stock;
         $product->attributes = $request->has('attribute_id') ? json_encode($request->attribute_id) : json_encode([]);
         $product->status = $request->status ? $request->status : 0;
+        $product->try_on_enabled = $request->boolean('try_on_enabled');
         $product->weight = ($request->filled('weight') && is_numeric($request->weight)) ? (float)$request->weight : 0;
 
         try {
@@ -910,6 +912,17 @@ public function index(): View|Factory|Application
         $product->daily_needs = $request->status;
         $product->save();
         return response()->json([], 200);
+    }
+
+    /**
+     * Toggle Virtual Try-On ("جرّبها عليك") eligibility for a single product.
+     */
+    public function tryOnStatus(Request $request): JsonResponse
+    {
+        $product = $this->product->findOrFail($request->id);
+        $product->try_on_enabled = (bool) $request->status;
+        $product->save();
+        return response()->json(['try_on_enabled' => $product->try_on_enabled], 200);
     }
 
     /**

@@ -231,6 +231,7 @@ Route::group(['prefix' => 'seller', 'as' => 'seller.', 'middleware' => ['module:
             Route::post('patterns/{id}/update-stock', [ProductController::class, 'patternsUpdateStock'])->name('patterns.update-stock');
             Route::get('get-categories', [ProductController::class, 'getCategories'])->name('get-categories');
             Route::post('daily-needs', [ProductController::class, 'dailyNeeds'])->name('daily-needs');
+            Route::post('try-on-status', [ProductController::class, 'tryOnStatus'])->name('try-on-status');
             Route::get('limited-stock', [ProductController::class, 'limitedStock'])->name('limited-stock');
             Route::get('get-variations', [ProductController::class, 'getVariations'])->name('get-variations');
             Route::post('update-quantity', [ProductController::class, 'updateQuantity'])->name('update-quantity');
@@ -258,6 +259,7 @@ Route::group(['prefix' => 'seller', 'as' => 'seller.', 'middleware' => ['module:
             Route::post('testimonials/settings', [Storefront3DController::class, 'saveTestimonialsSettings'])->name('testimonials.settings');
             Route::post('testimonials', [Storefront3DController::class, 'saveTestimonial'])->name('testimonials.save');
             Route::delete('testimonials/{id}', [Storefront3DController::class, 'deleteTestimonial'])->name('testimonials.delete');
+            Route::post('try-on/settings', [Storefront3DController::class, 'saveTryOnSettings'])->name('try-on.settings');
         });
         Route::group(['prefix' => 'size-chart', 'as' => 'size-chart.', 'middleware' => ['module:product_management']], function () {
             Route::get('/', [SizeChartController::class, 'index'])->name('index');

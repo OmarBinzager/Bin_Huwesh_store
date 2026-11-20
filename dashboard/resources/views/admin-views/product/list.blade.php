@@ -109,6 +109,7 @@
                             <th class="">{{ translate('Quantity') }}</th>
                             <th class="text-center">{{ translate('Show in daily needs') }}</th>
                             <th class="text-center">{{ translate('Featured') }}</th>
+                            <th class="text-center">{{ translate('جرّبها عليك') }}</th>
                             <th class="text-center">{{ translate('Status') }}</th>
                             <th class="text-center">{{ translate('Action') }}</th>
                         </tr>
@@ -236,6 +237,18 @@
                                             onclick="featured_status_change_alert('{{ route('admin.product.feature', [$product->id, $product->is_featured ? 0 : 1]) }}', '{{ $product->is_featured ? translate('want to remove from featured product') : translate('want to add in featured product') }}', event)"
                                             class="toggle-switch-input" id="stocksCheckbox{{ $product->id }}"
                                             {{ $product->is_featured ? 'checked' : '' }}>
+                                        <span class="toggle-switch-label mx-auto text">
+                                            <span class="toggle-switch-indicator"></span>
+                                        </span>
+                                    </label>
+                                </td>
+
+                                <td class="pt-1 pb-3  {{ $key == 0 ? 'pt-4' : '' }}">
+                                    <label class="toggle-switch my-0">
+                                        <input type="checkbox"
+                                            onchange="toggle_try_on('{{ $product['id'] }}', this)"
+                                            class="toggle-switch-input"
+                                            {{ !empty($product->try_on_enabled) ? 'checked' : '' }}>
                                         <span class="toggle-switch-label mx-auto text">
                                             <span class="toggle-switch-indicator"></span>
                                         </span>
@@ -439,6 +452,29 @@
                 },
                 success: function() {
                     toastr.success('{{ translate('Daily need status updated successfully') }}');
+                }
+            });
+        }
+
+        function toggle_try_on(id, checkbox) {
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+            $.ajax({
+                url: "{{ route('admin.product.try-on-status') }}",
+                method: 'POST',
+                data: {
+                    id: id,
+                    status: checkbox.checked ? 1 : 0
+                },
+                success: function() {
+                    toastr.success('{{ translate('تم تحديث حالة التجربة الافتراضية بنجاح') }}');
+                },
+                error: function() {
+                    checkbox.checked = !checkbox.checked;
+                    toastr.error('{{ translate('تعذر تحديث الحالة') }}');
                 }
             });
         }
