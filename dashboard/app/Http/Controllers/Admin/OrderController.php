@@ -171,10 +171,7 @@ class OrderController extends Controller
             return back();
         }
 
-        if ( ($request->order_status == 'out_for_delivery' || $request->order_status == 'delivered') && $order['delivery_man_id'] == null && $order['order_type'] != 'pos') {
-            Toastr::warning(translate('Please assign delivery man first!'));
-            return back();
-        }
+        // Delivery man assignment is optional (delivery app/feature is disabled in Bin Huwesh)
 
         //refund amount to wallet
         if (in_array($request['order_status'] , ['returned', 'failed', 'canceled']) && $order['is_guest'] == 0 && isset($order->customer) && Helpers::get_business_settings('wallet_status') == 1) {

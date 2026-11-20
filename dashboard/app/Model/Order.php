@@ -10,9 +10,34 @@ use App\Models\OrderImage;
 use App\Models\OrderPartialPayment;
 use App\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
+    protected static function booted(): void
+    {
+        static::deleting(function (Order $order) {
+            $order->details()->delete();
+            $order->partial_payment()->delete();
+            $order->delivery_histories()->delete();
+            $order->order_image()->delete();
+            $order->order_area()->delete();
+            $order->order_change_amount()->delete();
+            $order->offline_payment()->delete();
+            $order->infoSoftInvoiceLogs()->delete();
+        });
+    }
+
+    /**
+     * Generate a strictly monotonic Order ID that never reuses deleted order IDs
+     * or collides with orphaned order_details rows.
+     */
+    public static function generateNextOrderId(): int
+    {
+        $maxOrderId = (int) (DB::table('orders')->max('id') ?? 0);
+        $maxDetailOrderId = (int) (DB::table('order_details')->max('order_id') ?? 0);
+        return max(100000, $maxOrderId, $maxDetailOrderId) + 1;
+    }
     protected $casts = [
         'order_amount'           => 'float',
         'checked'                => 'integer',

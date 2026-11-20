@@ -14,11 +14,14 @@ import {
 import { useI18n } from "@/lib/i18n/context";
 import { AccountShell } from "./AccountShell";
 
+type OrderFilterTab = "all" | "ongoing" | "completed" | "other";
+
 export default function OrdersClient() {
   const { locale, t } = useI18n();
   const { formatMoney } = useCurrency();
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<OrderFilterTab>("all");
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [detailsMap, setDetailsMap] = useState<Record<number, OrderDetailItem[]>>({});
 
@@ -29,7 +32,13 @@ export default function OrdersClient() {
     }
     setLoading(true);
     const list = await fetchOrders(locale);
-    setOrders(list);
+    const sorted = [...list].sort((a, b) => {
+      const aTs = Date.parse(a.created_at || "") || 0;
+      const bTs = Date.parse(b.created_at || "") || 0;
+      if (aTs !== bTs) return bTs - aTs;
+      return b.id - a.id;
+    });
+    setOrders(sorted);
     setLoading(false);
   }, [locale]);
 
@@ -88,6 +97,20 @@ export default function OrdersClient() {
     return t.orderDetails.unpaidLabel;
   };
 
+  const isCompleted = (s: string) => s.toLowerCase() === "delivered";
+  const isOther = (s: string) => ["canceled", "cancelled", "returned", "failed"].includes(s.toLowerCase());
+  const ongoingOrders = orders.filter((o) => !isCompleted(o.order_status) && !isOther(o.order_status));
+  const completedOrders = orders.filter((o) => isCompleted(o.order_status));
+  const otherOrders = orders.filter((o) => isOther(o.order_status));
+  const visibleOrders =
+    activeTab === "ongoing"
+      ? ongoingOrders
+      : activeTab === "completed"
+        ? completedOrders
+        : activeTab === "other"
+          ? otherOrders
+          : orders;
+
   return (
     <AccountShell
       current="orders"
@@ -104,7 +127,36 @@ export default function OrdersClient() {
         </div>
       ) : (
         <div className="space-y-4">
-          {orders.map((order) => {
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                { id: "all", label: locale === "en" ? "All" : "الكل", count: orders.length },
+                { id: "ongoing", label: locale === "en" ? "Ongoing" : "الطلبات الجارية", count: ongoingOrders.length },
+                { id: "completed", label: locale === "en" ? "Completed" : "الطلبات المكتملة", count: completedOrders.length },
+                { id: "other", label: locale === "en" ? "Other" : "أصناف أخرى", count: otherOrders.length },
+              ] as const
+            ).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`rounded-full border px-4 py-1.5 text-xs font-medium transition ${
+                  activeTab === tab.id
+                    ? "border-ink bg-ink text-on-ink"
+                    : "border-line bg-card text-ink hover:bg-stage"
+                }`}
+              >
+                {tab.label} ({tab.count})
+              </button>
+            ))}
+          </div>
+
+          {visibleOrders.length === 0 ? (
+            <div className="rounded-3xl border border-line bg-card p-8 text-center text-sm text-muted">
+              {locale === "en" ? "No orders in this category." : "لا توجد طلبات في هذا القسم."}
+            </div>
+          ) : (
+            visibleOrders.map((order) => {
             const isExpanded = expandedId === order.id;
             const details = detailsMap[order.id] ?? [];
             const canCancel = order.order_status === "pending";
@@ -200,7 +252,8 @@ export default function OrdersClient() {
                 )}
               </div>
             );
-          })}
+          })
+          )}
         </div>
       )}
     </AccountShell>

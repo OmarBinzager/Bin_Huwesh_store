@@ -209,7 +209,7 @@ class OrderController extends Controller
 
         try {
             DB::beginTransaction();
-            $orderId = 100000 + Order::all()->count() + 1;
+            $orderId = Order::generateNextOrderId();
 
             $selectedCurrencyCode = $request->header('X-Currency-Code') ?? $request['currency_code'] ?? null;
             $orderCurrency = null;
