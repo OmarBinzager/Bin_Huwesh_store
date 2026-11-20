@@ -27,6 +27,15 @@ export default function TryOnEmbedClient() {
       autoStart={autoStart}
       onClose={() => {
         if (typeof window !== "undefined") {
+          const bridge = (
+            window as unknown as {
+              flutter_inappwebview?: { callHandler?: (name: string) => void };
+            }
+          ).flutter_inappwebview;
+          if (bridge?.callHandler) {
+            bridge.callHandler("closeTryOn");
+            return;
+          }
           window.history.back();
         }
       }}
