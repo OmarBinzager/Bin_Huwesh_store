@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { createDecartClient, models, type RealTimeClient } from "@decartai/sdk";
 import { fetchTryOnToken } from "@/lib/storefront-api";
 
@@ -284,18 +285,18 @@ export default function TryOnModal({
     }
   };
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
   const formattedTime = `00:${String(secondsLeft).padStart(2, "0")}`;
   const fullScreenMode = embedded || isFullscreen;
 
-  return (
+  return createPortal(
     <div
       ref={modalContainerRef}
       className={
         fullScreenMode
-          ? "fixed inset-0 z-50 flex flex-col bg-paper text-ink"
-          : "fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-3 backdrop-blur-sm sm:p-6"
+          ? "fixed inset-0 z-[9999] flex flex-col bg-paper text-ink"
+          : "fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 p-3 backdrop-blur-sm sm:p-6"
       }
       role="dialog"
       aria-modal="true"
@@ -586,6 +587,7 @@ export default function TryOnModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
